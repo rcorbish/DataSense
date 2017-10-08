@@ -148,7 +148,7 @@ public class Cuda implements AutoCloseable {
 			checkrc( rc ) ;
 			
 			rc = CuBlas.INSTANCE.cublasDgemm_v2( cuublasHandle, 
-					0, 0,
+					CUBLAS_OP_N,  CUBLAS_OP_N,
 					M,N,K, 
 					one, gpuA, M, 
 					gpuB, K,
@@ -253,8 +253,8 @@ public class Cuda implements AutoCloseable {
 	//		printMatrix( M, 1, gpuB ) ;
 	
 			//--------------------------------------
-			// Solve R = Q' x b   
-			// R is upper triangualr 
+			// Solve R x = Q' x b   to find x
+			// R is upper triangular 
 	
 			rc = CuBlas.INSTANCE.cublasDtrsm_v2(
 					cuublasHandle, 
@@ -278,7 +278,7 @@ public class Cuda implements AutoCloseable {
 		return x ;
 	}
 
-	void printMatrix( int M, int N, Pointer A ) {
+	protected void printMatrix( int M, int N, Pointer A ) {
 		double a[] = new double[M*N] ;
 		int rc = CuBlas.INSTANCE.cublasGetMatrix( M, N, DoubleSize, A, M, a, M ) ;
 		System.out.println( ".... " + rc ) ;

@@ -176,7 +176,7 @@ public class Blas implements AutoCloseable {
 
 	}
 
-	void printMatrix( int M, int N, double A[] ) {
+	protected void printMatrix( int M, int N, double A[] ) {
 		System.out.println( " ==== "  ) ;
 
 		for( int i=0 ; i<Math.min( 8, M) ; i++ ) {
