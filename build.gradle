@@ -1,0 +1,27 @@
+apply plugin: 'java'
+apply plugin: 'maven'
+
+group = 'DataSense'
+version = '0.0.1-SNAPSHOT'
+
+description = """"""
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+
+
+repositories {
+        
+     maven { url "http://repo.maven.apache.org/maven2" }
+}
+dependencies {
+    compile group: 'net.java.dev.jna', name: 'jna', version:'4.5.0'
+}
+
+task copyDependencies(type: Copy, dependsOn: build) {
+    from configurations.runtime
+    into new File(".", "libs")
+}
+
+
