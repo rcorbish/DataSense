@@ -218,7 +218,7 @@ public class Cuda extends Compute {
 			// workspace size
 			int work[] = new int[1] ;		
 	
-			log.info( "Allocating work area on GPU" ) ;
+			log.info( "Calculating work area on GPU" ) ;
 			rc = CuSolver.INSTANCE.cusolverDnDgeqrf_bufferSize(cusolverHandle, M, numFeatures, gpuA, M, work) ; 		
 			checkrc( rc ) ;
 			int lwork = work[0] ;

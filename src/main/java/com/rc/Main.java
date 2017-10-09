@@ -13,10 +13,10 @@ public class Main {
 
 			Random rng = new Random( 100 ) ;
 
-			int rows  = 25 ;	// M
-			int cols  = 5 ;		// N
-			int mid   = 4 ;		// K
-			int numFeatures = 3 ;
+			int rows  = 25_000 ;	// M
+			int cols  = 8 ;		// N
+			int mid   = 5_000 ;		// K
+			int numFeatures = 1 ;
 
 			double A[] = new double[rows*mid] ; 	// M x K   
 			double B[] = new double[mid*cols] ;  	// K x N
@@ -33,8 +33,8 @@ public class Main {
 				for( int j=0 ; j<mid ; j++ ) {
 					int ix = i+ j*rows ;
 					b[i] += A[ix] * -(j+1) + rng.nextGaussian() / 10.0 ;
-					b[i+rows] += A[ix] * (j+3) + rng.nextGaussian() / 10.0 ;
-					b[i+rows+rows] += A[ix] * Math.E ;
+//					b[i+rows] += A[ix] * (j+3) + rng.nextGaussian() / 10.0 ;
+//					b[i+rows+rows] += A[ix] * Math.E ;
 				}
 			}
 
