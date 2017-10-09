@@ -1,11 +1,15 @@
 package com.rc;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.sun.jna.Library;
 import com.sun.jna.Native;
 import com.sun.jna.Platform;
 import com.sun.jna.Pointer;
 
 public class Cuda implements AutoCloseable {
+	final static Logger log = LoggerFactory.getLogger( Cuda.class ) ;
 
 	// cublasFillMode_t;
 	public final static int CUBLAS_FILL_MODE_LOWER=0 ; 
@@ -95,8 +99,8 @@ public class Cuda implements AutoCloseable {
 
 	}
 
-	private final Pointer cuublasHandle ;
-	private final Pointer cuusolverHandle ;
+	private final Pointer cublasHandle ;
+	private final Pointer cusolverHandle ;
 	private final int version ;
 	
 	private final int DoubleSize ;  // size of double in bytes
@@ -112,21 +116,24 @@ public class Cuda implements AutoCloseable {
 		Pointer handle[] = new Pointer[1] ;
 		int rc = CuBlas.INSTANCE.cublasCreate_v2( handle ) ;
 		checkrc( rc ) ;
-		this.cuublasHandle = handle[0] ;
+		this.cublasHandle = handle[0] ;
 
 		rc = CuSolver.INSTANCE.cusolverDnCreate( handle ) ;
 		checkrc( rc ) ;
-		this.cuusolverHandle = handle[0] ;
+		this.cusolverHandle = handle[0] ;
 
 		int version[] = new int[1] ;
 		CuBlas.INSTANCE.cublasGetVersion_v2( handle[0], version ) ;
-		this.version = version[0] ;				
+		this.version = version[0] ;		
+		
+		log.info( "Connecdted to GPU. Cuda version {}", version[0] ) ;
 	}
 
 	@Override
 	public void close() {
-		CuBlas.INSTANCE.cublasDestroy_v2( cuublasHandle ) ;    	
-		CuSolver.INSTANCE.cusolverDnDestroy( cuusolverHandle ) ;    	
+		CuBlas.INSTANCE.cublasDestroy_v2( cublasHandle ) ;    	
+		CuSolver.INSTANCE.cusolverDnDestroy( cusolverHandle ) ;    	
+		log.info( "Diconecdted from GPU" ) ;
 	}
 
 	public double[] mmul( int rows, int cols, double A[], double B[] ) {
@@ -135,6 +142,8 @@ public class Cuda implements AutoCloseable {
 		int N = cols ;
 		double C[] = new double[M*N] ;
 
+		log.info( "mpy {} x {}  *  {} x {}", M, K, K, N ) ;
+
 		Pointer gpuA=null, gpuB=null, gpuC=null ;
 		
 		try {
@@ -142,12 +151,14 @@ public class Cuda implements AutoCloseable {
 			gpuB = getMemory(K*N) ;
 			gpuC = getMemory(M*N) ;
 	
+			log.info( "Sending A and B to GPU" ) ;
 			int rc = CuBlas.INSTANCE.cublasSetMatrix(M, K, DoubleSize, A, M, gpuA, M ) ;
 			checkrc( rc ) ;
 			rc = CuBlas.INSTANCE.cublasSetMatrix(K, N, DoubleSize, B, K, gpuB, K ) ;
 			checkrc( rc ) ;
 			
-			rc = CuBlas.INSTANCE.cublasDgemm_v2( cuublasHandle, 
+			log.info( "Execute multiply" ) ;
+			rc = CuBlas.INSTANCE.cublasDgemm_v2( cublasHandle, 
 					CUBLAS_OP_N,  CUBLAS_OP_N,
 					M,N,K, 
 					one, gpuA, M, 
@@ -156,6 +167,7 @@ public class Cuda implements AutoCloseable {
 					) ;
 			checkrc( rc ) ;
 	
+			log.info( "Copying C from GPU" ) ;
 			rc = CuBlas.INSTANCE.cublasGetMatrix(M, N, DoubleSize, gpuC, M, C, M ) ;
 			checkrc( rc ) ;
 		} finally {
@@ -163,6 +175,7 @@ public class Cuda implements AutoCloseable {
 			CuBlas.INSTANCE.cublasFree( gpuB ) ;
 			CuBlas.INSTANCE.cublasFree( gpuC ) ;
 		}	
+		log.info( "mpy complete");
 		return C ;
 	}
 
@@ -177,6 +190,8 @@ public class Cuda implements AutoCloseable {
 	public double[] solve( int rows, int cols, double A[], double B[] ) {
 		int M = rows ;
 		int N = cols ;
+		
+		log.info( "Solve Ax=b  {} x {} ", M, N ) ;
 
 		if( M<N) throw ( new RuntimeException( "M must be >= N" ) ) ;
 		double x[] = null ;
@@ -187,7 +202,7 @@ public class Cuda implements AutoCloseable {
 			gpuA = getMemory(M*N);		// A
 			gpuB = getMemory(M*1);		// this will also hold Q' x b   ( 1st column only ) 
 	
-			// Copy A and b to GPU
+			log.info( "Sending A and B to GPU" ) ;
 			int rc = CuBlas.INSTANCE.cublasSetMatrix(M, N, DoubleSize, A, M, gpuA, M ) ;
 			checkrc(rc) ;
 			rc = CuBlas.INSTANCE.cublasSetMatrix(M, 1, DoubleSize, B, M, gpuB, M ) ;
@@ -196,15 +211,18 @@ public class Cuda implements AutoCloseable {
 			// workspace size
 			int work[] = new int[1] ;		
 	
-			rc = CuSolver.INSTANCE.cusolverDnDgeqrf_bufferSize(cuusolverHandle, M, 1, gpuA, M, work) ; 		
+			log.info( "Allocating work area on GPU" ) ;
+			rc = CuSolver.INSTANCE.cusolverDnDgeqrf_bufferSize(cusolverHandle, M, 1, gpuA, M, work) ; 		
 			checkrc( rc ) ;
 			int lwork = work[0] ;
 			gpuW = getMemory(lwork) ;
+			log.info( "Allocated double[{}] on GPU", lwork ) ;
 	
 			// QR ( step 1 )
 			gpuT = getMemory( Math.min(M, N) ) ;
+			log.info( "Perform QR = A" ) ;
 			rc = CuSolver.INSTANCE.cusolverDnDgeqrf( 
-					cuusolverHandle, 
+					cusolverHandle, 
 					M, N, 
 					gpuA, M, 
 					gpuT, 
@@ -238,8 +256,9 @@ public class Cuda implements AutoCloseable {
 	*/
 			
 			// Q' x b   -> gpuB		
+			log.info( "Perform Q' x b" ) ;
 			rc = CuSolver.INSTANCE.cusolverDnDormqr(
-					cuusolverHandle, 
+					cusolverHandle, 
 					CUBLAS_SIDE_LEFT, CUBLAS_OP_T, 
 					M, 1, Math.min(M,N), 
 					gpuA, M,	
@@ -256,8 +275,9 @@ public class Cuda implements AutoCloseable {
 			// Solve R x = Q' x b   to find x
 			// R is upper triangular 
 	
+			log.info( "Solve Rx = Q' x b" ) ;
 			rc = CuBlas.INSTANCE.cublasDtrsm_v2(
-					cuublasHandle, 
+					cublasHandle, 
 					CUBLAS_SIDE_LEFT, CUBLAS_FILL_MODE_UPPER, CUBLAS_OP_N, CUBLAS_DIAG_NON_UNIT, 
 					N, 1, one, 
 					gpuA, M, 
@@ -265,6 +285,7 @@ public class Cuda implements AutoCloseable {
 					) ;
 			checkrc( rc ) ;
 	
+			log.info( "Copying x from GPU" ); 
 			x = new double[N] ;
 			rc = CuBlas.INSTANCE.cublasGetMatrix(N, 1, DoubleSize, gpuB, N, x, N ) ;
 			checkrc( rc ) ;
@@ -275,6 +296,7 @@ public class Cuda implements AutoCloseable {
 			CuBlas.INSTANCE.cublasFree( gpuD ) ;
 			CuBlas.INSTANCE.cublasFree( gpuT ) ;
 		}
+		log.info( "Solved x vector" ) ;
 		return x ;
 	}
 
@@ -300,7 +322,7 @@ public class Cuda implements AutoCloseable {
 		if( ste.getMethodName().equals( "getMemory") ) {
 			ste = Thread.currentThread().getStackTrace()[3] ;
 		}
-		System.err.println( "Error code [" + rc + "] at: " + ste ) ;
+		log.error( "Error {} at: {}",  rc, ste ) ;
 		throw new RuntimeException( "Failed to check RC" ) ;
 	}
 	

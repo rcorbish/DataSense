@@ -9,11 +9,17 @@ import java.text.DecimalFormat;
 import java.util.Random;
 import java.util.StringJoiner;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class Loader {
+	final static Logger log = LoggerFactory.getLogger( Blas.class ) ;
 
 	private static final Random rng = new Random() ;
 	
 	public static double[] loadFromCsv( int M, Path file ) throws IOException {
+		
+		log.info( "Loading {} rows from {}", M, file ) ;
 		
 		double reservoir[] = null ;
 		
@@ -25,24 +31,26 @@ public class Loader {
 			int N = headers.length ;
 			
 			reservoir = new double[M*N] ;
-			
-			while( (line=br.readLine()) != null ) {
+			log.info( "Found {} columns", N ); 
+			while( line != null ) {
 				if( line.trim().length() == 0 ) continue ;
 				String cols[] = line.split( ",(?=([^\"]*\"[^\"]*\")*[^\"]*$)" ) ;
 				double row[] = parse( cols ) ;
+				if( m==M ) { log.info( "Switching to reservoir mode. Keeping {} samples", M ) ; }
 				if( m<M ) {
 					for( int c=0 ; c<N ; c++ ) {
 						reservoir[m + c*M] = row[c] ;
 					}
-					m++ ;
 				} else {
 					int r = rng.nextInt(M) ;
 					for( int c=0 ; c<N ; c++ ) {
 						reservoir[r + c*M] = row[c] ;
 					}
-				}				
+				}
+				line=br.readLine() ;
+				m++ ;
 			}
-			
+			log.info( "Parsed {} lines", m ) ;
 			return reservoir ;
 		}
 	}

@@ -13,7 +13,7 @@ public class Main {
 			
 			Random rng = new Random( 100 ) ;
 
-			int rows  = 1_000 ;		// M
+			int rows  = 19_000 ;		// M
 			int cols  = 10 ;		// N
 			int mid   = 100 ;		// K
 
@@ -42,7 +42,7 @@ public class Main {
 			Loader.saveToCsv( rows, b, Paths.get("b.csv") ) ;
 			
 			System.out.println( "------ L O A D -----" );
-			rows = 100 ;
+			rows = 500 ;
 			A = Loader.loadFromCsv( rows, Paths.get("A.csv") ) ;
 			B = Loader.loadFromCsv( mid, Paths.get("B.csv") ) ;
 			b = Loader.loadFromCsv( rows, Paths.get("b.csv") ) ;
@@ -68,21 +68,11 @@ public class Main {
 			System.out.println( "\n---- C U D A ------" );
 
 			try ( Cuda cuda = new Cuda() ) {
-				long start = System.nanoTime() ;
 				double C[] = cuda.mmul(rows, cols, A, B) ;
-				long delta = System.nanoTime() - start ;
 				printMatrix( rows, cols, C ) ;
-				System.out.println( "Elapsed " + String.format( "%,d uS", (delta/1000) )) ;
-			} catch( Throwable ignore ) {
 
-			}
-
-			try ( Cuda cuda = new Cuda() ) {
-				long start = System.nanoTime() ;
 				double x[] = cuda.solve(rows, mid, A, b) ;
-				long delta = System.nanoTime() - start ;
 				printMatrix(1, cols, x);
-				System.out.println( "Elapsed " + String.format( "%,d uS", (delta/1000) )) ;
 			} catch( Throwable ignore ) {
 				ignore.printStackTrace();
 			}
@@ -90,21 +80,11 @@ public class Main {
 
 			System.out.println( "----- B L A S ------" );
 			try ( Blas blas = new Blas(8) ) {
-				long start = System.nanoTime() ;
 				double C[] = blas.mmul(rows, cols, A, B) ;
-				long delta = System.nanoTime() - start ;
 				printMatrix( rows, cols, C ) ;
-				System.out.println( "Elapsed " + String.format( "%,d uS", (delta/1000) )) ;
-			} catch( Throwable ignore ) {
 
-			}
-
-			try ( Blas blas = new Blas(8) ) {
-				long start = System.nanoTime() ;
 				double x[] = blas.solve(rows, mid, A, b) ;
-				long delta = System.nanoTime() - start ;
 				printMatrix(1, cols, x);
-				System.out.println( "Elapsed " + String.format( "%,d uS", (delta/1000) )) ;
 			} catch( Throwable ignore ) {
 				ignore.printStackTrace();
 			}

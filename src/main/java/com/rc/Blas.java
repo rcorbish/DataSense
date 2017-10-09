@@ -1,11 +1,16 @@
 package com.rc;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.sun.jna.Library;
 import com.sun.jna.Native;
 import com.sun.jna.Platform;
 
-public class Blas implements AutoCloseable {
 
+public class Blas implements AutoCloseable {
+	final static Logger log = LoggerFactory.getLogger( Blas.class ) ;
+	
 	public interface OpenBlas extends Library {
 		OpenBlas INSTANCE = (OpenBlas)
 				Native.loadLibrary((Platform.isWindows() ? "msvcrt" : "openblas"), OpenBlas.class ) ;
@@ -72,14 +77,18 @@ public class Blas implements AutoCloseable {
 	}
 
 	public Blas( int numThreads ) {
+		log.info( "Creating BLAS instance with {} threads", numThreads ) ;
 		OpenBlas.INSTANCE.openblas_set_num_threads(numThreads);
 	}
 
 	public double[] mmul( int rows, int cols, double A[], double B[] ) {
+
 		int M = rows ;
 		int K = A.length / M ;
 		int N = cols ;
 		double C[] = new double[M*N] ;
+
+		log.info( "mpy {} x {}  *  {} x {}", M, K, K, N ) ;
 
 		//		--------------
 		//		 A [M x K]
@@ -94,7 +103,9 @@ public class Blas implements AutoCloseable {
 				B, K,
 				zero, C, M
 				) ;
-
+		
+		checkrc( rc ) ;
+		log.info( "mpy complete");
 		return C ;
 	}
 
@@ -111,6 +122,8 @@ public class Blas implements AutoCloseable {
 		int M = rows ;
 		int N = cols ;
 
+		log.info( "Solve Ax=b  {} x {} ", M, N ) ;
+
 		if( M<N) throw ( new RuntimeException( "M must be >= N" ) ) ;
 
 		int devinfo[] = new int[1] ;
@@ -126,7 +139,9 @@ public class Blas implements AutoCloseable {
 				devinfo ) ;
 		checkrc( rc ) ;
 
-		int lwork = (int)work[0] ;		
+		int lwork = (int)work[0] ;
+		log.info( "Allocated double[{}] for work area", lwork ) ;
+
 		work = new double[lwork] ;
 		rc = Lapacke.INSTANCE.LAPACKE_dgeqrf_work(
 				CblasColMajor,
@@ -138,6 +153,7 @@ public class Blas implements AutoCloseable {
 				devinfo) ;
 		checkrc( rc ) ;
 		//		printMatrix(1,  N, tau);
+		log.info( "Factored  QR = A" ) ;
 
 		// Q' x b   -> B		
 		rc = Lapacke.INSTANCE.LAPACKE_dormqr_work(
@@ -153,6 +169,7 @@ public class Blas implements AutoCloseable {
 				) ; 
 		checkrc( rc ) ;
 		//		printMatrix(M, 1, B);
+		log.info( "Created Q'b = Rx" ) ;
 
 		//--------------------------------------
 		// Solve R = Q' x b   
@@ -166,6 +183,8 @@ public class Blas implements AutoCloseable {
 				B, M
 				) ;
 
+		log.info( "Solved x vector" ) ;
+
 		double x[] = new double[N] ;
 		for( int i=0 ; i<N ; i++ ) { x[i] = B[i] ; }
 		return x ;
@@ -173,7 +192,7 @@ public class Blas implements AutoCloseable {
 
 	@Override
 	public void close() {
-
+		log.info( "Shutdown BLAS" ) ;
 	}
 
 	protected void printMatrix( int M, int N, double A[] ) {
@@ -193,7 +212,7 @@ public class Blas implements AutoCloseable {
 	protected void checkrc( int rc ) {
 		if( rc == 0 ) return ;
 		StackTraceElement ste = Thread.currentThread().getStackTrace()[2] ;
-		System.err.println( "Error at: " + ste ) ;
+		log.error( "Error {} at: {}",  rc, ste ) ;
 		throw new RuntimeException( "Failed to check RC" ) ;
 	}
 
