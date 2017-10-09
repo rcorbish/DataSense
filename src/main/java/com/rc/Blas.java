@@ -8,7 +8,7 @@ import com.sun.jna.Native;
 import com.sun.jna.Platform;
 
 
-public class Blas implements AutoCloseable {
+public class Blas extends Compute {
 	final static Logger log = LoggerFactory.getLogger( Blas.class ) ;
 	
 	public interface OpenBlas extends Library {
@@ -16,6 +16,9 @@ public class Blas implements AutoCloseable {
 				Native.loadLibrary((Platform.isWindows() ? "msvcrt" : "openblas"), OpenBlas.class ) ;
 
 		void openblas_set_num_threads( int numThreads ) ;
+		String openblas_get_corename() ;
+		String openblas_get_config() ;
+		
 		int cblas_dgemm( int order, int transA, int transB , 
 				int M, int N, int K, 
 				double alpha, double A[], int LDA, 
@@ -73,14 +76,21 @@ public class Blas implements AutoCloseable {
 
 
 	public Blas() {
-		this( 2 ) ;
+		this( Runtime.getRuntime().availableProcessors() ) ;
 	}
 
 	public Blas( int numThreads ) {
 		log.info( "Creating BLAS instance with {} threads", numThreads ) ;
+		log.info( "Openblas config: {}", getVersion() ) ;
 		OpenBlas.INSTANCE.openblas_set_num_threads(numThreads);
 	}
 
+	@Override
+	public String getVersion() {
+		return OpenBlas.INSTANCE.openblas_get_config()  ;
+	}
+	
+	@Override
 	public double[] mmul( int rows, int cols, double A[], double B[] ) {
 
 		int M = rows ;
@@ -118,7 +128,7 @@ public class Blas implements AutoCloseable {
 	//
 	// x = solve R \ Q'B 
 	//
-	public double[] solve( int rows, int cols, double A[], double B[] ) {
+	public double[] solve( int rows, int cols, double A[], double B[], int numFeatures ) {
 		int M = rows ;
 		int N = cols ;
 
@@ -160,7 +170,7 @@ public class Blas implements AutoCloseable {
 				LAPACK_COL_MAJOR,
 				'L' , //CblasLeft,
 				'T' , //CblasTrans,
-				M, 1, Math.min(M,N), 
+				M, numFeatures, Math.min(M,N), 
 				A, M,	
 				tau, 
 				B, M,
@@ -169,6 +179,7 @@ public class Blas implements AutoCloseable {
 				) ; 
 		checkrc( rc ) ;
 		//		printMatrix(M, 1, B);
+
 		log.info( "Created Q'b = Rx" ) ;
 
 		//--------------------------------------
@@ -177,22 +188,29 @@ public class Blas implements AutoCloseable {
 		OpenBlas.INSTANCE.cblas_dtrsm(
 				CblasColMajor,
 				CblasLeft, CblasUpper, CblasNoTrans, CblasNonUnit,
-				N, 1, 
+				N, numFeatures, 
 				one, 
 				A, M, 
 				B, M
 				) ;
+//		printMatrix( M, numFeatures, B ) ;
 
-		log.info( "Solved x vector" ) ;
+		log.info( "Solved x" ) ;
 
-		double x[] = new double[N] ;
-		for( int i=0 ; i<N ; i++ ) { x[i] = B[i] ; }
+		double x[] = new double[N*numFeatures] ;
+		for( int f=0 ; f<numFeatures ; f++ ) {
+			for( int i=0 ; i<N ; i++ ) {
+				int xx = i + f*N ;
+				int bx = i + f*M ; 
+				x[xx] = B[bx] ;
+			}
+		}
 		return x ;
 	}
 
 	@Override
 	public void close() {
-		log.info( "Shutdown BLAS" ) ;
+		log.info( "Shutdown openblas" ) ;
 	}
 
 	protected void printMatrix( int M, int N, double A[] ) {

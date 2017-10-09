@@ -10,16 +10,17 @@ public class Main {
 	public static void main(String[] args) {
 
 		try {
-			
+
 			Random rng = new Random( 100 ) ;
 
-			int rows  = 19_000 ;		// M
-			int cols  = 10 ;		// N
-			int mid   = 100 ;		// K
+			int rows  = 25 ;	// M
+			int cols  = 5 ;		// N
+			int mid   = 4 ;		// K
+			int numFeatures = 3 ;
 
 			double A[] = new double[rows*mid] ; 	// M x K   
 			double B[] = new double[mid*cols] ;  	// K x N
-			double b[] = new double[rows] ; 	 	// M
+			double b[] = new double[rows*numFeatures] ; 	 	// M
 
 			for( int i=0 ; i<rows*mid ; i++ ) {
 				A[i] = rng.nextGaussian() ;
@@ -29,20 +30,23 @@ public class Main {
 			}
 			for( int i=0 ; i<rows ; i++ ) {
 				//b[i] = 0 ;
-				for( int j=0 ; j<cols ; j++ ) {
+				for( int j=0 ; j<mid ; j++ ) {
 					int ix = i+ j*rows ;
 					b[i] += A[ix] * -(j+1) + rng.nextGaussian() / 10.0 ;
+					b[i+rows] += A[ix] * (j+3) + rng.nextGaussian() / 10.0 ;
+					b[i+rows+rows] += A[ix] * Math.E ;
 				}
 			}
 
+			/*
 			System.out.println( "------ S A V E -----" );
 
 			Loader.saveToCsv( rows, A, Paths.get("A.csv") ) ;
 			Loader.saveToCsv( mid , B, Paths.get("B.csv") ) ;
 			Loader.saveToCsv( rows, b, Paths.get("b.csv") ) ;
-			
+
 			System.out.println( "------ L O A D -----" );
-			rows = 500 ;
+			rows = 3_000 ;
 			A = Loader.loadFromCsv( rows, Paths.get("A.csv") ) ;
 			B = Loader.loadFromCsv( mid, Paths.get("B.csv") ) ;
 			b = Loader.loadFromCsv( rows, Paths.get("b.csv") ) ;
@@ -50,41 +54,50 @@ public class Main {
 				b[i] = 0 ;
 				for( int j=0 ; j<cols ; j++ ) {
 					int ix = i+ j*rows ;
-					b[i] += A[ix] * -(j+1) + rng.nextGaussian() / 10.0 ;
+					b[i] += A[ix] * -(j+1) + rng.nextGaussian() / 100.0 ;
 				}
 			}
-			
-					
+			 */
+
 			System.out.println( "--------- A --------" );
 			printMatrix(rows, mid, A);
 
-			//		System.out.println( "--------- B --------" );
-			//		printMatrix(mid, cols, B);
+			System.out.println( "--------- B --------" );
+			printMatrix(mid, cols, B);
 
 			System.out.println( "--------- b --------" );
-			printMatrix(1, rows, b);
+			printMatrix(rows, numFeatures, b);
 
-
-			System.out.println( "\n---- C U D A ------" );
-
-			try ( Cuda cuda = new Cuda() ) {
-				double C[] = cuda.mmul(rows, cols, A, B) ;
+			System.out.println( "----- A U T O ------" );
+			try ( Compute comp = Compute.getInstance() ) {
+				double C[] = comp.mmul(rows, cols, A, B) ;
 				printMatrix( rows, cols, C ) ;
 
-				double x[] = cuda.solve(rows, mid, A, b) ;
-				printMatrix(1, cols, x);
+				double x[] = comp.solve(rows, mid, A, b, numFeatures) ;
+				printMatrix(mid, numFeatures, x);
 			} catch( Throwable ignore ) {
 				ignore.printStackTrace();
 			}
 
+			System.out.println( "\n---- C U D A ------" );
 
-			System.out.println( "----- B L A S ------" );
-			try ( Blas blas = new Blas(8) ) {
-				double C[] = blas.mmul(rows, cols, A, B) ;
+			try ( Compute comp =new Cuda() ) {
+				double C[] = comp.mmul(rows, cols, A, B) ;
 				printMatrix( rows, cols, C ) ;
 
-				double x[] = blas.solve(rows, mid, A, b) ;
-				printMatrix(1, cols, x);
+				double x[] = comp.solve(rows, mid, A, b, numFeatures) ;
+				printMatrix(mid, numFeatures, x);
+			} catch( Throwable ignore ) {
+				ignore.printStackTrace();
+			}
+
+			System.out.println( "----- B L A S ------" );
+			try ( Compute comp = new Blas() ) {
+				double C[] = comp.mmul(rows, cols, A, B) ;
+				printMatrix( rows, cols, C ) ;
+
+				double x[] = comp.solve(rows, mid, A, b, numFeatures) ;
+				printMatrix(mid, numFeatures, x);
 			} catch( Throwable ignore ) {
 				ignore.printStackTrace();
 			}

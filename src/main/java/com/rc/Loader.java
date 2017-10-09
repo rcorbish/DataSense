@@ -24,17 +24,18 @@ public class Loader {
 		double reservoir[] = null ;
 		
 		int m = 0 ;
+		final String REGEX = "\\," ; // ",(?=([^\"]*\"[^\"]*\")*[^\"]*$)"
 		
 		try ( BufferedReader br = Files.newBufferedReader( file ) ) {
 			String line = br.readLine() ;
-			String headers[] = line.split( ",(?=([^\"]*\"[^\"]*\")*[^\"]*$)" ) ;
+			String headers[] = line.split( REGEX ) ;
 			int N = headers.length ;
 			
 			reservoir = new double[M*N] ;
 			log.info( "Found {} columns", N ); 
 			while( line != null ) {
 				if( line.trim().length() == 0 ) continue ;
-				String cols[] = line.split( ",(?=([^\"]*\"[^\"]*\")*[^\"]*$)" ) ;
+				String cols[] = line.split( REGEX ) ;
 				double row[] = parse( cols ) ;
 				if( m==M ) { log.info( "Switching to reservoir mode. Keeping {} samples", M ) ; }
 				if( m<M ) {
