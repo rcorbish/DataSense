@@ -309,6 +309,23 @@ public class Cuda extends Compute {
 		return x ;
 	}
 
+	//
+	// xA = B
+	// 
+	// (xA)' = B'
+	//
+	// A'x'  = B'
+	// QRx'  = B'
+	// Rx'   = Q'B'
+	//
+	// x = solve R \ Q'B' 
+	//
+	public double[] solve2( int rows, int cols, double A[], double B[], int numFeatures ) {
+		int M = rows ;
+		int N = cols ;
+		return null ;
+	}
+
 	protected void printMatrix( int M, int N, Pointer A ) {
 		double a[] = new double[M*N] ;
 		int rc = CuBlas.INSTANCE.cublasGetMatrix( M, N, DoubleSize, A, M, a, M ) ;

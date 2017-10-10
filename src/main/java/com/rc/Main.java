@@ -13,17 +13,19 @@ public class Main {
 
 			Random rng = new Random( 100 ) ;
 
-			int rows  = 25_000 ;	// M
-			int cols  = 8 ;		// N
-			int mid   = 5_000 ;		// K
-			int numFeatures = 1 ;
+			int rows  = 4 ;		// M
+			int cols  = 4 ;		// N
+			int mid   = 4 ;		// K
+			int numFeatures = 4 ;
 
 			double A[] = new double[rows*mid] ; 	// M x K   
+			double A2[] = new double[rows*mid] ; 	// M x K   
 			double B[] = new double[mid*cols] ;  	// K x N
 			double b[] = new double[rows*numFeatures] ; 	 	// M
 
 			for( int i=0 ; i<rows*mid ; i++ ) {
 				A[i] = rng.nextGaussian() ;
+				A2[i] = A[i] ;
 			}
 			for( int i=0 ; i<mid*cols ; i++ ) {
 				B[i] = rng.nextGaussian() ;
@@ -32,9 +34,10 @@ public class Main {
 				//b[i] = 0 ;
 				for( int j=0 ; j<mid ; j++ ) {
 					int ix = i+ j*rows ;
-					b[i] += A[ix] * -(j+1) + rng.nextGaussian() / 10.0 ;
-//					b[i+rows] += A[ix] * (j+3) + rng.nextGaussian() / 10.0 ;
-//					b[i+rows+rows] += A[ix] * Math.E ;
+					b[i] += A[ix] * -(j+1) ; //+ rng.nextGaussian() / 100.0 ;
+					b[i+rows] += A[ix] * (j+3) ; //+ rng.nextGaussian() / 100.0 ;
+					b[i+rows+rows] += A[ix] * Math.E ;
+					b[i+rows+rows+rows] += A[ix] * Math.PI ;
 				}
 			}
 
@@ -70,15 +73,21 @@ public class Main {
 
 			System.out.println( "----- A U T O ------" );
 			try ( Compute comp = Compute.getInstance() ) {
-				double C[] = comp.mmul(rows, cols, A, B) ;
-				printMatrix( rows, cols, C ) ;
+				Matrix x = new Matrix( mid, numFeatures, comp.solve2(rows, mid, A, b, numFeatures) ) ;
+				System.out.println(x);
+				x.transpose(); 
+				System.out.println(x);
+				System.out.println(x.dup());
+				
+				double C[] = comp.mmul(rows, numFeatures, x.data, A2 ) ;
+				printMatrix( rows, numFeatures, C ) ;
 
-				double x[] = comp.solve(rows, mid, A, b, numFeatures) ;
-				printMatrix(mid, numFeatures, x);
+				// System.out.println();
+				// printMatrix( rows, numFeatures, b ) ;
 			} catch( Throwable ignore ) {
 				ignore.printStackTrace();
 			}
-
+/*
 			System.out.println( "\n---- C U D A ------" );
 
 			try ( Compute comp =new Cuda() ) {
@@ -101,7 +110,7 @@ public class Main {
 			} catch( Throwable ignore ) {
 				ignore.printStackTrace();
 			}
-
+*/
 		} catch( Throwable t ) {
 			t.printStackTrace(); 
 			System.exit( 2 ); ;

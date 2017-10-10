@@ -208,6 +208,93 @@ public class Blas extends Compute {
 		return x ;
 	}
 
+
+
+	//
+	// xA = B
+	//
+	// This is eaasy if we can switch row/col ordering of matrices
+	//
+	public double[] solve2( int rows, int cols, double A[], double B[], int numFeatures ) {
+		int M = rows ;
+		int N = cols ;
+
+		log.info( "Solve xA=b  {} x {} ", M, N ) ;
+
+		if( M<N) throw ( new RuntimeException( "M must be >= N" ) ) ;
+
+		int devinfo[] = new int[1] ;
+		double work[] = new double[1] ;
+		double tau[] = new double[ Math.min(M, N) ] ;
+		int rc = Lapacke.INSTANCE.LAPACKE_dgeqrf_work(
+				CblasRowMajor,
+				M, N, 
+				A, M,
+				tau,
+				work,
+				-1,
+				devinfo ) ;
+		checkrc( rc ) ;
+
+		int lwork = (int)work[0] ;
+		log.info( "Allocated double[{}] for work area", lwork ) ;
+
+		work = new double[lwork] ;
+		rc = Lapacke.INSTANCE.LAPACKE_dgeqrf_work(
+				CblasRowMajor,
+				M, N,
+				A, M,
+				tau,
+				work,
+				lwork,
+				devinfo) ;
+		checkrc( rc ) ;
+		//		printMatrix(1,  N, tau);
+		log.info( "Factored  QR = A'" ) ;
+
+		// Q' x b   -> B		
+		rc = Lapacke.INSTANCE.LAPACKE_dormqr_work(
+				LAPACK_ROW_MAJOR,
+				'L' , //CblasLeft,
+				'T' , //CblasTrans,
+				M, numFeatures, Math.min(M,N), 
+				A, M,	
+				tau, 
+				B, M,
+				work, lwork,
+				devinfo
+				) ; 
+		checkrc( rc ) ;
+		//		printMatrix(M, 1, B);
+
+		log.info( "Created Q'b = Rx'" ) ;
+
+		//--------------------------------------
+		// Solve R = Q' x b   
+		// R is upper triangular 
+		OpenBlas.INSTANCE.cblas_dtrsm(
+				CblasRowMajor,
+				CblasLeft, CblasUpper, CblasNoTrans, CblasNonUnit,
+				N, numFeatures, 
+				one, 
+				A, M, 
+				B, M
+				) ;
+//		printMatrix( M, numFeatures, B ) ;
+
+		log.info( "Solved x" ) ;
+
+		double x[] = new double[N*numFeatures] ;
+		for( int f=0 ; f<numFeatures ; f++ ) {
+			for( int i=0 ; i<N ; i++ ) {
+				int xx = i + f*N ;
+				int bx = i + f*M ; 
+				x[xx] = B[bx] ;
+			}
+		}
+		return x ;
+	}
+
 	@Override
 	public void close() {
 		log.info( "Shutdown openblas" ) ;

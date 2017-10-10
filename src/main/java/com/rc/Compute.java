@@ -8,6 +8,7 @@ public abstract class Compute implements AutoCloseable {
 
 	public abstract double[] mmul( int rows, int cols, double A[], double B[] ) ;
 	public abstract double[] solve( int rows, int cols, double A[], double B[], int numFeatures ) ;
+	public abstract double[] solve2( int rows, int cols, double A[], double B[], int numFeatures ) ;
 	public abstract String getVersion() ;
 	
 	private static Class<? extends Compute> CLASS = null ;
@@ -37,9 +38,9 @@ public abstract class Compute implements AutoCloseable {
 			try( Compute tmp = new Cuda() ) {
 				tmpClass = tmp.getClass() ;	
 				log.info( "Found cuda library" ) ; 
-			} catch (Exception ignore) {
+			} catch (Throwable ignore) {
 				tmpClass = null ;
-				log.error( "Cannot find cuda library - trying openblas", ignore ) ;
+				log.warn( "Cannot find cuda library - trying openblas" ) ;
 			}
 		}
 		
