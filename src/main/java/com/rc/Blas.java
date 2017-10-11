@@ -215,21 +215,24 @@ public class Blas extends Compute {
 	//
 	// This is eaasy if we can switch row/col ordering of matrices
 	//
-	public double[] solve2( int rows, int cols, double A[], double B[], int numFeatures ) {
-		int M = rows ;
-		int N = cols ;
+	public Matrix solve2( Matrix A, Matrix B, int numFeatures ) {
 
-		log.info( "Solve xA=b  {} x {} ", M, N ) ;
+		
+		log.info( "Solve xA=B  {} x {}  / {} x {} ", A.M, A.N, B.M, B.N) ;
 
-		if( M<N) throw ( new RuntimeException( "M must be >= N" ) ) ;
+		
+//		if( M<N) throw ( new RuntimeException( "M must be >= N" ) ) ;
 
 		int devinfo[] = new int[1] ;
 		double work[] = new double[1] ;
-		double tau[] = new double[ Math.min(M, N) ] ;
+		int tauSize = 4 ; //Math.min( A.N, A.M )  ;
+		
+		
+		double tau[] = new double[ tauSize ] ;
 		int rc = Lapacke.INSTANCE.LAPACKE_dgeqrf_work(
-				CblasRowMajor,
-				M, N, 
-				A, M,
+				CblasColMajor,
+				A.M, A.N, 
+				A.data, A.M,
 				tau,
 				work,
 				-1,
@@ -237,19 +240,21 @@ public class Blas extends Compute {
 		checkrc( rc ) ;
 
 		int lwork = (int)work[0] ;
+		lwork=1000 ;
 		log.info( "Allocated double[{}] for work area", lwork ) ;
 
 		work = new double[lwork] ;
 		rc = Lapacke.INSTANCE.LAPACKE_dgeqrf_work(
-				CblasRowMajor,
-				M, N,
-				A, M,
+				CblasColMajor,
+				A.M, A.N, 
+				A.data, A.M,
 				tau,
 				work,
 				lwork,
 				devinfo) ;
 		checkrc( rc ) ;
 		//		printMatrix(1,  N, tau);
+		System.out.println( A ) ;
 		log.info( "Factored  QR = A'" ) ;
 
 		// Q' x b   -> B		
@@ -257,10 +262,10 @@ public class Blas extends Compute {
 				LAPACK_ROW_MAJOR,
 				'L' , //CblasLeft,
 				'T' , //CblasTrans,
-				M, numFeatures, Math.min(M,N), 
-				A, M,	
+				B.M, B.N, tauSize, 
+				A.data, A.M,	
 				tau, 
-				B, M,
+				B.data, B.M,
 				work, lwork,
 				devinfo
 				) ; 
@@ -275,24 +280,24 @@ public class Blas extends Compute {
 		OpenBlas.INSTANCE.cblas_dtrsm(
 				CblasRowMajor,
 				CblasLeft, CblasUpper, CblasNoTrans, CblasNonUnit,
-				N, numFeatures, 
+				A.N, numFeatures, 
 				one, 
-				A, M, 
-				B, M
+				A.data, A.M, 
+				B.data, A.M
 				) ;
 //		printMatrix( M, numFeatures, B ) ;
 
 		log.info( "Solved x" ) ;
 
-		double x[] = new double[N*numFeatures] ;
+		double x[] = new double[A.N*numFeatures] ;
 		for( int f=0 ; f<numFeatures ; f++ ) {
-			for( int i=0 ; i<N ; i++ ) {
-				int xx = i + f*N ;
-				int bx = i + f*M ; 
-				x[xx] = B[bx] ;
+			for( int i=0 ; i<A.N ; i++ ) {
+				int xx = i + f*A.N ;
+				int bx = i + f*A.M ; 
+				x[xx] = B.data[bx] ;
 			}
 		}
-		return x ;
+		return new Matrix( numFeatures, A.N, x )  ;
 	}
 
 	@Override

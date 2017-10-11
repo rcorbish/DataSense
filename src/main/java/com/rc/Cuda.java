@@ -320,9 +320,7 @@ public class Cuda extends Compute {
 	//
 	// x = solve R \ Q'B' 
 	//
-	public double[] solve2( int rows, int cols, double A[], double B[], int numFeatures ) {
-		int M = rows ;
-		int N = cols ;
+	public Matrix solve2( Matrix A, Matrix B, int numFeatures ) {
 		return null ;
 	}
 

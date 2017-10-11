@@ -8,7 +8,7 @@ public abstract class Compute implements AutoCloseable {
 
 	public abstract double[] mmul( int rows, int cols, double A[], double B[] ) ;
 	public abstract double[] solve( int rows, int cols, double A[], double B[], int numFeatures ) ;
-	public abstract double[] solve2( int rows, int cols, double A[], double B[], int numFeatures ) ;
+	public abstract Matrix solve2( Matrix A, Matrix B, int numFeatures ) ;
 	public abstract String getVersion() ;
 	
 	private static Class<? extends Compute> CLASS = null ;

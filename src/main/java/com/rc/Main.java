@@ -13,34 +13,41 @@ public class Main {
 
 			Random rng = new Random( 100 ) ;
 
-			int rows  = 4 ;		// M
+			int rows  = 3 ;		// M
 			int cols  = 4 ;		// N
 			int mid   = 4 ;		// K
 			int numFeatures = 4 ;
 
-			double A[] = new double[rows*mid] ; 	// M x K   
-			double A2[] = new double[rows*mid] ; 	// M x K   
-			double B[] = new double[mid*cols] ;  	// K x N
-			double b[] = new double[rows*numFeatures] ; 	 	// M
+			double Ad[] = new double[rows*mid] ; 	// M x K   
+			double Bd[] = new double[mid*cols] ;  	// K x N
+			double bd[] = new double[rows*numFeatures] ; 	 	// M
 
 			for( int i=0 ; i<rows*mid ; i++ ) {
-				A[i] = rng.nextGaussian() ;
-				A2[i] = A[i] ;
+				Ad[i] = rng.nextGaussian() ;
 			}
 			for( int i=0 ; i<mid*cols ; i++ ) {
-				B[i] = rng.nextGaussian() ;
+				Bd[i] = rng.nextGaussian() ;
 			}
 			for( int i=0 ; i<rows ; i++ ) {
 				//b[i] = 0 ;
 				for( int j=0 ; j<mid ; j++ ) {
 					int ix = i+ j*rows ;
-					b[i] += A[ix] * -(j+1) ; //+ rng.nextGaussian() / 100.0 ;
-					b[i+rows] += A[ix] * (j+3) ; //+ rng.nextGaussian() / 100.0 ;
-					b[i+rows+rows] += A[ix] * Math.E ;
-					b[i+rows+rows+rows] += A[ix] * Math.PI ;
+					bd[i] += Ad[ix] * -(j+1) ; //+ rng.nextGaussian() / 100.0 ;
+					bd[i+rows] += Ad[ix] * (j+3) ; //+ rng.nextGaussian() / 100.0 ;
+					bd[i+rows+rows] += Ad[ix] * Math.E ;
+					bd[i+rows+rows+rows] += Ad[ix] * Math.PI ;
 				}
 			}
+			
+			Matrix A = new Matrix(rows,  mid, Ad ) ;
+			Matrix B = new Matrix( mid, cols, Bd ) ;
+			Matrix b = new Matrix(rows,  numFeatures, bd ) ;
 
+			System.out.println( A ) ;
+			A.transpose();
+			System.out.println( A ) ;
+			A.transpose();
+			
 			/*
 			System.out.println( "------ S A V E -----" );
 
@@ -63,54 +70,26 @@ public class Main {
 			 */
 
 			System.out.println( "--------- A --------" );
-			printMatrix(rows, mid, A);
+			System.out.println( A );
 
 			System.out.println( "--------- B --------" );
-			printMatrix(mid, cols, B);
+			System.out.println( B );
 
 			System.out.println( "--------- b --------" );
-			printMatrix(rows, numFeatures, b);
+			System.out.println( b );
 
-			System.out.println( "----- A U T O ------" );
 			try ( Compute comp = Compute.getInstance() ) {
-				Matrix x = new Matrix( mid, numFeatures, comp.solve2(rows, mid, A, b, numFeatures) ) ;
-				System.out.println(x);
-				x.transpose(); 
-				System.out.println(x);
-				System.out.println(x.dup());
+				Matrix A2 = A.dup();
+				Matrix x = comp.solve2( A.transpose(), b.transpose(), numFeatures)  ;
+				System.out.println( x );
 				
-				double C[] = comp.mmul(rows, numFeatures, x.data, A2 ) ;
-				printMatrix( rows, numFeatures, C ) ;
+				double Cd[] = comp.mmul(rows, numFeatures, x.data, A2.data ) ;
+				Matrix C = new Matrix( rows, numFeatures, Cd ) ;
+				System.out.println( C );
 
-				// System.out.println();
-				// printMatrix( rows, numFeatures, b ) ;
 			} catch( Throwable ignore ) {
 				ignore.printStackTrace();
 			}
-/*
-			System.out.println( "\n---- C U D A ------" );
-
-			try ( Compute comp =new Cuda() ) {
-				double C[] = comp.mmul(rows, cols, A, B) ;
-				printMatrix( rows, cols, C ) ;
-
-				double x[] = comp.solve(rows, mid, A, b, numFeatures) ;
-				printMatrix(mid, numFeatures, x);
-			} catch( Throwable ignore ) {
-				ignore.printStackTrace();
-			}
-
-			System.out.println( "----- B L A S ------" );
-			try ( Compute comp = new Blas() ) {
-				double C[] = comp.mmul(rows, cols, A, B) ;
-				printMatrix( rows, cols, C ) ;
-
-				double x[] = comp.solve(rows, mid, A, b, numFeatures) ;
-				printMatrix(mid, numFeatures, x);
-			} catch( Throwable ignore ) {
-				ignore.printStackTrace();
-			}
-*/
 		} catch( Throwable t ) {
 			t.printStackTrace(); 
 			System.exit( 2 ); ;

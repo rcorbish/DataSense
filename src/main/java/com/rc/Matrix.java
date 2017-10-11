@@ -7,7 +7,6 @@ public class Matrix {
 
     double data[] ;
 
-    private boolean isColumnMajor ;
     private boolean isVector ;
 
     public Matrix( int rows, int columns ) {
@@ -18,29 +17,37 @@ public class Matrix {
         this.M = rows ;
         this.N = columns ;
         this.data = data ;
-        isColumnMajor = true ;
         isVector = rows==1 || columns==1 ;
     }
 
     public Matrix dup() {
         double copy[] = new double[data.length] ;
         System.arraycopy( data, 0, copy, 0, copy.length ) ;
-        Matrix rc = isColumnMajor ?
-            new Matrix( M, N, copy ) :
-            new Matrix( N, M, copy ) ;
-
-        return rc ;
+        return new Matrix( M, N, copy ) ;
     }
 
-    public void transpose() {
+    public Matrix transpose() {
+
+    	double data2[] = new double[ data.length] ;
+    	
+        for( int i=0 ; i<M ; i++ ) {
+        	for( int j=0 ; j<N ; j++ ) {
+        		int i1 = i + j*M ;
+        		int i2 = j + i*N ;
+        		
+                data2[ i2 ] = data[ i1 ];
+        	}
+        }
         int tmp = this.M ;
         this.M = this.N ;
-        this.N = tmp ;
-        isColumnMajor = !isColumnMajor ;
+        this.N = tmp ;      
+        this.data = data2 ;
+        
+        return this ;
     }
 
     protected int index( int r, int c ) {
-        return isColumnMajor ? (r + c*M) : (c + r*N) ;
+        return r + c*M  ;
     }
 
     public String toString() {
