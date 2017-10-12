@@ -41,8 +41,7 @@ public class Blas extends Compute {
 				int m, int n, 
 				double a[],  int lda, 
 				double tau[], 
-				double work[], int lwork,
-				int info[]
+				double work[], int lwork
 				);
 		int LAPACKE_dormqr_work( 
 				int matrix_layout, int side, int trans, 
@@ -50,8 +49,7 @@ public class Blas extends Compute {
 				double a[], int lda, 
 				double tau[],
 				double c[], int ldc ,
-				double work[], int lwork,
-				int info[]
+				double work[], int lwork
 				) ;
 
 	}
@@ -145,8 +143,7 @@ public class Blas extends Compute {
 				A, M,
 				tau,
 				work,
-				-1,
-				devinfo ) ;
+				-1 ) ;
 		checkrc( rc ) ;
 
 		int lwork = (int)work[0] ;
@@ -159,8 +156,7 @@ public class Blas extends Compute {
 				A, M,
 				tau,
 				work,
-				lwork,
-				devinfo) ;
+				lwork) ;
 		checkrc( rc ) ;
 		//		printMatrix(1,  N, tau);
 		log.info( "Factored  QR = A" ) ;
@@ -174,8 +170,7 @@ public class Blas extends Compute {
 				A, M,	
 				tau, 
 				B, M,
-				work, lwork,
-				devinfo
+				work, lwork
 				) ; 
 		checkrc( rc ) ;
 		//		printMatrix(M, 1, B);
@@ -225,7 +220,7 @@ public class Blas extends Compute {
 
 		int devinfo[] = new int[1] ;
 		double work[] = new double[1] ;
-		int tauSize = 4 ; //Math.min( A.N, A.M )  ;
+		int tauSize =Math.min( A.M, A.N )  ;
 		
 		
 		double tau[] = new double[ tauSize ] ;
@@ -235,12 +230,10 @@ public class Blas extends Compute {
 				A.data, A.M,
 				tau,
 				work,
-				-1,
-				devinfo ) ;
+				-1 ) ;
 		checkrc( rc ) ;
 
 		int lwork = (int)work[0] ;
-		lwork=1000 ;
 		log.info( "Allocated double[{}] for work area", lwork ) ;
 
 		work = new double[lwork] ;
@@ -250,54 +243,50 @@ public class Blas extends Compute {
 				A.data, A.M,
 				tau,
 				work,
-				lwork,
-				devinfo) ;
+				lwork ) ;
 		checkrc( rc ) ;
-		//		printMatrix(1,  N, tau);
-		System.out.println( A ) ;
-		log.info( "Factored  QR = A'" ) ;
+		log.info( "Factored  QR = A' ... \n{}", A ) ;
 
 		// Q' x b   -> B		
 		rc = Lapacke.INSTANCE.LAPACKE_dormqr_work(
-				LAPACK_ROW_MAJOR,
+				LAPACK_COL_MAJOR,
 				'L' , //CblasLeft,
 				'T' , //CblasTrans,
 				B.M, B.N, tauSize, 
 				A.data, A.M,	
 				tau, 
 				B.data, B.M,
-				work, lwork,
-				devinfo
+				work, lwork
 				) ; 
 		checkrc( rc ) ;
-		//		printMatrix(M, 1, B);
-
-		log.info( "Created Q'b = Rx'" ) ;
+		
+		log.info( "Created Q'b = Rx' ... \n{}",B ) ;
 
 		//--------------------------------------
-		// Solve R = Q' x b   
-		// R is upper triangular 
+		// Solve R X = Q' x b   
+		//       
+		//      A is R		( result of QR )
+		//		B is Q'B	( Q * original input )
 		OpenBlas.INSTANCE.cblas_dtrsm(
-				CblasRowMajor,
+				CblasColMajor,
 				CblasLeft, CblasUpper, CblasNoTrans, CblasNonUnit,
-				A.N, numFeatures, 
+				A.N, B.N, 
 				one, 
-				A.data, A.M, 
-				B.data, A.M
+				A.data, A.M,    
+				B.data, A.M		
 				) ;
-//		printMatrix( M, numFeatures, B ) ;
 
-		log.info( "Solved x" ) ;
+		log.info( "Solved x ...\n{}", B  ) ;
 
-		double x[] = new double[A.N*numFeatures] ;
+		double x[] = new double[A.N*B.N] ;
 		for( int f=0 ; f<numFeatures ; f++ ) {
 			for( int i=0 ; i<A.N ; i++ ) {
 				int xx = i + f*A.N ;
-				int bx = i + f*A.M ; 
+				int bx = i + f*B.M; 
 				x[xx] = B.data[bx] ;
 			}
 		}
-		return new Matrix( numFeatures, A.N, x )  ;
+		return new Matrix( A.N, B.N, x )  ;
 	}
 
 	@Override

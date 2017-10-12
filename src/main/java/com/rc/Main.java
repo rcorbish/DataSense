@@ -1,6 +1,5 @@
 package com.rc;
 
-import java.nio.file.Paths;
 import java.util.Random;
 
 
@@ -11,16 +10,16 @@ public class Main {
 
 		try {
 
-			Random rng = new Random( 100 ) ;
+			Random rng = new Random( 120 ) ;
 
-			int rows  = 3 ;		// M
+			int rows  = 4 ;		// M
 			int cols  = 4 ;		// N
 			int mid   = 4 ;		// K
 			int numFeatures = 4 ;
 
 			double Ad[] = new double[rows*mid] ; 	// M x K   
 			double Bd[] = new double[mid*cols] ;  	// K x N
-			double bd[] = new double[rows*numFeatures] ; 	 	// M
+			double bd[] = new double[cols*mid] ; // rows*numFeatures] ; 	 	// M
 
 			for( int i=0 ; i<rows*mid ; i++ ) {
 				Ad[i] = rng.nextGaussian() ;
@@ -28,25 +27,13 @@ public class Main {
 			for( int i=0 ; i<mid*cols ; i++ ) {
 				Bd[i] = rng.nextGaussian() ;
 			}
-			for( int i=0 ; i<rows ; i++ ) {
-				//b[i] = 0 ;
-				for( int j=0 ; j<mid ; j++ ) {
-					int ix = i+ j*rows ;
-					bd[i] += Ad[ix] * -(j+1) ; //+ rng.nextGaussian() / 100.0 ;
-					bd[i+rows] += Ad[ix] * (j+3) ; //+ rng.nextGaussian() / 100.0 ;
-					bd[i+rows+rows] += Ad[ix] * Math.E ;
-					bd[i+rows+rows+rows] += Ad[ix] * Math.PI ;
-				}
+			for( int i=0 ; i<bd.length ; i++ ) {
+				bd[i] = rng.nextGaussian() ;
 			}
 			
 			Matrix A = new Matrix(rows,  mid, Ad ) ;
 			Matrix B = new Matrix( mid, cols, Bd ) ;
-			Matrix b = new Matrix(rows,  numFeatures, bd ) ;
-
-			System.out.println( A ) ;
-			A.transpose();
-			System.out.println( A ) ;
-			A.transpose();
+			Matrix b = new Matrix( cols, mid, bd ) ;
 			
 			/*
 			System.out.println( "------ S A V E -----" );
@@ -80,10 +67,10 @@ public class Main {
 
 			try ( Compute comp = Compute.getInstance() ) {
 				Matrix A2 = A.dup();
-				Matrix x = comp.solve2( A.transpose(), b.transpose(), numFeatures)  ;
+				Matrix x = comp.solve2( A.transpose(), b.transpose(), numFeatures).transpose()  ;
 				System.out.println( x );
 				
-				double Cd[] = comp.mmul(rows, numFeatures, x.data, A2.data ) ;
+				double Cd[] = comp.mmul(4, 4, x.data, A2.data ) ;
 				Matrix C = new Matrix( rows, numFeatures, Cd ) ;
 				System.out.println( C );
 
