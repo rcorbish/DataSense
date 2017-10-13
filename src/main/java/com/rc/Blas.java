@@ -208,20 +208,34 @@ public class Blas extends Compute {
 	//
 	// xA = B
 	//
-	// This is eaasy if we can switch row/col ordering of matrices
+	// This is easy if we can switch row/col ordering of matrices
 	//
 	public Matrix solve2( Matrix A, Matrix B, int numFeatures ) {
 
 		
 		log.info( "Solve xA=B  {} x {}  / {} x {} ", A.M, A.N, B.M, B.N) ;
+		if( A.N != B.N ) {
+			throw new RuntimeException( "Incompatible sizes - columns must match" ) ;
+		}
+		//
+		// IN
+		// 	A is A.M x A.N  
+		// 	B is numFeatures x A.N
+		//
+		// OUT
+		// 	Q is A.M x A.M
+		// 	R is A.M x A.N
+		// 	B is numFeatures x A.N
+		//  Q'B' is A.M x numFeatures
+		//  X is numFeatures x A.M
+		//
 
+		// In place - destroys inputs!
+		A.transpose() ;
+		B.transpose() ;
 		
-//		if( M<N) throw ( new RuntimeException( "M must be >= N" ) ) ;
-
-		int devinfo[] = new int[1] ;
 		double work[] = new double[1] ;
 		int tauSize =Math.min( A.M, A.N )  ;
-		
 		
 		double tau[] = new double[ tauSize ] ;
 		int rc = Lapacke.INSTANCE.LAPACKE_dgeqrf_work(
@@ -234,7 +248,7 @@ public class Blas extends Compute {
 		checkrc( rc ) ;
 
 		int lwork = (int)work[0] ;
-		log.info( "Allocated double[{}] for work area", lwork ) ;
+		log.debug( "Allocated double[{}] for work area", lwork ) ;
 
 		work = new double[lwork] ;
 		rc = Lapacke.INSTANCE.LAPACKE_dgeqrf_work(
@@ -245,7 +259,7 @@ public class Blas extends Compute {
 				work,
 				lwork ) ;
 		checkrc( rc ) ;
-		log.info( "Factored  QR = A' ... \n{}", A ) ;
+		log.debug( "Factored  QR = A' ... \n{}", A ) ;
 
 		// Q' x b   -> B		
 		rc = Lapacke.INSTANCE.LAPACKE_dormqr_work(
@@ -260,7 +274,7 @@ public class Blas extends Compute {
 				) ; 
 		checkrc( rc ) ;
 		
-		log.info( "Created Q'b = Rx' ... \n{}",B ) ;
+		log.debug( "Created Q'b' = Rx' ... \n{}",B ) ;
 
 		//--------------------------------------
 		// Solve R X = Q' x b   
@@ -276,17 +290,18 @@ public class Blas extends Compute {
 				B.data, A.M		
 				) ;
 
-		log.info( "Solved x ...\n{}", B  ) ;
+		log.debug( "Solved x ...\n{}", B  ) ;
 
-		double x[] = new double[A.N*B.N] ;
+		// NB this is transpose copy
+		double x[] = new double[numFeatures*A.M] ;
 		for( int f=0 ; f<numFeatures ; f++ ) {
 			for( int i=0 ; i<A.N ; i++ ) {
-				int xx = i + f*A.N ;
-				int bx = i + f*B.M; 
+				int xx = i + f*A.M ;
+				int bx = i + f*numFeatures; 
 				x[xx] = B.data[bx] ;
 			}
 		}
-		return new Matrix( A.N, B.N, x )  ;
+		return new Matrix( numFeatures, A.M, x ) ; //.transpose() ;
 	}
 
 	@Override

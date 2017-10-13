@@ -12,14 +12,14 @@ public class Main {
 
 			Random rng = new Random( 120 ) ;
 
-			int rows  = 4 ;		// M
+			int rows  = 5 ;		// M
 			int cols  = 4 ;		// N
 			int mid   = 4 ;		// K
 			int numFeatures = 4 ;
 
 			double Ad[] = new double[rows*mid] ; 	// M x K   
 			double Bd[] = new double[mid*cols] ;  	// K x N
-			double bd[] = new double[cols*mid] ; // rows*numFeatures] ; 	 	// M
+			double bd[] = new double[numFeatures*mid] ; // rows*numFeatures] ; 	 	// M
 
 			for( int i=0 ; i<rows*mid ; i++ ) {
 				Ad[i] = rng.nextGaussian() ;
@@ -33,7 +33,7 @@ public class Main {
 			
 			Matrix A = new Matrix(rows,  mid, Ad ) ;
 			Matrix B = new Matrix( mid, cols, Bd ) ;
-			Matrix b = new Matrix( cols, mid, bd ) ;
+			Matrix b = new Matrix( numFeatures, mid, bd ) ;
 			
 			/*
 			System.out.println( "------ S A V E -----" );
@@ -67,11 +67,11 @@ public class Main {
 
 			try ( Compute comp = Compute.getInstance() ) {
 				Matrix A2 = A.dup();
-				Matrix x = comp.solve2( A.transpose(), b.transpose(), numFeatures).transpose()  ;
+				Matrix x = comp.solve2( A, b, numFeatures)  ;
 				System.out.println( x );
 				
-				double Cd[] = comp.mmul(4, 4, x.data, A2.data ) ;
-				Matrix C = new Matrix( rows, numFeatures, Cd ) ;
+				double Cd[] = comp.mmul(numFeatures, B.N, x.data, A2.data ) ;
+				Matrix C = new Matrix( numFeatures, A.M, Cd ) ;
 				System.out.println( C );
 
 			} catch( Throwable ignore ) {
