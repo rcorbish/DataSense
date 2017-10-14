@@ -89,14 +89,11 @@ public class Blas extends Compute {
 	}
 	
 	@Override
-	public double[] mmul( int rows, int cols, double A[], double B[] ) {
+	public Matrix mmul( Matrix A, Matrix B ) {
 
-		int M = rows ;
-		int K = A.length / M ;
-		int N = cols ;
-		double C[] = new double[M*N] ;
+		Matrix C = new Matrix( A.M, B.N ) ;
 
-		log.info( "mpy {} x {}  *  {} x {}", M, K, K, N ) ;
+		log.info( "mpy {} x {}  *  {} x {}", A.M, A.N, B.M, B.N ) ;
 
 		//		--------------
 		//		 A [M x K]
@@ -106,10 +103,12 @@ public class Blas extends Compute {
 		int rc = OpenBlas.INSTANCE.cblas_dgemm( 
 				CblasColMajor,
 				CblasNoTrans, CblasNoTrans,
-				M,N,K, 
-				one, A, M, 
-				B, K,
-				zero, C, M
+				A.M,B.N,B.M, 
+				one, 
+				A.data, A.M, 
+				B.data, B.M,
+				zero, 
+				C.data, C.M
 				) ;
 		
 		checkrc( rc ) ;
@@ -126,21 +125,18 @@ public class Blas extends Compute {
 	//
 	// x = solve R \ Q'B 
 	//
-	public double[] solve( int rows, int cols, double A[], double B[], int numFeatures ) {
-		int M = rows ;
-		int N = cols ;
+	public Matrix solve( Matrix A, Matrix B ) {
 
-		log.info( "Solve Ax=b  {} x {} ", M, N ) ;
+		log.info( "Solve Ax=b  {} x {} ", A.M, A.N ) ;
 
-		if( M<N) throw ( new RuntimeException( "M must be >= N" ) ) ;
+		if( A.M<A.N) throw ( new RuntimeException( "M must be >= N" ) ) ;
 
-		int devinfo[] = new int[1] ;
 		double work[] = new double[1] ;
-		double tau[] = new double[ Math.min(M, N) ] ;
+		double tau[] = new double[ Math.min(A.M, A.N) ] ;
 		int rc = Lapacke.INSTANCE.LAPACKE_dgeqrf_work(
 				CblasColMajor,
-				M, N, 
-				A, M,
+				A.M, B.N, 
+				A.data, A.M,
 				tau,
 				work,
 				-1 ) ;
@@ -152,8 +148,8 @@ public class Blas extends Compute {
 		work = new double[lwork] ;
 		rc = Lapacke.INSTANCE.LAPACKE_dgeqrf_work(
 				CblasColMajor,
-				M, N, 
-				A, M,
+				A.M, B.N, 
+				A.data, A.M,
 				tau,
 				work,
 				lwork) ;
@@ -166,10 +162,10 @@ public class Blas extends Compute {
 				LAPACK_COL_MAJOR,
 				'L' , //CblasLeft,
 				'T' , //CblasTrans,
-				M, numFeatures, Math.min(M,N), 
-				A, M,	
+				A.M, B.N, Math.min(A.M,A.N), 
+				A.data, A.M,	
 				tau, 
-				B, M,
+				B.data, B.M,
 				work, lwork
 				) ; 
 		checkrc( rc ) ;
@@ -183,21 +179,21 @@ public class Blas extends Compute {
 		OpenBlas.INSTANCE.cblas_dtrsm(
 				CblasColMajor,
 				CblasLeft, CblasUpper, CblasNoTrans, CblasNonUnit,
-				N, numFeatures, 
+				B.N, B.N, 
 				one, 
-				A, M, 
-				B, M
+				A.data, A.M, 
+				B.data, A.M
 				) ;
 //		printMatrix( M, numFeatures, B ) ;
 
 		log.info( "Solved x" ) ;
 
-		double x[] = new double[N*numFeatures] ;
-		for( int f=0 ; f<numFeatures ; f++ ) {
-			for( int i=0 ; i<N ; i++ ) {
-				int xx = i + f*N ;
-				int bx = i + f*M ; 
-				x[xx] = B[bx] ;
+		Matrix x = new Matrix( A.N, B.N ) ;
+		for( int f=0 ; f<B.N ; f++ ) {
+			for( int i=0 ; i<A.N ; i++ ) {
+				int xx = i + f*A.N ;
+				int bx = i + f*B.M ; 
+				x.data[xx] = B.data[bx] ;
 			}
 		}
 		return x ;
@@ -210,24 +206,27 @@ public class Blas extends Compute {
 	//
 	// This is easy if we can switch row/col ordering of matrices
 	//
-	public Matrix solve2( Matrix A, Matrix B, int numFeatures ) {
+	public Matrix solve2( Matrix A, Matrix B ) {
 
 		
 		log.info( "Solve xA=B  {} x {}  / {} x {} ", A.M, A.N, B.M, B.N) ;
 		if( A.N != B.N ) {
 			throw new RuntimeException( "Incompatible sizes - columns must match" ) ;
 		}
+		if( A.M > A.N ) {
+			throw new RuntimeException( "Incompatible input - M must be <= N" ) ;
+		}
 		//
 		// IN
 		// 	A is A.M x A.N  
-		// 	B is numFeatures x A.N
+		// 	B is B.M x B.N
 		//
 		// OUT
 		// 	Q is A.M x A.M
 		// 	R is A.M x A.N
-		// 	B is numFeatures x A.N
-		//  Q'B' is A.M x numFeatures
-		//  X is numFeatures x A.M
+		// 	B is B.N x A.N
+		//  Q'B' is A.M x B.N
+		//  X is B.N x A.M
 		//
 
 		// In place - destroys inputs!
@@ -277,10 +276,10 @@ public class Blas extends Compute {
 		log.debug( "Created Q'b' = Rx' ... \n{}",B ) ;
 
 		//--------------------------------------
-		// Solve R X = Q' x b   
+		// Solve R X = Q' x b'
 		//       
-		//      A is R		( result of QR )
-		//		B is Q'B	( Q * original input )
+		//      A is R		( result of QR )  A.M x A.N 
+		//		B is Q'B	( Q * original input ) A.M * numFeatures
 		OpenBlas.INSTANCE.cblas_dtrsm(
 				CblasColMajor,
 				CblasLeft, CblasUpper, CblasNoTrans, CblasNonUnit,
@@ -290,18 +289,19 @@ public class Blas extends Compute {
 				B.data, A.M		
 				) ;
 
-		log.debug( "Solved x ...\n{}", B  ) ;
+		log.debug( "Solved x' ...\n{}", B  ) ;
 
 		// NB this is transpose copy
-		double x[] = new double[numFeatures*A.M] ;
-		for( int f=0 ; f<numFeatures ; f++ ) {
-			for( int i=0 ; i<A.N ; i++ ) {
-				int xx = i + f*A.M ;
-				int bx = i + f*numFeatures; 
-				x[xx] = B.data[bx] ;
-			}
-		}
-		return new Matrix( numFeatures, A.M, x ) ; //.transpose() ;
+		// double x[] = new double[B.N*A.N] ;
+		// for( int f=0 ; f<B.N ; f++ ) {
+		// 	for( int i=0 ; i<B.N ; i++ ) {
+		// 		int xx = i + f*B.N ;
+		// 		int bx = i + f*B.N; 
+		// 		double d = B.data[bx] ;
+		// 		x[xx] = d ;
+		// 	}
+		// }
+		return B.transpose() ;
 	}
 
 	@Override

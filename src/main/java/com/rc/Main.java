@@ -12,29 +12,25 @@ public class Main {
 
 			Random rng = new Random( 120 ) ;
 
-			int rows  = 5 ;		// M
-			int cols  = 4 ;		// N
+			int rows  = 3 ;		// M
+			int cols  = 5 ;		// N
 			int mid   = 4 ;		// K
 			int numFeatures = 4 ;
 
-			double Ad[] = new double[rows*mid] ; 	// M x K   
-			double Bd[] = new double[mid*cols] ;  	// K x N
-			double bd[] = new double[numFeatures*mid] ; // rows*numFeatures] ; 	 	// M
+			Matrix A = new Matrix( rows, mid ) ; 	// M x K   
+			Matrix B = new Matrix( mid, cols ) ;  	// K x N
+			Matrix b = new Matrix( numFeatures,mid ) ; 	 	// M
 
-			for( int i=0 ; i<rows*mid ; i++ ) {
-				Ad[i] = rng.nextGaussian() ;
+			for( int i=0 ; i<A.length() ; i++ ) {
+				A.data[i] = rng.nextGaussian() ;
 			}
-			for( int i=0 ; i<mid*cols ; i++ ) {
-				Bd[i] = rng.nextGaussian() ;
+			for( int i=0 ; i<B.length() ; i++ ) {
+				B.data[i] = rng.nextGaussian() ;
 			}
-			for( int i=0 ; i<bd.length ; i++ ) {
-				bd[i] = rng.nextGaussian() ;
+			for( int i=0 ; i<b.length() ; i++ ) {
+				b.data[i] = rng.nextGaussian() ;
 			}
-			
-			Matrix A = new Matrix(rows,  mid, Ad ) ;
-			Matrix B = new Matrix( mid, cols, Bd ) ;
-			Matrix b = new Matrix( numFeatures, mid, bd ) ;
-			
+						
 			/*
 			System.out.println( "------ S A V E -----" );
 
@@ -67,11 +63,10 @@ public class Main {
 
 			try ( Compute comp = Compute.getInstance() ) {
 				Matrix A2 = A.dup();
-				Matrix x = comp.solve2( A, b, numFeatures)  ;
+				Matrix x = comp.solve2( A, b)  ;
 				System.out.println( x );
 				
-				double Cd[] = comp.mmul(numFeatures, B.N, x.data, A2.data ) ;
-				Matrix C = new Matrix( numFeatures, A.M, Cd ) ;
+				Matrix C = x.mmul( A2 ) ;
 				System.out.println( C );
 
 			} catch( Throwable ignore ) {

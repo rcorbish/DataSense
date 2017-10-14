@@ -5,6 +5,9 @@ public class Matrix {
     int M ;     // rows
     int N ;     // cols
 
+
+    static Compute Engine = Compute.getInstance() ;
+
     double data[] ;
 
     private boolean isVector ;
@@ -26,6 +29,10 @@ public class Matrix {
         return new Matrix( M, N, copy ) ;
     }
 
+    public Matrix mmul( Matrix B ) {
+        return Engine.mmul(this, B ) ;
+    }
+        
     public Matrix transpose() {
 
     	double data2[] = new double[ data.length] ;
@@ -46,16 +53,19 @@ public class Matrix {
         return this ;
     }
 
-    protected int index( int r, int c ) {
-        return r + c*M  ;
+
+
+    public double get( int r, int c ) {
+        return data[r + c*M]  ;
     }
 
+    public int length() { return M*N ; }
     public String toString() {
         StringBuilder rc = new StringBuilder() ;
 
         for( int i=0 ; i<Math.min( 8, M) ; i++ ) {
             for( int j=0 ; j<Math.min( 8, N) ; j++ ) {
-                rc.append( String.format( "%10.3f", data[index(i,j)] ) );
+                rc.append( String.format( "%10.3f", get(i,j) ) );
             }
             rc.append( '\n' ); 
         }

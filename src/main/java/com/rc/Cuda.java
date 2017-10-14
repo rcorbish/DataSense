@@ -143,39 +143,38 @@ public class Cuda extends Compute {
 		log.info( "Diconected from GPU" ) ;
 	}
 
-	public double[] mmul( int rows, int cols, double A[], double B[] ) {
-		int M = rows ;
-		int K = A.length / M ;
-		int N = cols ;
-		double C[] = new double[M*N] ;
+	public Matrix mmul( Matrix A, Matrix B ) {
+		Matrix C = new Matrix( A.M, B.N ) ;
 
-		log.info( "mpy {} x {}  *  {} x {}", M, K, K, N ) ;
+		log.info( "mpy {} x {}  *  {} x {}", A.M, A.N, B.M, B.N ) ;
 
 		Pointer gpuA=null, gpuB=null, gpuC=null ;
 		
 		try {
-			gpuA = getMemory(M*K) ;
-			gpuB = getMemory(K*N) ;
-			gpuC = getMemory(M*N) ;
+			gpuA = getMemory(A.M*A.N) ;
+			gpuB = getMemory(B.M*B.N) ;
+			gpuC = getMemory(A.M*B.N) ;
 	
 			log.info( "Sending A and B to GPU" ) ;
-			int rc = CuBlas.INSTANCE.cublasSetMatrix(M, K, DoubleSize, A, M, gpuA, M ) ;
+			int rc = CuBlas.INSTANCE.cublasSetMatrix(A.M, A.N, DoubleSize, A.data, A.M, gpuA, A.M ) ;
 			checkrc( rc ) ;
-			rc = CuBlas.INSTANCE.cublasSetMatrix(K, N, DoubleSize, B, K, gpuB, K ) ;
+			rc = CuBlas.INSTANCE.cublasSetMatrix(B.M, B.N, DoubleSize, B.data, B.M, gpuB, B.M ) ;
 			checkrc( rc ) ;
 			
 			log.info( "Execute multiply" ) ;
 			rc = CuBlas.INSTANCE.cublasDgemm_v2( cublasHandle, 
 					CUBLAS_OP_N,  CUBLAS_OP_N,
-					M,N,K, 
-					one, gpuA, M, 
-					gpuB, K,
-					zero, gpuC, M
+					A.M,B.N,B.M, 
+					one, 
+					gpuA, A.M, 
+					gpuB, B.M,
+					zero, 
+					gpuC, A.M
 					) ;
 			checkrc( rc ) ;
 	
 			log.info( "Copying C from GPU" ) ;
-			rc = CuBlas.INSTANCE.cublasGetMatrix(M, N, DoubleSize, gpuC, M, C, M ) ;
+			rc = CuBlas.INSTANCE.cublasGetMatrix(C.M, C.N, DoubleSize, gpuC, C.M, C.data, C.M ) ;
 			checkrc( rc ) ;
 		} finally {
 			CuBlas.INSTANCE.cublasFree( gpuA ) ;
@@ -194,44 +193,46 @@ public class Cuda extends Compute {
 	//
 	// x = solve R \ Q'B 
 	//
-	public double[] solve( int rows, int cols, double A[], double B[], int numFeatures ) {
-		int M = rows ;
-		int N = cols ;
-		
-		log.info( "Solve Ax=b  {} x {} ", M, N ) ;
+	public Matrix solve( Matrix A, Matrix B ) {
+		log.info( "Solve Ax=b  {} x {} ", A.M, A.N ) ;
 
-		if( M<N) throw ( new RuntimeException( "M must be >= N" ) ) ;
-		double x[] = null ;
+		if( A.M<A.N) throw ( new RuntimeException( "M must be >= N" ) ) ;
+		Matrix x = null ;
 		
 		Pointer gpuD=null, gpuA=null, gpuB=null, gpuW=null, gpuT=null ;
 		try {
 			gpuD = getMemory(1);					// device return code
-			gpuA = getMemory(M*N);					// A
-			gpuB = getMemory(M*numFeatures);		// this will also hold Q' x b   
+			gpuA = getMemory(A.M*A.N);					// A
+			gpuB = getMemory(B.M*B.N);		// this will also hold Q' x b   
 	
 			log.info( "Sending A and B to GPU" ) ;
-			int rc = CuBlas.INSTANCE.cublasSetMatrix(M, N, DoubleSize, A, M, gpuA, M ) ;
+			int rc = CuBlas.INSTANCE.cublasSetMatrix( A.M, A.N, DoubleSize, A.data, A.M, gpuA, A.M ) ;
 			checkrc(rc) ;
-			rc = CuBlas.INSTANCE.cublasSetMatrix(M, numFeatures, DoubleSize, B, M, gpuB, M ) ;
+			rc = CuBlas.INSTANCE.cublasSetMatrix( B.M, B.N, DoubleSize, B.data, B.M, gpuB, B.M ) ;
 			checkrc(rc) ;
 	
 			// workspace size
 			int work[] = new int[1] ;		
 	
 			log.info( "Calculating work area on GPU" ) ;
-			rc = CuSolver.INSTANCE.cusolverDnDgeqrf_bufferSize(cusolverHandle, M, numFeatures, gpuA, M, work) ; 		
+			rc = CuSolver.INSTANCE.cusolverDnDgeqrf_bufferSize(
+					cusolverHandle, 
+					A.M, B.N, 
+					gpuA, A.M, 
+					work
+					) ; 		
 			checkrc( rc ) ;
 			int lwork = work[0] ;
 			gpuW = getMemory(lwork) ;
-			log.info( "Allocated double[{}] on GPU", lwork ) ;
+			log.debug( "Allocated double[{}] on GPU", lwork ) ;
 	
 			// QR ( step 1 )
-			gpuT = getMemory( Math.min(M, N) ) ;
+			gpuT = getMemory( Math.min(A.M, A.N) ) ;
 			log.info( "Perform QR = A" ) ;
 			rc = CuSolver.INSTANCE.cusolverDnDgeqrf( 
 					cusolverHandle, 
-					M, N, 
-					gpuA, M, 
+					A.M, B.N, 
+					gpuA, A.M, 
 					gpuT, 
 					gpuW, lwork, 
 					gpuD 
@@ -267,10 +268,10 @@ public class Cuda extends Compute {
 			rc = CuSolver.INSTANCE.cusolverDnDormqr(
 					cusolverHandle, 
 					CUBLAS_SIDE_LEFT, CUBLAS_OP_T, 
-					M, numFeatures, Math.min(M,N), 
-					gpuA, M,	
+					A.M, B.N, Math.min(A.M,A.N), 
+					gpuA, A.M,	
 					gpuT, 
-					gpuB, M, 
+					gpuB, B.M, 
 					gpuW, 
 					lwork, 
 					gpuD
@@ -286,17 +287,17 @@ public class Cuda extends Compute {
 			rc = CuBlas.INSTANCE.cublasDtrsm_v2(
 					cublasHandle, 
 					CUBLAS_SIDE_LEFT, CUBLAS_FILL_MODE_UPPER, CUBLAS_OP_N, CUBLAS_DIAG_NON_UNIT, 
-					N, numFeatures, 
+					A.N, B.N, 
 					one, 
-					gpuA, M, 
-					gpuB, M
+					gpuA, A.M, 
+					gpuB, B.M
 					) ;
 			checkrc( rc ) ;
 //			printMatrix( M, numFeatures, gpuB ) ;
 	
 			log.info( "Copying x from GPU" ); 
-			x = new double[N*numFeatures] ;
-			rc = CuBlas.INSTANCE.cublasGetMatrix(N, numFeatures, DoubleSize, gpuB, M, x, N ) ;
+			x = new Matrix( B.M, B.N ) ;
+			rc = CuBlas.INSTANCE.cublasGetMatrix(A.M, B.N, DoubleSize, gpuB, B.M, x.data, B.M ) ;
 			checkrc( rc ) ;
 		} finally {		
 			CuBlas.INSTANCE.cublasFree( gpuA ) ;
@@ -320,7 +321,7 @@ public class Cuda extends Compute {
 	//
 	// x = solve R \ Q'B' 
 	//
-	public Matrix solve2( Matrix A, Matrix B, int numFeatures ) {
+	public Matrix solve2( Matrix A, Matrix B ) {
 		return null ;
 	}
 
