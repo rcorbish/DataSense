@@ -1,0 +1,25 @@
+@CHARSET "UTF-8";
+@import url("https://fonts.googleapis.com/css?family=Poppins");
+
+html {
+	font-family: 'Poppins', sans-serif;
+	background-color: #000000 ;
+	color: white ;
+}
+
+.athena {
+	font-size: 90pt ;
+	xletter-spacing: 1pt ;
+	animation: neon 0.75s ease-in-out infinite alternate;	
+}
+
+.center {
+  	display: flex;
+    justify-content: center; /* for horizontal alignment */
+    align-items: center; /* for vertical alignment */
+}
+
+@keyframes neon {
+	from { text-shadow:0 0 10px #aaa, 0 0 20px #ccc, 0 0 30px #ddd, 0 0 40px #fff;}
+	to { text-shadow: 0 0 5px #eaaa, 0 0 10px #ccc, 0 0 15px #ddd, 0 0 20px #fff;}
+}

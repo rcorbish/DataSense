@@ -6,6 +6,8 @@ import org.slf4j.LoggerFactory;
 public abstract class Compute implements AutoCloseable {
 	final static Logger log = LoggerFactory.getLogger( Blas.class ) ;
 
+	public final static String ComputeProperty = "compute_library" ;
+	
 	public abstract Matrix mmul( Matrix A, Matrix B ) ;
 	public abstract Matrix solve( Matrix A, Matrix B ) ;
 	public abstract Matrix solve2( Matrix A, Matrix B ) ;
@@ -16,13 +18,13 @@ public abstract class Compute implements AutoCloseable {
 	private static void InitLibrary() {	
 		log.info( "Initializing compute library" ) ;
 		
-		String preferredLibrary = System.getProperty( "compute_library" ) ;
+		String preferredLibrary = System.getProperty( ComputeProperty ) ;
 		if( preferredLibrary == null ) {
 			preferredLibrary = System.getenv( "compute_library" ) ;
 		}
 		if( preferredLibrary == null ) {
 			log.info( "No preferred library specified - searching for best choice");				
-			log.info( "Use -Dcompute_library=xxx or set global environment compute_library=xxx");
+			log.info( "Use -Dcompute_library=xxx or set global environment {}=xxx", ComputeProperty );
 			log.info( "xxx is openblas or cuda");
 		} else {
 			if( preferredLibrary.equals( "openblas")  || preferredLibrary.equals( "cuda" ) ) {

@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<link rel='stylesheet', href='css.css'>
+
+<style>
+</style>
+
+<title>Data Sense</title>
+</head>
+<body>
+	<div class="upload" data-target='upload-data'></div>
+	<div id="results"> </div>
+
+	<script>
+		window.addEventListener("load", function(e) {
+			initUploadDivs()
+		});
+
+		function initUploadDivs() {
+			var divs = document.querySelectorAll(".upload");
+			var div;
+			for (var i = 0; i < divs.length; i++) {
+				div = divs[i];
+				div.ondragover = function(e) {
+					e.dataTransfer.dropEffect = 'copy';
+					this.classList.add( "dropok" ) ;
+					e.preventDefault();
+					return false;
+				}.bind(div);
+				div.ondragend = function(e) {
+					this.classList.remove( "dropok" ) ;
+					e.preventDefault();
+					return false;
+				};
+				div.ondragleave = function(e) {
+					this.classList.remove( "dropok" ) ;
+					e.preventDefault();
+					return false;
+				};
+				div.ondrop = function(e) {
+					this.classList.remove( "dropok" ) ;
+					e.preventDefault();
+
+					var file = e.dataTransfer.files[0];
+					var reader = new FileReader();
+
+					reader.onload = function(event) {
+						var xhr = new XMLHttpRequest();
+						xhr.onload = function(e) {
+							document.getElementById("results").innerHTML = "<pre>"
+									+ e.target.responseText + "</pre>";
+						};
+						xhr.onerror = function(e) {
+							document.getElementById("results").innerHTML = "<pre>"
+									+ e.target.responseText + "</pre>";
+						};
+						xhr.open("POST", this.dataset.target);
+						xhr.setRequestHeader("Content-type", "text/csv");
+						xhr.send(event.target.result);
+					}.bind(this);
+					reader.readAsText(file);
+
+					return false;
+				}.bind(div);
+			}
+		}
+	</script>
+</body>
+</html>

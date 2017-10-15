@@ -3,11 +3,18 @@ package com.rc;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.DecimalFormat;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 import java.util.StringJoiner;
+import java.util.regex.Pattern;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,28 +22,46 @@ import org.slf4j.LoggerFactory;
 public class Loader {
 	final static Logger log = LoggerFactory.getLogger( Blas.class ) ;
 
-	private static final Random rng = new Random() ;
-	
-	public static double[] loadFromCsv( int M, Path file ) throws IOException {
-		
-		log.info( "Loading {} rows from {}", M, file ) ;
-		
-		double reservoir[] = null ;
-		
-		int m = 0 ;
-		final String REGEX = "\\," ; // ",(?=([^\"]*\"[^\"]*\")*[^\"]*$)"
-		
-		try ( BufferedReader br = Files.newBufferedReader( file ) ) {
+	private static final Random rng = new Random(7) ;
+
+	public static Matrix loadFromCsv( int M, Path file ) throws IOException {
+
+		log.info( "Loading up to {} rows from {}", M, file ) ;
+		InputStream is = Files.newInputStream(file) ;
+		return load( M, is, Charset.defaultCharset() ) ;
+	}
+
+	public static Matrix load( int M, InputStream is, Charset cs ) throws IOException {
+
+		Matrix rc = null ;
+		String REGEX = ",;\t" ; 
+
+		try( Reader rdr = new InputStreamReader(is,  cs ) ;
+				BufferedReader br = new BufferedReader(rdr) ; ) {
 			String line = br.readLine() ;
+			
+			for( int i=0 ; i<line.length() ; i++ ) {
+				if( REGEX.indexOf( line.charAt(i) ) > 0 ) {
+					REGEX=String.valueOf( line.charAt(i) ) ;
+					break ;
+				}
+			}
+			
 			String headers[] = line.split( REGEX ) ;
 			int N = headers.length ;
+			 
+			int m = 0 ;
+			double reservoir[] = new double[M*N] ;
+			log.info( "Found {} columns", N );
 			
-			reservoir = new double[M*N] ;
-			log.info( "Found {} columns", N ); 
+			@SuppressWarnings("unchecked")
+			List<String> maps[] = new ArrayList[N] ;
+			
+			line = br.readLine() ;
 			while( line != null ) {
 				if( line.trim().length() == 0 ) continue ;
 				String cols[] = line.split( REGEX ) ;
-				double row[] = parse( cols ) ;
+				double row[] = parse( cols, maps ) ;
 				if( m==M ) { log.info( "Switching to reservoir mode. Keeping {} samples", M ) ; }
 				if( m<M ) {
 					for( int c=0 ; c<N ; c++ ) {
@@ -52,13 +77,16 @@ public class Loader {
 				m++ ;
 			}
 			log.info( "Parsed {} lines", m ) ;
-			return reservoir ;
+			rc = new Matrix( M, N, reservoir ) ;
+			rc.reshape( Math.min(M, m),  N ) ;
+			rc.labels = headers ;
 		}
+		return rc ;
 	}
 
 	public static void saveToCsv( int M, double data[], Path file ) throws IOException {
 		DecimalFormat df = new DecimalFormat( "#.000000" ) ;
-		
+
 		try ( BufferedWriter bw = Files.newBufferedWriter( file ) ) {			
 			int N = data.length / M ;
 			for( int i=0 ; i<M ; i++ ) {
@@ -72,11 +100,30 @@ public class Loader {
 			}			
 		}		
 	}
+
+	static String REGEX_NUMERIC =  "[+-]?[\\d\\.\\,]+" ;
+	private static double buildMap( String col, List<String> map ) {
+		double rc = map.indexOf( col.intern() ) ;
+		if( rc < 0 ) {
+			rc = map.size() ;
+			map.add( col.intern() ) ;
+		}
+		return rc ;
+	}
 	
-	private static double[] parse( String [] cols) {
+	private static double[] parse( String [] cols, List<String>[] maps ) {
 		double rc[] = new double[ cols.length ] ;
 		for( int i=0 ; i<rc.length ; i++ ) {
-			rc[i] = Double.parseDouble( cols[i] ) ;
+			try {
+				rc[i] = Double.parseDouble( cols[i] ) ;
+			} catch ( Throwable t ) {
+				List<String> map = maps[i] ;
+				if( map == null ) {
+					map = new ArrayList<>() ;
+					maps[i] = map ;
+				}
+				rc[i] = buildMap(cols[i], map ) ;
+			}
 		}
 		return rc ;
 	}

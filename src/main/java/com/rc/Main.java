@@ -1,90 +1,45 @@
 package com.rc;
 
-import java.util.Random;
-
-
+import joptsimple.OptionParser;
+import joptsimple.OptionSet;
 
 public class Main {
 
 	public static void main(String[] args) {
-
+		Options options = new Options( args ) ;
 		try {
-
-			Random rng = new Random( 120 ) ;
-
-			int rows  = 3 ;		// M
-			int cols  = 5 ;		// N
-			int mid   = 4 ;		// K
-			int numFeatures = 4 ;
-
-			Matrix A = new Matrix( rows, mid ) ; 	// M x K   
-			Matrix B = new Matrix( mid, cols ) ;  	// K x N
-			Matrix b = new Matrix( numFeatures,mid ) ; 	 	// M
-
-			for( int i=0 ; i<A.length() ; i++ ) {
-				A.data[i] = rng.nextGaussian() ;
-			}
-			for( int i=0 ; i<B.length() ; i++ ) {
-				B.data[i] = rng.nextGaussian() ;
-			}
-			for( int i=0 ; i<b.length() ; i++ ) {
-				b.data[i] = rng.nextGaussian() ;
-			}
-						
-			/*
-			System.out.println( "------ S A V E -----" );
-
-			Loader.saveToCsv( rows, A, Paths.get("A.csv") ) ;
-			Loader.saveToCsv( mid , B, Paths.get("B.csv") ) ;
-			Loader.saveToCsv( rows, b, Paths.get("b.csv") ) ;
-
-			System.out.println( "------ L O A D -----" );
-			rows = 3_000 ;
-			A = Loader.loadFromCsv( rows, Paths.get("A.csv") ) ;
-			B = Loader.loadFromCsv( mid, Paths.get("B.csv") ) ;
-			b = Loader.loadFromCsv( rows, Paths.get("b.csv") ) ;
-			for( int i=0 ; i<rows ; i++ ) {
-				b[i] = 0 ;
-				for( int j=0 ; j<cols ; j++ ) {
-					int ix = i+ j*rows ;
-					b[i] += A[ix] * -(j+1) + rng.nextGaussian() / 100.0 ;
-				}
-			}
-			 */
-
-			System.out.println( "--------- A --------" );
-			System.out.println( A );
-
-			System.out.println( "--------- B --------" );
-			System.out.println( B );
-
-			System.out.println( "--------- b --------" );
-			System.out.println( b );
-
-			try ( Compute comp = Compute.getInstance() ) {
-				Matrix A2 = A.dup();
-				Matrix x = comp.solve2( A, b)  ;
-				System.out.println( x );
-				
-				Matrix C = x.mmul( A2 ) ;
-				System.out.println( C );
-
-			} catch( Throwable ignore ) {
-				ignore.printStackTrace();
-			}
+			Monitor m = new Monitor() ;
+			m.start( options.port ) ;
+			
 		} catch( Throwable t ) {
-			t.printStackTrace(); 
-			System.exit( 2 ); ;
+			t.printStackTrace( ); 
+			System.exit( 2 ); 
+		}	
+	}
+}
+
+
+
+class Options {
+	
+	int port = 8111 ;
+	String platform = null ;
+	
+	public Options( String args[] ) {
+		OptionParser parser = new OptionParser( );
+		parser.accepts( "port", "Port number for website - defaults to 8111")
+				.withRequiredArg().ofType( Integer.class ); 
+		
+		parser.accepts( "platform", "Preferred BLAs platform, cuda or openblas")
+				.withRequiredArg().ofType( String.class ); ;
+		
+		OptionSet os = parser.parse( args ) ;
+		if( os.has( "port" ) ) {
+			port = (Integer)os.valueOf( "port" ) ;
+		}
+		if( os.has( "platform" ) ) {
+			System.getProperties().setProperty( Compute.ComputeProperty, (String)os.valueOf( "platform" ) ) ;
 		}
 	}
 
-	static void printMatrix( int M, int N, double A[] ) {
-		for( int i=0 ; i<Math.min( 8, M) ; i++ ) {
-			for( int j=0 ; j<Math.min( 8, N) ; j++ ) {
-				int ix = i + j*M ;
-				System.out.print( String.format( "%10.2f", A[ix] ) );
-			}
-			System.out.println(); 
-		}
-	}
 }

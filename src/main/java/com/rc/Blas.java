@@ -93,8 +93,7 @@ public class Blas extends Compute {
 
 		Matrix C = new Matrix( A.M, B.N ) ;
 
-		log.info( "mpy {} x {}  *  {} x {}", A.M, A.N, B.M, B.N ) ;
-
+		if( A.N != B.M ) throw new RuntimeException( String.format( "Incompatible matrix sizes: %d x %d  and %d x %d", A.M, A.N, B.M, B.N ) )  ;
 		//		--------------
 		//		 A [M x K]
 		//		 B [K x N]
@@ -135,7 +134,7 @@ public class Blas extends Compute {
 		double tau[] = new double[ Math.min(A.M, A.N) ] ;
 		int rc = Lapacke.INSTANCE.LAPACKE_dgeqrf_work(
 				CblasColMajor,
-				A.M, B.N, 
+				A.M, A.N, 
 				A.data, A.M,
 				tau,
 				work,
@@ -148,7 +147,7 @@ public class Blas extends Compute {
 		work = new double[lwork] ;
 		rc = Lapacke.INSTANCE.LAPACKE_dgeqrf_work(
 				CblasColMajor,
-				A.M, B.N, 
+				A.M, A.N, 
 				A.data, A.M,
 				tau,
 				work,
@@ -165,7 +164,7 @@ public class Blas extends Compute {
 				A.M, B.N, Math.min(A.M,A.N), 
 				A.data, A.M,	
 				tau, 
-				B.data, B.M,
+				B.data, A.M,
 				work, lwork
 				) ; 
 		checkrc( rc ) ;
@@ -179,7 +178,7 @@ public class Blas extends Compute {
 		OpenBlas.INSTANCE.cblas_dtrsm(
 				CblasColMajor,
 				CblasLeft, CblasUpper, CblasNoTrans, CblasNonUnit,
-				B.N, B.N, 
+				A.N, B.N, 
 				one, 
 				A.data, A.M, 
 				B.data, A.M
@@ -283,12 +282,15 @@ public class Blas extends Compute {
 		OpenBlas.INSTANCE.cblas_dtrsm(
 				CblasColMajor,
 				CblasLeft, CblasUpper, CblasNoTrans, CblasNonUnit,
-				A.N, B.N, 
+				A.N, A.M, 
 				one, 
 				A.data, A.M,    
 				B.data, A.M		
 				) ;
 
+		B.transpose() ;
+		//B.M = A.M ;
+		B.N = A.N ;
 		log.debug( "Solved x' ...\n{}", B  ) ;
 
 		// NB this is transpose copy
@@ -301,7 +303,7 @@ public class Blas extends Compute {
 		// 		x[xx] = d ;
 		// 	}
 		// }
-		return B.transpose() ;
+		return B ;
 	}
 
 	@Override
