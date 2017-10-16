@@ -20,7 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class Loader {
-	final static Logger log = LoggerFactory.getLogger( Blas.class ) ;
+	final static Logger log = LoggerFactory.getLogger( Loader.class ) ;
 
 	private static final Random rng = new Random(7) ;
 
