@@ -4,7 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public abstract class Compute implements AutoCloseable {
-	final static Logger log = LoggerFactory.getLogger( Blas.class ) ;
+	final static Logger log = LoggerFactory.getLogger( Compute.class ) ;
 
 	public final static String ComputeProperty = "compute_library" ;
 	
@@ -28,9 +28,9 @@ public abstract class Compute implements AutoCloseable {
 			log.info( "xxx is openblas or cuda");
 		} else {
 			if( preferredLibrary.equals( "openblas")  || preferredLibrary.equals( "cuda" ) ) {
-				log.warn( "preferred library {} specfied", preferredLibrary ) ;
+				log.info( "preferred library {} specfied", preferredLibrary ) ;
 			} else {
-				log.warn( "Invalid preferred library specified {} - searching for best choice", preferredLibrary ) ;				
+				log.info( "Invalid preferred library specified {} - searching for best choice", preferredLibrary ) ;				
 			}
 		}
 		
@@ -42,7 +42,9 @@ public abstract class Compute implements AutoCloseable {
 				log.info( "Found cuda library" ) ; 
 			} catch (Throwable ignore) {
 				tmpClass = null ;
-				log.warn( "Cannot find cuda library - trying openblas" ) ;
+				if( "cuda".equalsIgnoreCase( preferredLibrary ) ) {
+					log.warn( "Cannot find cuda library - trying openblas" ) ;
+				}
 			}
 		}
 		
