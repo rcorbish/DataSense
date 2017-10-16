@@ -4,8 +4,8 @@ import static org.junit.Assert.*;
 
 import org.junit.After;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
+
 
 public class TestBase {
 
@@ -36,6 +36,22 @@ public class TestBase {
 			}
 		}
 	}
+
+	@Test
+	public void testPutcol() {
+		Matrix A = Matrix.eye(4) ;
+		for( int i=0 ; i<A.N ; i++ ) {
+			A.putColumn(i, new double[] { i,i,i,i } ) ;
+		}
+
+		for( int j=0 ; j<A.N ; j++ ) {
+			for( int i=0 ; i<A.M ; i++ ) {
+				assertEquals( "Unexpected value in A", j, A.get(i, j), 1e-6) ;
+			}
+		}
+
+	}
+
 
 	@Test
 	public void testMmul() {

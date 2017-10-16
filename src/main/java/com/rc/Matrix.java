@@ -1,7 +1,10 @@
 
 package com.rc ;
 
+import java.lang.reflect.Array;
 import java.lang.reflect.Type;
+import java.util.Arrays;
+import java.util.Random;
 
 import javax.management.RuntimeErrorException;
 
@@ -80,7 +83,7 @@ public class Matrix {
 
     public Matrix transpose() {
 
-    	double data2[] = new double[ data.length] ;
+		double data2[] = new double[ data.length] ;
     	
         for( int i=0 ; i<M ; i++ ) {
         	for( int j=0 ; j<N ; j++ ) {
@@ -143,26 +146,39 @@ public class Matrix {
 		
 		System.arraycopy( data, 0, rc.data, 0, length() ) ;		
 		System.arraycopy( other.data, 0, rc.data, M*N, other.length() ) ;
+
+		rc.labels = new String[ rc.N ] ;
+		System.arraycopy( labels, 0, rc.labels, 0, N ) ;		
+		System.arraycopy( other.labels, 0, rc.labels, N, other.N ) ;
 		
 		return rc ;
 	}
 
-	public Matrix map( Function func ) {
-		Matrix rc = new Matrix( M, N ) ;
+	public Matrix map( MatrixFunction func ) {
 		for( int i=0 ; i<M ; i++ ) {
 			for( int j=0 ; j<N ; j++ ) {
-				rc.put( i, j, func.call( get(i,j), this, i, j ) ) ;
+				put( i, j, func.call( get(i,j), this, i, j ) ) ;
 			}
 		}
-		return rc ;
+		return this ;
 	}
 
+	public Matrix mapColumn( MatrixColFunction func ) {
+		
+		for( int i=0 ; i<N ; i++ ) {
+			putColumn(i, func.call( data, this, i*M, M ) ) ;
+		}
+		return this ;
+	}
 	
     public double get( int r, int c ) {
         return data[r + c*M]  ;
     }
     public void put( int r, int c, double v ) {
         data[r + c*M] = v ;  ;
+    }
+    public void putColumn( int c, double v[] ) {
+        System.arraycopy(v, 0, data, c*M, M ) ;  ;
     }
 
     public int length() { return M*N ; }
@@ -172,6 +188,15 @@ public class Matrix {
     	Matrix rc = new Matrix( s, s ) ;
     	for( int i=0 ; i<rc.length() ; i+=(s+1) ) {
     		rc.data[i] = 1  ;
+    	}
+    	return rc ;
+    }
+	
+	static public Matrix rand( int m,int n ) {
+		Random rng = new Random() ;
+    	Matrix rc = new Matrix( m, n ) ;
+    	for( int i=0 ; i<rc.length() ; i++ ) {
+    		rc.data[i] = rng.nextGaussian() ;
     	}
     	return rc ;
     }
@@ -198,8 +223,12 @@ public class Matrix {
     }
     
     @FunctionalInterface
-    static interface Function {    	
+    static interface MatrixFunction {    	
     	public double call( double value, Matrix context, int r, int c ) ;
+    }
+    @FunctionalInterface
+    static interface MatrixColFunction {    	
+    	public double[] call( double values[], Matrix context, int offset, int len ) ;
     }
     
     static class Deserializer implements JsonSerializer<Matrix> {

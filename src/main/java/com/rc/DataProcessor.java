@@ -28,23 +28,22 @@ public class DataProcessor {
 					}
 				}
 			}
-				
 			Matrix B = A.extractColumns( feature ) ;
 			B.name = "B" ;
 
 			Matrix A2 = A.dup() ;
-			Matrix Y = B.dup() ;
+			A2.map( (value, context, r, c) ->  value * value )  ;			
+			Matrix A3 = A.appendColumns(A2) ;
 
-//			log.info( "data {}", A ) ;
-//			log.info( "features {}", B ) ;
+			log.debug( "data {}", A ) ;
+			log.debug( "features {}", B ) ;		
+
+			Matrix AC = A3.dup() ;
 			
-//			Matrix m2 = A.map( (value, context, r, c) ->  value * value )  ;			
-//			Matrix m3 = A.appendColumns(m2) ;
+			Matrix X = A3.divLeft(B) ;
 			
-			Matrix X = A.divLeft(B) ;
-			
-			rc = A2.mmul( X ).appendColumns(Y) ;
-			X.labels = A.labels ;
+			// rc = AC.mmul( X ).appendColumns(Y) ;
+			X.labels = AC.labels ;
 			rc = X.transpose() ;
 		} catch (IOException e) {
 			e.printStackTrace();
