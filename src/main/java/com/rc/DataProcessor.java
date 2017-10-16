@@ -14,7 +14,7 @@ public class DataProcessor {
 	public Object process( InputStream data, Charset cs ) {
 		Matrix rc = null ;
 		try {
-			Matrix A = Loader.load( 200, data, cs ) ;
+			Matrix A = Loader.load( 1000, data, cs ) ;
 			A.name = "A" ;
 
 			int feature = 0 ;
@@ -35,8 +35,8 @@ public class DataProcessor {
 			Matrix A2 = A.dup() ;
 			Matrix Y = B.dup() ;
 
-			log.info( "data {}", A ) ;
-			log.info( "features {}", B ) ;
+//			log.info( "data {}", A ) ;
+//			log.info( "features {}", B ) ;
 			
 //			Matrix m2 = A.map( (value, context, r, c) ->  value * value )  ;			
 //			Matrix m3 = A.appendColumns(m2) ;

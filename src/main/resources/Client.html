@@ -10,7 +10,7 @@
 <title>Data Sense</title>
 </head>
 <body>
-	<div class="upload" data-target='upload-data'></div>
+	<div class="upload" data-target='upload-data'>Drop CSV</div>
 	<div id="results"> </div>
 
 	<script>
@@ -40,6 +40,8 @@
 					return false;
 				};
 				div.ondrop = function(e) {
+					this.innerHTML = "Uploading ...." ;
+					
 					this.classList.remove( "dropok" ) ;
 					e.preventDefault();
 
@@ -49,13 +51,15 @@
 					reader.onload = function(event) {
 						var xhr = new XMLHttpRequest();
 						xhr.onload = function(e) {
+							this.innerHTML = "Drop CSV" ;
 							document.getElementById("results").innerHTML = "<pre>"
 									+ e.target.responseText + "</pre>";
-						};
+						}.bind( this ) ;
 						xhr.onerror = function(e) {
+							this.innerHTML = "Drop CSV" ;
 							document.getElementById("results").innerHTML = "<pre>"
 									+ e.target.responseText + "</pre>";
-						};
+						}.bind( this ) ;
 						xhr.open("POST", this.dataset.target);
 						xhr.setRequestHeader("Content-type", "text/csv");
 						xhr.send(event.target.result);

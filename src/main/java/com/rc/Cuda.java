@@ -250,14 +250,14 @@ public class Cuda extends Compute {
 					) ; 
 			checkrc( rc ) ;
 			log.info( "factored QR <- A" ) ;
-			printMatrix(A.M, B.N, gpuA);
+//			printMatrix(A.M, B.N, gpuA);
 			
 			// Q' x b   -> gpuB		
 			log.info( "Perform Q' x b" ) ;
 			rc = CuSolver.INSTANCE.cusolverDnDormqr(
 					cusolverHandle, 
 					CUBLAS_SIDE_LEFT, CUBLAS_OP_T, 
-					A.M, A.M, Math.min(A.M, A.N), 
+					A.M, A.N, Math.min(A.M, A.N), 
 					gpuA, A.M,	
 					gpuT, 
 					gpuB, A.M, 
@@ -267,7 +267,7 @@ public class Cuda extends Compute {
 					) ; 
 			checkrc( rc ) ;
 
-			printMatrix(A.M, B.N, gpuB);
+//			printMatrix(A.M, B.N, gpuB);
 
 			//--------------------------------------
 			// Solve R x = Q' x b   to find x
@@ -284,7 +284,7 @@ public class Cuda extends Compute {
 					gpuB, B.M
 					) ;
 			checkrc( rc ) ;
-			printMatrix( A.N, B.N, gpuB ) ;
+//			printMatrix( A.N, B.N, gpuB ) ;
 	
 			log.info( "Copying x from GPU" ); 
 			x = new Matrix( A.N, B.N ) ;

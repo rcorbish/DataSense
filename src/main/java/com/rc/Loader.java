@@ -34,22 +34,30 @@ public class Loader {
 	public static Matrix load( int M, InputStream is, Charset cs ) throws IOException {
 
 		Matrix rc = null ;
-		String REGEX = ",;\t" ; 
+		String SEPARATOR_CHARS = ",;\t" ; 
 
 		try( Reader rdr = new InputStreamReader(is,  cs ) ;
 				BufferedReader br = new BufferedReader(rdr) ; ) {
 			String line = br.readLine() ;
-			
+			String regex = "\\," ;
 			for( int i=0 ; i<line.length() ; i++ ) {
-				if( REGEX.indexOf( line.charAt(i) ) > 0 ) {
-					REGEX=String.valueOf( line.charAt(i) ) ;
+				if( SEPARATOR_CHARS.indexOf( line.charAt(i) ) > 0 ) {
+					regex=String.valueOf( line.charAt(i) ) ;
 					break ;
 				}
 			}
 			
-			String headers[] = line.split( REGEX ) ;
+			String headers[] = line.split( regex ) ;
 			int N = headers.length ;
 			 
+			for( int i=0 ; i<headers.length ; i++ ) {
+				String col = headers[i].trim() ;
+				if( col.charAt(0) == col.charAt(col.length()-1) && (col.charAt(0)=='"' || col.charAt(0)=='\'') ) {
+					col = col.substring(1,col.length()-1 ) ;					
+				}
+				headers[i] = col ;
+			}
+			
 			int m = 0 ;
 			double reservoir[] = new double[M*N] ;
 			log.info( "Found {} columns", N );
@@ -60,7 +68,7 @@ public class Loader {
 			line = br.readLine() ;
 			while( line != null ) {
 				if( line.trim().length() == 0 ) continue ;
-				String cols[] = line.split( REGEX ) ;
+				String cols[] = line.split( regex ) ;
 				double row[] = parse( cols, maps ) ;
 				if( m==M ) { log.info( "Switching to reservoir mode. Keeping {} samples", M ) ; }
 				if( m<M ) {
@@ -103,10 +111,15 @@ public class Loader {
 
 	static String REGEX_NUMERIC =  "[+-]?[\\d\\.\\,]+" ;
 	private static double buildMap( String col, List<String> map ) {
-		double rc = map.indexOf( col.intern() ) ;
+		String icol =
+		( col.charAt(0) == col.charAt(col.length()-1) && (col.charAt(0)=='"' || col.charAt(0)=='\'') ) ?
+				col.substring(1,col.length()-1 ).intern() :
+				col.intern()
+				;
+		double rc = map.indexOf( icol ) ;
 		if( rc < 0 ) {
 			rc = map.size() ;
-			map.add( col.intern() ) ;
+			map.add( icol ) ;
 		}
 		return rc ;
 	}
