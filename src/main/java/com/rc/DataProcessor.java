@@ -11,10 +11,10 @@ public class DataProcessor {
 	final static Logger log = LoggerFactory.getLogger( DataProcessor.class ) ;
 
 	final static String FEATURE_LABELS[] = { "Score", "Feature", "Result" } ;
-	public Object process( InputStream data, Charset cs ) {
-		Matrix rc = null ;
+	public Object process( InputStream data, ProcessorOptions options ) {
+		Object rc = null ;
 		try {
-			Matrix A = Loader.load( 1000, data, cs ) ;
+			Matrix A = Loader.load( 1000, data, options.cs ) ;
 			A.name = "A" ;
 
 			int feature = 0 ;
@@ -31,23 +31,35 @@ public class DataProcessor {
 			Matrix B = A.extractColumns( feature ) ;
 			B.name = "B" ;
 
-			Matrix A2 = A.dup() ;
-			A2.map( (value, context, r, c) ->  value * value )  ;			
-			Matrix A3 = A.appendColumns(A2) ;
-
+			Matrix A3 ;
+			
+			if( options.square ) {
+				Matrix A2 = A.dup() ;
+				A2.map( (value, context, r, c) ->  value * value )  ;			
+				A3 = A.appendColumns(A2) ;
+			} else {
+				A3 = A ;
+			}
+			
 			log.debug( "data {}", A ) ;
 			log.debug( "features {}", B ) ;		
 
-			Matrix AC = A3.dup() ;
-			
-			Matrix X = A3.divLeft(B) ;
-			
-			// rc = AC.mmul( X ).appendColumns(Y) ;
-			X.labels = AC.labels ;
-			rc = X.transpose() ;
+			rc = "Unsupported method" ; 
+			if( "linear".equals( options.method ) ) {
+				Matrix X = A3.divLeft(B) ;			
+				X.labels = A3.labels ;
+				rc = X.transpose() ;
+			}
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 		return rc ;
 	}
+}
+
+class ProcessorOptions {
+	Charset cs ;
+	boolean square ;
+	boolean discrete ;
+	String  method ;
 }

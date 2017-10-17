@@ -49,7 +49,19 @@ public class TestBase {
 				assertEquals( "Unexpected value in A", j, A.get(i, j), 1e-6) ;
 			}
 		}
+	}
 
+
+	@Test
+	public void testMap() {
+		Matrix A = Matrix.rand(4,4) ;
+		A.map( (v,m,r,c) -> r+10*c ) ;
+
+		for( int j=0 ; j<A.N ; j++ ) {
+			for( int i=0 ; i<A.M ; i++ ) {
+				assertEquals( "Unexpected value in A", i+10*j, A.get(i, j), 1e-6) ;
+			}
+		}
 	}
 
 

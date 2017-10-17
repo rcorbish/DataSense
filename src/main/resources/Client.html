@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<link rel='stylesheet', href='css.css'>
+<link rel='stylesheet' href='css.css'>
 
 <style>
 </style>
@@ -11,6 +11,13 @@
 </head>
 <body>
 	<div class="upload" data-target='upload-data'>Drop CSV</div>
+	<div class="controls">
+		<form class='control' accept-charset="UTF-8" >
+			<input type='checkbox' name='square-values'>Synthesize x<sup>2</sup>
+			<input type='checkbox' name='discrete-to-col'>Discrete column values for labels
+			<input type='radio'    name='method' value='linear' checked>Linear Regression
+		</form>
+	</div>
 	<div id="results"> </div>
 
 	<script>
@@ -40,36 +47,40 @@
 					return false;
 				};
 				div.ondrop = function(e) {
-					this.innerHTML = "Uploading ...." ;
+					this.innerHTML = "Uploading ...." 
 					
-					this.classList.remove( "dropok" ) ;
-					e.preventDefault();
-
-					var file = e.dataTransfer.files[0];
-					var reader = new FileReader();
-
-					reader.onload = function(event) {
-						var xhr = new XMLHttpRequest();
-						xhr.onload = function(e) {
-							this.innerHTML = "Drop CSV" ;
-							document.getElementById("results").innerHTML = "<pre>"
-									+ e.target.responseText + "</pre>";
-						}.bind( this ) ;
-						xhr.onerror = function(e) {
-							this.innerHTML = "Drop CSV" ;
-							document.getElementById("results").innerHTML = "<pre>"
-									+ e.target.responseText + "</pre>";
-						}.bind( this ) ;
-						xhr.open("POST", this.dataset.target);
-						xhr.setRequestHeader("Content-type", "text/csv");
-						xhr.send(event.target.result);
-					}.bind(this);
-					reader.readAsText(file);
-
-					return false;
-				}.bind(div);
+					//const query = buildQuery() 
+					
+					this.classList.remove( "dropok" ) 
+					e.preventDefault()
+					
+					uploadFile( e.dataTransfer.files[0], this.dataset.target, this )
+					return false
+				}.bind( div ) ;
 			}
 		}
+		
+		function uploadFile( file, target, div ) {
+			// Will upload and send the controls info 
+			// 
+			const form = document.querySelector( ".control" ) ;
+			var formData = new FormData( form );
+			formData.append( file.name, file ) ;
+			var xhr = new XMLHttpRequest();
+			xhr.onload = function(e) {
+				div.innerHTML = "Drop CSV" ;
+				document.getElementById("results").innerHTML = "<pre>"
+						+ e.target.responseText + "</pre>";
+			} ;
+			xhr.onerror = function(e) {
+				div.innerHTML = "Drop CSV" ;
+				document.getElementById("results").innerHTML = "<pre>"
+						+ e.target.responseText + "</pre>";
+			} ;
+			xhr.open("POST", target);
+			xhr.send(formData);			
+		}
+		
 	</script>
 </body>
 </html>
