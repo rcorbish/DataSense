@@ -40,6 +40,13 @@ public class DataProcessor {
 			} else {
 				A3 = A ;
 			}
+
+			if( options.addOnes ) {
+				Matrix A2 = Matrix.fill( A.M, 1,  1.0, "bias" ) ;
+				A3 = A3.appendColumns(A2) ;
+			} else {
+				A3 = A ;
+			}
 			
 			log.debug( "data {}", A ) ;
 			log.debug( "features {}", B ) ;		
@@ -61,5 +68,6 @@ class ProcessorOptions {
 	Charset cs ;
 	boolean square ;
 	boolean discrete ;
+	boolean addOnes;
 	String  method ;
 }

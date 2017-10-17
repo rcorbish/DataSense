@@ -14,7 +14,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import java.util.StringJoiner;
-import java.util.regex.Pattern;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,7 +25,7 @@ public class Loader {
 
 	public static Matrix loadFromCsv( int M, Path file ) throws IOException {
 
-		log.info( "Loading up to {} rows from {}", M, file ) ;
+		log.info( "Loading (up to) {} rows from {}", M, file ) ;
 		InputStream is = Files.newInputStream(file) ;
 		return load( M, is, Charset.defaultCharset() ) ;
 	}
@@ -88,7 +87,30 @@ public class Loader {
 			rc = new Matrix( M, N, reservoir ) ;
 			rc.reshape( Math.min(M, m),  N ) ;
 			rc.labels = headers ;
-		}
+
+			
+			for( int c=0 ; c<maps.length ; c++ ) {
+				List<String> buckets = maps[c] ;
+				if( buckets == null ) {
+					continue ;
+				}
+				log.info( "Creating {} buckets for {}", buckets.size(), rc.labels[c] ) ;
+				String labels[] = new String[ buckets.size()] ;
+				for( int i=0 ; i<labels.length ; i++ ) {
+					labels[i] = rc.labels[c] + "-is-" + buckets.get(i) ;
+				}
+				Matrix B = Matrix.fill( rc.M, buckets.size(), 0.0, labels ) ;
+				for( int i=0 ; i<rc.M ; i++ ) {
+					double n = rc.get(i,c) ;
+					if( n-(int)n == 0.0 && n<B.N ) {     /// @TODO  fix this ...
+						B.put( i, (int)n, 1.0 ) ;
+					}
+				}
+				log.info( "Adding {} to data", B ) ;
+				rc.appendColumns( B ) ;
+			}
+		} // end try()
+
 		return rc ;
 	}
 

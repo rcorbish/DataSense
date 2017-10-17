@@ -94,6 +94,7 @@ public class Monitor implements AutoCloseable {
 		    	
 		    processorOptions.square   = req.queryParams("square-values") != null  ;
 		    processorOptions.discrete = req.queryParams("discrete-to-col") != null  ;
+		    processorOptions.addOnes  = req.queryParams("add-ones-column") != null  ;
 		    processorOptions.method   = req.queryParams("method") ;
 		    
 			Matcher matcher = ctPattern.matcher( contentType ) ;

@@ -120,7 +120,7 @@ public class Matrix {
 	public Matrix extractColumns( int ... cols ) {
 		
 		Matrix rc = new Matrix( M, cols.length ) ;
-		
+		rc.labels = new String[cols.length] ;
 		for( int i=0 ; i<cols.length ; ++i ) {
 			System.arraycopy( data, M*cols[i], rc.data, M*i, M ) ;
 		}
@@ -129,6 +129,8 @@ public class Matrix {
 			int col = cols[i] ;
 			int len = ( N-1 - col ) * M ;
 			System.arraycopy( data, M*(col+1), data, M*col, len ) ;
+			// handle label move
+			rc.labels[i] = labels[col] ;
 			System.arraycopy( labels, (col+1), labels, col, (labels.length - 1 - col) ) ;
 			N-- ;
 		}
@@ -200,7 +202,19 @@ public class Matrix {
     	}
     	return rc ;
     }
-    
+
+	static public Matrix fill( int m,int n, double v, String ... labels ) {
+		Matrix rc = fill( m, n, v ) ;
+		rc.labels = labels ;
+		return rc ;
+	}
+	static public Matrix fill( int m,int n, double v ) {
+		Random rng = new Random() ;
+		Matrix rc = new Matrix( m, n ) ;
+		Arrays.fill( rc.data, v);
+    	return rc ;
+    }
+
     public String toString() {
         StringBuilder rc = new StringBuilder() ;
         if( name != null ) {
