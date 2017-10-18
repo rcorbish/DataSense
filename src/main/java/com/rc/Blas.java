@@ -229,8 +229,8 @@ public class Blas extends Compute {
 		//
 
 		// In place - destroys inputs!
-		A.transpose() ;
-		B.transpose() ;
+		A = A.transpose() ;
+		B = B.transpose() ;
 		
 		double work[] = new double[1] ;
 		int tauSize =Math.min( A.M, A.N )  ;
@@ -288,7 +288,7 @@ public class Blas extends Compute {
 				B.data, A.M		
 				) ;
 
-		B.transpose() ;
+		B = B.transpose() ;
 		//B.M = A.M ;
 		B.N = A.N ;
 		log.debug( "Solved x' ...\n{}", B  ) ;

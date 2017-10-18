@@ -56,6 +56,12 @@ public class Matrix {
     	}    		
         return this ;
     }
+    public Matrix muli( double a ) {
+    	for( int i=0 ; i<length() ; i++ ) {
+    		data[i] *= a ;
+    	}    		
+        return this ;
+    }
 
     public Matrix mmul( Matrix B ) {
         return Engine.mmul(this, B ) ;
@@ -92,14 +98,32 @@ public class Matrix {
         		
                 data2[ i2 ] = data[ i1 ];
         	}
-        }
-        int tmp = this.M ;
-        this.M = this.N ;
-        this.N = tmp ;      
-        this.data = data2 ;
-        
-        return this ;
+		}
+		Matrix rc = new Matrix( this.N, this.M, data2 ) ;
+        return rc ;
     }
+
+	public Matrix zeroMeanColumns() {
+		Matrix rc = new Matrix( M, N ) ;
+
+		for( int i=0 ; i<N ; i++ ) {
+			double sum = 0 ;
+			int ix = i*M ;
+			for( int j=0 ; j<M ; j++ ) {
+				sum += data[ix] ;
+				ix++ ;
+			}
+			ix = i*M ;
+			double mean = sum / M ;
+			//System.out.println( "Col " + i + " - mean = " + mean ) ;
+			for( int j=0 ; j<M ; j++ ) {
+				rc.data[ix] = data[ix] - mean ;
+				ix++ ;
+			}
+		}
+		return rc ;
+	}
+
 
 	public void reshape( int newM, int newN ) {
 
