@@ -172,6 +172,18 @@ public class Matrix {
 		}
 		return this ;
 	}
+
+	public void prefixLabels( String prefix ) {
+		if( labels == null ) { 
+			labels = new String[N] ;
+			for( int i=0 ; i<N ; i++ ) {
+				labels[i] = String.valueOf(i) ;
+			}
+		}
+		for( int i=0 ; i<N ; i++ ) {
+			labels[i] = prefix + labels[i] ;
+		}
+	}
 	
     public double get( int r, int c ) {
         return data[r + c*M]  ;

@@ -22,20 +22,79 @@ public class Loader {
 	final static Logger log = LoggerFactory.getLogger( Loader.class ) ;
 
 	private static final Random rng = new Random(7) ;
-
-	public static Matrix loadFromCsv( int M, Path file ) throws IOException {
-
-		log.info( "Loading (up to) {} rows from {}", M, file ) ;
-		InputStream is = Files.newInputStream(file) ;
-		return load( M, is, Charset.defaultCharset() ) ;
+	
+	
+	private Loader() {
+		throw new UnsupportedOperationException( "Loader is a singleton" ) ;
 	}
+	
 
-	public static Matrix load( int M, InputStream is, Charset cs ) throws IOException {
+	/**
+	 * If we're asked to map ordinal columns to individual discrete columns
+	 * this does that work.
+	 * 
+	 * e.g. instead of a column having values 1,2,3,4 or 5
+	 * we create 5 columns of IS_1, IS_2, IS_3, IS_4 & IS_5 
+	 * which can take values 0 or 1
+	 * 
+	 * @param in will be altered by this process
+	 * @param maps 
+	 * 
+	 * @return a new Matrix containing remapped columns 
+	 * @throws IOException
+	 */
+	public static Matrix makeDiscreteColumns( Matrix in, List<String> maps[] ) throws IOException {
+
+		Matrix rc = in ;
+		
+		for( int c=0 ; c<maps.length ; c++ ) {
+			List<String> map = maps[c] ;
+			if( map == null ) {
+				continue ;
+			}
+
+			double mappedDataLimit = -1e14 + map.size()  ;
+			
+			// Scan the rows for a real numeric value, which could be mixed in
+			// with the mapped ordinals. e.g. if we had values 1,2,YES,NO the 1 & 2 
+			// would not be recognized as non numerics
+			//
+			// we address that here
+			for( int i=0 ; i<rc.M ; i++ ) {
+				double n = rc.get(i,c) ;
+				if( n>mappedDataLimit ) {			// we found a real number mixed in - let's map it now
+					String col = String.valueOf( rc.get( i, c) ) ;
+					rc.put( i, c, mapToDouble( col, map) ) ;
+				} else {
+					rc.put( i, c, Math.round(n + 1e14) ) ;
+				}
+			}
+			// Now all columns are mapped to ordinals
+			log.info( "Creating {} buckets for {}", map.size(), rc.labels[c] ) ;
+			
+			String labels[] = new String[ map.size()] ;
+			for( int i=0 ; i<labels.length ; i++ ) {
+				labels[i] = rc.labels[c] + "-is-" + map.get(i) ;
+			}
+			Matrix B = Matrix.fill( rc.M, map.size(), 0.0, labels ) ;
+			for( int i=0 ; i<rc.M ; i++ ) {
+				int n = (int)rc.get(i,c) ;
+				B.put( i, (int)n, 1.0 ) ;
+			}
+			log.info( "Adding {} columns to data", B.N ) ;
+			rc = rc.appendColumns( B ) ;
+		}
+		
+		return rc ;
+	}
+	
+	
+	public static Matrix load( int M, InputStream is, ProcessorOptions options ) throws IOException {
 
 		Matrix rc = null ;
 		String SEPARATOR_CHARS = ",;\t" ; 
 
-		try( Reader rdr = new InputStreamReader(is,  cs ) ;
+		try( Reader rdr = new InputStreamReader(is, options.cs ) ;
 				BufferedReader br = new BufferedReader(rdr) ; ) {
 			String line = br.readLine() ;
 			String regex = "\\," ;
@@ -88,33 +147,15 @@ public class Loader {
 			rc.reshape( Math.min(M, m),  N ) ;
 			rc.labels = headers ;
 
-			
-			for( int c=0 ; c<maps.length ; c++ ) {
-				List<String> buckets = maps[c] ;
-				if( buckets == null ) {
-					continue ;
-				}
-				log.info( "Creating {} buckets for {}", buckets.size(), rc.labels[c] ) ;
-				String labels[] = new String[ buckets.size()] ;
-				for( int i=0 ; i<labels.length ; i++ ) {
-					labels[i] = rc.labels[c] + "-is-" + buckets.get(i) ;
-				}
-				Matrix B = Matrix.fill( rc.M, buckets.size(), 0.0, labels ) ;
-				for( int i=0 ; i<rc.M ; i++ ) {
-					double n = rc.get(i,c) ;
-					if( n-(int)n == 0.0 && n<B.N ) {     /// @TODO  fix this ...
-						B.put( i, (int)n, 1.0 ) ;
-					}
-				}
-				log.info( "Adding {} to data", B ) ;
-				rc.appendColumns( B ) ;
+			if( options!=null && options.discrete ) {
+				rc = makeDiscreteColumns( rc, maps ) ;
 			}
 		} // end try()
 
 		return rc ;
 	}
 
-	public static void saveToCsv( int M, double data[], Path file ) throws IOException {
+	public void saveToCsv( int M, double data[], Path file ) throws IOException {
 		DecimalFormat df = new DecimalFormat( "#.000000" ) ;
 
 		try ( BufferedWriter bw = Files.newBufferedWriter( file ) ) {			
@@ -132,34 +173,42 @@ public class Loader {
 	}
 
 	static String REGEX_NUMERIC =  "[+-]?[\\d\\.\\,]+" ;
-	private static double buildMap( String col, List<String> map ) {
+	private static double mapToDouble( String col, List<String> map ) {
 		String icol =
 		( col.charAt(0) == col.charAt(col.length()-1) && (col.charAt(0)=='"' || col.charAt(0)=='\'') ) ?
 				col.substring(1,col.length()-1 ).intern() :
 				col.intern()
 				;
-		double rc = map.indexOf( icol ) ;
+		double rc = -1e14 + map.indexOf( icol ) ;
 		if( rc < 0 ) {
-			rc = map.size() ;
+			rc = -1e14 + map.size() ;
 			map.add( icol ) ;
 		}
 		return rc ;
 	}
 	
-	private static double[] parse( String [] cols, List<String>[] maps ) {
+	private static double[] parse( String [] cols, List<String> maps[] ) {
 		double rc[] = new double[ cols.length ] ;
+		// for each column
 		for( int i=0 ; i<rc.length ; i++ ) {
-			try {
-				rc[i] = Double.parseDouble( cols[i] ) ;
-			} catch ( Throwable t ) {
-				List<String> map = maps[i] ;
-				if( map == null ) {
-					map = new ArrayList<>() ;
+			// if we've seen non numeric - let's map it to an ordinal
+			if(  maps[i] != null ) {
+				rc[i] = mapToDouble(cols[i], maps[i] ) ;
+			} else { // else we've only seen valid numbers				
+				try {
+					rc[i] = Double.parseDouble( cols[i] ) ;
+				} catch ( Throwable t ) {
+					// we just found a non-numeric, start mapping... 
+					List<String> map = new ArrayList<>() ;
 					maps[i] = map ;
+					// and get an ordinal
+					rc[i] = mapToDouble(cols[i], map ) ;
+					// We will need to remap the previous rows to ordinals ( in case the first few were valid numbers )
+					// Do it after all processing done (i.e. reservoir completed )
 				}
-				rc[i] = buildMap(cols[i], map ) ;
 			}
 		}
 		return rc ;
 	}
+	
 }
