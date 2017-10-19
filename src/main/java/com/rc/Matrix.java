@@ -3,8 +3,11 @@ package com.rc ;
 
 import java.lang.reflect.Array;
 import java.lang.reflect.Type;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Random;
+import java.util.stream.Stream;
 
 import javax.management.RuntimeErrorException;
 
@@ -103,6 +106,70 @@ public class Matrix {
         return rc ;
     }
 
+	public Matrix mean() {
+		Matrix rc = new Matrix( 1, N ) ;
+		rc.labels = labels ;
+
+		int ix = 0 ;
+		for( int i=0 ; i<N ; i++ ) {
+			double sum = 0 ;
+			for( int j=0 ; j<M ; j++ ) {
+				sum += data[ix] ;
+				ix++ ;
+			}
+			double mean = sum / M ;
+			rc.data[i] = mean ;
+		}		
+		return rc ;
+	}
+
+	public Matrix skewness( Matrix means ) {
+		Matrix rc = new Matrix( 1, N ) ;
+		rc.labels = labels ;
+
+		int ix = 0 ;
+		for( int i=0 ; i<N ; i++ ) {
+			double sumN = 0 ;
+			double sumD = 0 ;
+			double mean = means.data[i] ;
+			for( int j=0 ; j<M ; j++ ) {
+				double d  = ( data[ix] - mean ) ;
+				sumN += d * d * d ;
+				sumD += d * d ;
+				ix++ ;
+			}
+			double n = sumN / M ;
+			double d = Math.pow( ( sumD / M ), 1.5 ) ;
+			rc.data[i] = n/d ;
+		}
+		return rc ;
+	}
+
+
+	public Matrix kurtosis( Matrix means ) {
+		Matrix rc = new Matrix( 1, N ) ;
+		rc.labels = labels ;
+
+		int ix = 0 ;
+		for( int i=0 ; i<N ; i++ ) {
+			double sumN = 0 ;
+			double sumD = 0 ;
+			double mean = means.data[i] ;
+			for( int j=0 ; j<M ; j++ ) {
+				double d  = data[ix] - mean ;
+				d = d * d ;
+				sumN += d * d ;
+				sumD += d ;
+				ix++ ;
+			}
+			double n = sumN / M ;
+			double d = sumD / M  ;
+			rc.data[i] = ( n / (d*d) ) - 3.0 ;
+		}		
+		return rc ;
+	}
+
+
 	public Matrix zeroMeanColumns() {
 		Matrix rc = new Matrix( M, N ) ;
 
@@ -180,6 +247,29 @@ public class Matrix {
 		return rc ;
 	}
 
+	public Matrix appendRows( Matrix other ) {
+		
+		if( N != other.N ) {
+			throw new RuntimeException( "Incompatible column counts for appendRows" ) ;
+		}
+		
+		Matrix rc = new Matrix( M+other.M, N ) ;
+		rc.labels = labels ;
+
+		for( int i=0 ; i<M ; i++ ) {
+			for( int j=0 ; j<N ; j++ ) {
+				rc.put( i,j, get(i,j) ) ;
+			}
+		}
+		for( int i=0 ; i<other.M ; i++ ) {
+			for( int j=0 ; j<N ; j++ ) {
+				rc.put( i+M,j, other.get(i,j) ) ;
+			}
+		}
+		
+		return rc ;
+	}
+
 	public Matrix map( MatrixFunction func ) {
 		for( int i=0 ; i<M ; i++ ) {
 			for( int j=0 ; j<N ; j++ ) {
@@ -190,9 +280,9 @@ public class Matrix {
 	}
 
 	public Matrix mapColumn( MatrixColFunction func ) {
-		
+		Matrix rc = new Matrix(M,N) ;
 		for( int i=0 ; i<N ; i++ ) {
-			putColumn(i, func.call( data, this, i*M, M ) ) ;
+			rc.putColumn( i, func.call( data, this, i*M, M ) ) ;
 		}
 		return this ;
 	}
@@ -278,7 +368,7 @@ public class Matrix {
     }
     @FunctionalInterface
     static interface MatrixColFunction {    	
-    	public double[] call( double values[], Matrix context, int offset, int len ) ;
+    	public double [] call( double values[], Matrix context, int offset, int len ) ;
     }
     
     static class Deserializer implements JsonSerializer<Matrix> {

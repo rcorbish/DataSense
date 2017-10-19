@@ -83,7 +83,7 @@ public class Monitor implements AutoCloseable {
 		    
 			String contentType = null ;
 			InputStream is = null ;
-		    ProcessorOptions processorOptions = new ProcessorOptions() ;
+		    ProcessorOptions processorOptions = new ProcessorOptions( req.queryMap().toMap() ) ;
 			
 		    for( Part part : parts) {
 		    	if( part.getSubmittedFileName() != null ) {
@@ -91,12 +91,8 @@ public class Monitor implements AutoCloseable {
 		    		is = part.getInputStream() ;
 		    	}
 		    }
-		    	
-		    processorOptions.square   = req.queryParams("square-values") != null  ;
-		    processorOptions.discrete = req.queryParams("discrete-to-col") != null  ;
-		    processorOptions.addOnes  = req.queryParams("add-ones-column") != null  ;
-		    processorOptions.method   = req.queryParams("method") ;
-		    
+				
+					    
 			Matcher matcher = ctPattern.matcher( contentType ) ;
 			String charset = "ISO-8859-1" ;
 			String mime = null ; //contentType.trim() ;

@@ -18,8 +18,6 @@ public class DataProcessor {
 			Matrix A = Loader.load( 1000, data, options ) ;
 			A.name = "A" ;
 
-			log.debug( "data {}", A ) ;
-
 			rc = "Unsupported method" ; 
 			if( "linear".equals( options.method ) ) {
 				int feature = 0 ;
@@ -57,18 +55,16 @@ public class DataProcessor {
 				X.labels = A.labels ;
 				rc = X.muli( 1.0 / X.N ) ;
 				log.debug( "Cov(A) =\n{}", rc ) ;
+			} else if( "statistics".equals( options.method ) ) {
+				Matrix AM = A.mean() ;
+				Matrix AS = A.skewness( AM ) ;
+				Matrix AK = A.kurtosis( AM ) ;
+				Matrix X = AM.appendRows(AS).appendRows(AK);
+				rc = X ;
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 		return rc ;
 	}
-}
-
-class ProcessorOptions {
-	Charset cs ;
-	boolean square ;
-	boolean discrete ;
-	boolean addOnes;
-	String  method ;
 }
