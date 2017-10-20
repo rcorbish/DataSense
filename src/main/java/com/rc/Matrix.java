@@ -1,15 +1,9 @@
 
 package com.rc ;
 
-import java.lang.reflect.Array;
 import java.lang.reflect.Type;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Random;
-import java.util.stream.Stream;
-
-import javax.management.RuntimeErrorException;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -123,6 +117,35 @@ public class Matrix {
 		return rc ;
 	}
 
+	
+	public Matrix stddev( Matrix means ) {
+		Matrix rc = variance( means ) ;
+		
+		for( int i=0 ; i<rc.length() ; i++ ) {
+			rc.data[i] = Math.sqrt( rc.data[i] ) ;
+		}
+		
+		return rc ;
+	}
+	
+	public Matrix variance( Matrix means ) {
+		Matrix rc = new Matrix( 1, N ) ;
+		rc.labels = labels ;
+
+		int ix = 0 ;
+		for( int i=0 ; i<N ; i++ ) {
+			double sum = 0 ;
+			double mean = means.data[i] ;
+			for( int j=0 ; j<M ; j++ ) {
+				double d  = ( data[ix] - mean ) ;
+				sum += d * d ;
+				ix++ ;
+			}
+			rc.data[i] = sum / ( M-1 ) ;
+		}
+		return rc ;
+	}
+
 	public Matrix skewness( Matrix means ) {
 		Matrix rc = new Matrix( 1, N ) ;
 		rc.labels = labels ;
@@ -144,6 +167,7 @@ public class Matrix {
 		}
 		return rc ;
 	}
+
 
 
 	public Matrix kurtosis( Matrix means ) {
@@ -174,17 +198,51 @@ public class Matrix {
 		Matrix rc = new Matrix( M, N ) ;
 
 		for( int i=0 ; i<N ; i++ ) {
+			// Mean
 			double sum = 0 ;
 			int ix = i*M ;
 			for( int j=0 ; j<M ; j++ ) {
 				sum += data[ix] ;
 				ix++ ;
 			}
-			ix = i*M ;
 			double mean = sum / M ;
-			//System.out.println( "Col " + i + " - mean = " + mean ) ;
+			ix = i*M ;
 			for( int j=0 ; j<M ; j++ ) {
 				rc.data[ix] = data[ix] - mean ;
+				ix++ ;
+			}
+		}
+		return rc ;
+	}
+	
+	
+	public Matrix normalizeColumns() {
+		Matrix rc = new Matrix( M, N ) ;
+
+		for( int i=0 ; i<N ; i++ ) {
+			// Mean
+			double sum = 0 ;
+			int ix = i*M ;
+			for( int j=0 ; j<M ; j++ ) {
+				sum += data[ix] ;
+				ix++ ;
+			}
+			double mean = sum / M ;
+			
+			// Std deviation
+			ix = i*M ;
+			sum = 0 ; 
+			for( int j=0 ; j<M ; j++ ) {
+				double d = data[ix] - mean ;
+				sum += d * d ;
+				ix++ ;
+			}
+			double sig = Math.sqrt( sum / (M - 1) ) ;
+
+			// ( x - m ) / s    zero mean, unit variance
+			ix = i*M ;
+			for( int j=0 ; j<M ; j++ ) {
+				rc.data[ix] = ( data[ix] - mean ) / sig ;
 				ix++ ;
 			}
 		}
@@ -379,29 +437,37 @@ public class Matrix {
     		JsonObject object = new JsonObject();
 
     		object.addProperty("M", src.M);
-    		object.addProperty("N", src.N);
 
-    		JsonArray cols[] = new JsonArray[src.N] ;
-    		
-			JsonArray data = new JsonArray( src.M );
-    		for( int i=0 ; i<src.N ; i++ ) {
-    			JsonArray r = new JsonArray( src.N );
-    			if( src.labels != null ) {
-    				JsonObject row = new JsonObject() ;
-    				row.add( src.labels[i], r );
-    				data.add( row ) ;
-    			} else {
-    				data.add( r ) ; 
+    		if( src.isVector ) {
+	    		object.addProperty("M", src.length() );
+    			for( int i=0 ; i<src.length() ; i++ ) {
+    				object.addProperty( src.labels==null ? String.valueOf(i) : src.labels[i], src.data[i] ) ;
     			}
-    			cols[i] = r ;
+    		} else {
+	    		object.addProperty("N", src.N);
+	
+	    		JsonArray cols[] = new JsonArray[src.N] ;
+	    		
+				JsonArray data = new JsonArray( src.M );
+	    		for( int i=0 ; i<src.N ; i++ ) {
+	    			JsonArray r = new JsonArray( src.N );
+	    			if( src.labels != null ) {
+	    				JsonObject row = new JsonObject() ;
+	    				row.add( src.labels[i], r );
+	    				data.add( row ) ;
+	    			} else {
+	    				data.add( r ) ; 
+	    			}
+	    			cols[i] = r ;
+	    		}
+	    		
+	    		for( int i=0 ; i<src.M ; i++ ) {
+	        		for( int j=0 ; j<src.N ; j++ ) {
+	        			cols[j].add( src.get( i, j ) ) ;
+	        		}
+	    		}
+	    		object.add( "data", data ) ;
     		}
-    		
-    		for( int i=0 ; i<src.M ; i++ ) {
-        		for( int j=0 ; j<src.N ; j++ ) {
-        			cols[j].add( src.get( i, j ) ) ;
-        		}
-    		}
-    		object.add( "data", data ) ;
     		return object;
     	}
     }

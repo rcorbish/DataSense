@@ -53,23 +53,6 @@ public class Loader {
 				continue ;
 			}
 
-			double mappedDataLimit = -1e14 + map.size()  ;
-			
-			// Scan the rows for a real numeric value, which could be mixed in
-			// with the mapped ordinals. e.g. if we had values 1,2,YES,NO the 1 & 2 
-			// would not be recognized as non numerics
-			//
-			// we address that here
-			for( int i=0 ; i<rc.M ; i++ ) {
-				double n = rc.get(i,c) ;
-				if( n>mappedDataLimit ) {			// we found a real number mixed in - let's map it now
-					String col = String.valueOf( rc.get( i, c) ) ;
-					rc.put( i, c, mapToDouble( col, map) ) ;
-				} else {
-					rc.put( i, c, Math.round(n + 1e14) ) ;
-				}
-			}
-			// Now all columns are mapped to ordinals
 			log.info( "Creating {} buckets for {}", map.size(), rc.labels[c] ) ;
 			
 			String labels[] = new String[ map.size()] ;
@@ -88,6 +71,32 @@ public class Loader {
 		return rc ;
 	}
 	
+	public static void verifyMappedColumns( Matrix m, List<String> maps[] ) throws IOException {
+
+		for( int c=0 ; c<maps.length ; c++ ) {
+			List<String> map = maps[c] ;
+			if( map == null ) {
+				continue ;
+			}
+
+			double mappedDataLimit = -1e14 + map.size()  ;
+			
+			// Scan the rows for a real numeric value, which could be mixed in
+			// with the mapped ordinals. e.g. if we had values 1,2,YES,NO the 1 & 2 
+			// would not be recognized as non numerics
+			//
+			// we address that here
+			for( int i=0 ; i<m.M ; i++ ) {
+				double n = m.get(i,c) ;
+				if( n>mappedDataLimit ) {			// we found a real number mixed in - let's map it now
+					String col = String.valueOf( m.get( i, c) ) ;
+					m.put( i, c, mapToDouble( col, map) + 1e14 ) ;
+				} else {
+					m.put( i, c, Math.round(n + 1e14) ) ;
+				}
+			}
+		}
+	}
 	
 	public static Matrix load( int M, InputStream is, ProcessorOptions options ) throws IOException {
 
@@ -147,6 +156,8 @@ public class Loader {
 			rc.reshape( Math.min(M, m),  N ) ;
 			rc.labels = headers ;
 
+			verifyMappedColumns( rc, maps ) ;
+
 			if( options!=null && options.discrete ) {
 				rc = makeDiscreteColumns( rc, maps ) ;
 			}
@@ -179,12 +190,12 @@ public class Loader {
 				col.substring(1,col.length()-1 ).intern() :
 				col.intern()
 				;
-		double rc = -1e14 + map.indexOf( icol ) ;
+		double rc = map.indexOf( icol ) ;
 		if( rc < 0 ) {
-			rc = -1e14 + map.size() ;
+			rc = map.size() ;
 			map.add( icol ) ;
 		}
-		return rc ;
+		return rc - 1e14 ;
 	}
 	
 	private static double[] parse( String [] cols, List<String> maps[] ) {
@@ -203,8 +214,6 @@ public class Loader {
 					maps[i] = map ;
 					// and get an ordinal
 					rc[i] = mapToDouble(cols[i], map ) ;
-					// We will need to remap the previous rows to ordinals ( in case the first few were valid numbers )
-					// Do it after all processing done (i.e. reservoir completed )
 				}
 			}
 		}

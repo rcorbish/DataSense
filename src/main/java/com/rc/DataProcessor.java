@@ -2,7 +2,6 @@ package com.rc;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.Charset;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,18 +47,33 @@ public class DataProcessor {
 				}
 				Matrix X = A.divLeft(B) ;			
 				X.labels = A.labels ;
-				rc = X.transpose() ;
-			} else if( "covariance".equals( options.method ) ) {
+				rc = X ;
+			} else if( "correlation".equals( options.method ) ) {
+				// 1st covariance
 				Matrix A4 = A.zeroMeanColumns() ;
-				Matrix X = A4.transpose().mmul( A4 ) ;			
-				X.labels = A.labels ;
-				rc = X.muli( 1.0 / X.N ) ;
-				log.debug( "Cov(A) =\n{}", rc ) ;
+				Matrix CO = A4.transpose().mmul( A4 ) ;			
+				CO.labels = A.labels ;
+				CO.muli( 1.0 / ( A.M - 1 ) ) ;
+
+				// Then correlation
+				Matrix MX = A.mean() ;
+				Matrix AS = A.stddev(MX) ;
+				
+				for( int i=0 ; i<A.N ; i++ ) {
+					int ix = i*CO.M ;
+					for( int j=0 ; j<A.N ; j++ ) {
+						CO.data[ix] /= ( AS.data[i] * AS.data[j] ) ;
+						ix++ ;
+					}
+				}
+				
+				rc = CO ;
 			} else if( "statistics".equals( options.method ) ) {
 				Matrix AM = A.mean() ;
+				Matrix AV = A.stddev( AM ) ;
 				Matrix AS = A.skewness( AM ) ;
 				Matrix AK = A.kurtosis( AM ) ;
-				Matrix X = AM.appendRows(AS).appendRows(AK);
+				Matrix X = AM.appendRows(AV).appendRows(AS).appendRows(AK);
 				rc = X ;
 			}
 		} catch (IOException e) {
