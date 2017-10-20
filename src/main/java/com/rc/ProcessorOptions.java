@@ -16,6 +16,7 @@ public class ProcessorOptions {
 	String  method ;
 	DateParserFunction dateParser ;
 	int dateBaseline ;
+	double testRatio = 0.2 ;
 
 
 	public ProcessorOptions( Map<String, String[]> params ) throws ParseException {
@@ -27,7 +28,7 @@ public class ProcessorOptions {
 		String baseline = get( params, "date-baseline" ) ;
 		Calendar today = Calendar.getInstance() ;
 		dateBaseline = 0 ;
-		
+
 		if( get( params, "to-years" ) != null ) {
 			dateParser = ProcessorOptions::toYears ;
 			if( baseline.equals( "1900") ) {

@@ -117,7 +117,38 @@ public class Matrix {
 		return rc ;
 	}
 
+	public Matrix min() {
+		Matrix rc = new Matrix( 1, N ) ;
+		rc.labels = labels ;
+
+		int ix = 0 ;
+		for( int i=0 ; i<N ; i++ ) {
+			double min = data[ix++] ;
+			for( int j=1 ; j<M ; j++ ) {
+				min = Math.min( min, data[ix++] ) ;
+			}
+			rc.data[i] = min ;
+		}		
+		return rc ;
+	}
+
 	
+	public Matrix max() {
+		Matrix rc = new Matrix( 1, N ) ;
+		rc.labels = labels ;
+
+		int ix = 0 ;
+		for( int i=0 ; i<N ; i++ ) {
+			double min = data[ix++] ;
+			for( int j=1 ; j<M ; j++ ) {
+				min = Math.max( min, data[ix++] ) ;
+			}
+			rc.data[i] = min ;
+		}		
+		return rc ;
+	}
+
+
 	public Matrix stddev( Matrix means ) {
 		Matrix rc = variance( means ) ;
 		
@@ -279,8 +310,10 @@ public class Matrix {
 			int len = ( N-1 - col ) * M ;
 			System.arraycopy( data, M*(col+1), data, M*col, len ) ;
 			// handle label move
-			rc.labels[i] = labels[col] ;
-			System.arraycopy( labels, (col+1), labels, col, (labels.length - 1 - col) ) ;
+			if( labels != null ) {
+				rc.labels[i] = labels[col] ;
+				System.arraycopy( labels, (col+1), labels, col, (labels.length - 1 - col) ) ;
+			}
 			N-- ;
 		}
 		
@@ -301,6 +334,29 @@ public class Matrix {
 		rc.labels = new String[ rc.N ] ;
 		System.arraycopy( labels, 0, rc.labels, 0, N ) ;		
 		System.arraycopy( other.labels, 0, rc.labels, N, other.N ) ;
+		
+		return rc ;
+	}
+
+	public Matrix extractRows( int ... rows ) {
+		
+		Matrix rc = new Matrix( rows.length, N ) ;
+		rc.labels = labels ;
+
+		for( int i=0 ; i<rows.length ; i++ ) {
+			for( int j=0 ; j<N ; j++ ) {
+				rc.put( i,j, get(rows[i],j) ) ;
+			}
+		}
+		System.out.println( "Extracted " +  rc ) ;
+		for( int i=0 ; i<rows.length ; i++ ) {
+			for( int j=0 ; j<N ; j++ ) {
+				int startCopy = j*M + rows[i] ;
+				System.arraycopy( data, startCopy+1, data, startCopy, M-rows[i]-1 ) ;
+			}
+		}
+		M -= rc.M ;
+		reshape( M, N ) ;
 		
 		return rc ;
 	}

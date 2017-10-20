@@ -14,9 +14,9 @@ public class DataProcessor {
 		Object rc = null ;
 		
 		try {
-			Matrix A = Loader.load( 1000, data, options ) ;
-			A.name = "A" ;
-
+			Dataset dataset = Loader.load( 1000, data, options ) ;
+			Matrix A  = dataset.train ;
+			
 			rc = "Unsupported method" ; 
 			if( "linear".equals( options.method ) ) {
 				int feature = 0 ;
@@ -47,7 +47,8 @@ public class DataProcessor {
 				}
 				Matrix X = A.divLeft(B) ;			
 				X.labels = A.labels ;
-				rc = X ;
+				Matrix Y = dataset.test.mmul(X) ;
+				rc = Y ;
 			} else if( "correlation".equals( options.method ) ) {
 				// 1st covariance
 				Matrix A4 = A.zeroMeanColumns() ;
@@ -69,11 +70,19 @@ public class DataProcessor {
 				
 				rc = CO ;
 			} else if( "statistics".equals( options.method ) ) {
+				Matrix AN = A.min() ;
+				Matrix AX = A.max() ;
 				Matrix AM = A.mean() ;
-				Matrix AV = A.stddev( AM ) ;
+				Matrix AD = A.stddev( AM ) ;
 				Matrix AS = A.skewness( AM ) ;
 				Matrix AK = A.kurtosis( AM ) ;
-				Matrix X = AM.appendRows(AV).appendRows(AS).appendRows(AK);
+				Matrix X = AN
+					.appendRows( AX )
+					.appendRows( AM )
+					.appendRows( AD )
+					.appendRows( AS )
+					.appendRows( AK )
+					;
 				rc = X ;
 			}
 		} catch (IOException e) {

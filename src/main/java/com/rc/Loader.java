@@ -98,9 +98,9 @@ public class Loader {
 		}
 	}
 	
-	public static Matrix load( int M, InputStream is, ProcessorOptions options ) throws IOException {
+	public static Dataset load( int dataM, InputStream is, ProcessorOptions options ) throws IOException {
 
-		Matrix rc = null ;
+		Dataset rc = null ;
 		String SEPARATOR_CHARS = ",;\t" ; 
 
 		try( Reader rdr = new InputStreamReader(is, options.cs ) ;
@@ -126,6 +126,7 @@ public class Loader {
 			}
 			
 			int m = 0 ;
+			int M = (int)( (1.0+options.testRatio)*dataM ) ;
 			double reservoir[] = new double[M*N] ;
 			log.info( "Found {} columns", N );
 			
@@ -152,15 +153,30 @@ public class Loader {
 				m++ ;
 			}
 			log.info( "Parsed {} lines", m ) ;
-			rc = new Matrix( M, N, reservoir ) ;
-			rc.reshape( Math.min(M, m),  N ) ;
-			rc.labels = headers ;
+			Matrix all = new Matrix( M, N, reservoir ) ;
+			all.reshape( Math.min(M, m),  N ) ;
+			all.labels = headers ;
 
-			verifyMappedColumns( rc, maps ) ;
+			verifyMappedColumns( all, maps ) ;
+
+			rc = new Dataset() ;
+			int testRows = (int)(options.testRatio*m) ;
+			
+			log.info( "Dataset has {} total and {} test data rows", m, testRows ) ;
+			rc.test = new Matrix(0, N ) ;
+			rc.test.name = "TEST" ;
+			rc.train = all ;
+			rc.train.name = "TRAIN" ;
 
 			if( options!=null && options.discrete ) {
-				rc = makeDiscreteColumns( rc, maps ) ;
+				rc.train = makeDiscreteColumns( rc.train, maps ) ;
+		   	}
+
+			for( int i=0 ; i<testRows ; i++ ) {
+				int testRow = rng.nextInt( all.M ) ;
+				rc.test.appendRows( all.extractRows( testRow ) ) ;
 			}
+			  
 		} // end try()
 
 		return rc ;

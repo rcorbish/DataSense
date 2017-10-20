@@ -51,6 +51,35 @@ public class TestBase {
 		}
 	}
 
+	@Test
+	public void testGetcol() {
+		Matrix A = Matrix.eye(4) ;
+
+		for( int j=0 ; j<A.N ; j++ ) {
+			Matrix C = A.extractColumns( 0 ) ;
+			assertEquals( "Unexpected # rows in extract", A.M, C.M ) ;
+
+			for( int i=0 ; i<C.M ; i++ ) {
+				assertEquals( "Unexpected value in A", i==j?1:0, C.get(i, 0), 1e-6) ;
+			}
+		}
+	}
+
+
+
+	@Test
+	public void testGetrow() {
+		Matrix A = Matrix.eye(4) ;
+
+		for( int j=0 ; j<A.M ; j++ ) {
+			Matrix R = A.extractRows( 0 ) ;
+			assertEquals( "Unexpected # cols in extract", A.N, R.N ) ;
+		//	System.out.println( R ) ;
+			for( int i=0 ; i<R.N ; i++ ) {
+				assertEquals( "Unexpected value in extract", i==j?1:0, R.get(0,i), 1e-6) ;
+			}
+		}
+	}
 
 	@Test
 	public void testMap() {
