@@ -102,6 +102,9 @@ public class Loader {
 		Dataset rc = null ;
 		String SEPARATOR_CHARS = ",;\t" ; 
 
+		if( !"linear".equals( options.method ) ) {
+			options.testRatio = 0 ;			
+		}
 		try( Reader rdr = new InputStreamReader(is, options.cs ) ;
 				BufferedReader br = new BufferedReader(rdr) ; ) {
 			String line = br.readLine() ;

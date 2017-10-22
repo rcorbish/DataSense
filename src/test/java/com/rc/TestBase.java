@@ -247,7 +247,7 @@ public class TestBase {
 			    0.124043,   0.330575,   0.880164,   0.982739,   0.723298  ) ; 
 		Matrix B = new Matrix( 5, 1,     4.4930,  5.0760,  6.5010,  7.0270, 6.6270 ) ; 
 		
-		Fmincg.CostFunction cost = new Fmincg.CostFunction() {			
+		Cgd.CostFunction cost = new Cgd.CostFunction() {			
 			@Override
 			public double call(Matrix X, Matrix y, Matrix theta, double lambda) {
 				Matrix S = X.mmul( theta ).subi( y ) ;		
@@ -260,7 +260,7 @@ public class TestBase {
 			}
 		};
 		
-		Fmincg.GradientsFunction grad = new Fmincg.GradientsFunction() {			
+		Cgd.GradientsFunction grad = new Cgd.GradientsFunction() {			
 			@Override
 			public Matrix call(Matrix X, Matrix y, Matrix theta, double lambda) {
 				Matrix S = X.mmul( theta ).subi( y ) ;		
@@ -275,8 +275,8 @@ public class TestBase {
 		
 		double LAMBDA 	= 0.00002;	
 
-		Fmincg cgs = new Fmincg( ) ; //(sc,it) -> { if( (it%500)==0 ){ System.out.println( it + " : " + sc ) ;} } ) ;
-		Matrix X = cgs.solve( cost, grad, A, B, LAMBDA, 1_000 ) ;
+		Cgd cgd = new Cgd( ) ; //(sc,it) -> { if( (it%500)==0 ){ System.out.println( it + " : " + sc ) ;} } ) ;
+		Matrix X = cgd.solve( cost, grad, A, B, LAMBDA, 1_000 ) ;
 		for( int i=0 ; i<X.length() ; i++ ) {
 			assertEquals( "CGD solver (AX=B) incorrect factor X[" + i + "]", (i+1), X.data[i], 0.02 ) ;
 		}

@@ -35,7 +35,6 @@ public class Monitor implements AutoCloseable {
 
 	final Random random ;
 	final Gson gson ;
-	final DataProcessor processor ;
 
 	public Monitor() {
 		this.random = new Random() ;
@@ -43,8 +42,6 @@ public class Monitor implements AutoCloseable {
 				.registerTypeAdapter( Matrix.class, new Matrix.Deserializer() )
 				.setPrettyPrinting()
 				.create() ;
-		
-		this.processor = new DataProcessor() ;
 	}
 	
 	
@@ -107,7 +104,7 @@ public class Monitor implements AutoCloseable {
 				throw new RuntimeException( "Invalid content type - only text/csv supported" ) ;
 			}
 			processorOptions.cs = Charset.forName( charset ) ;			
-			
+			DataProcessor processor = DataProcessorFactory.getInstance( processorOptions.method ) ;
 			rc = processor.process( is, processorOptions ) ;
 		} catch ( Throwable t ) {
 			logger.warn( "Error processing getItem request", t ) ;

@@ -4,9 +4,9 @@ package com.rc ;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class Fmincg {
+public class Cgd {
 
-	final static Logger log = LoggerFactory.getLogger( Fmincg.class ) ;
+	final static Logger log = LoggerFactory.getLogger( Cgd.class ) ;
 
 	@FunctionalInterface
 	static interface CostFunction {
@@ -22,10 +22,10 @@ public class Fmincg {
 	}
 
 	private ProgressFunction progress ;
-	public Fmincg() {
+	public Cgd() {
 		this( null ) ;
 	}
-	public Fmincg( ProgressFunction progress ) {
+	public Cgd( ProgressFunction progress ) {
 		this.progress = progress ;
 	}
 	
@@ -39,13 +39,13 @@ public class Fmincg {
 		Matrix theta = Matrix.fill( Xin.N, yin.N, 0.0 ) ;
 		
 		double RHO = 0.01;                           
-		double SIG = 0.5;       //% RHO and SIG are the constants in the Wolfe-Powell conditions
-		double INT = 0.1;    //% don't reevaluate within 0.1 of the limit of the current bracket
-		double EXT = 3.0;                    //% extrapolate maximum 3 times the current bracket
-		double MAX = 20;                         //% max 20 function evaluations per line search
-		double RATIO = 100;                                      //% maximum allowed slope ratio
+		double SIG = 0.5;	// RHO and SIG are the constants in the Wolfe-Powell conditions
+		double INT = 0.1;   // don't reevaluate within 0.1 of the limit of the current bracket
+		double EXT = 3.0;   // extrapolate maximum 3 times the current bracket
+		double MAX = 40;    // max evaluations per line search
+		double RATIO = 100; // maximum allowed slope ratio
 
-		double red = 1.0 ;
+		double red = 1.0 ;	
 
 		int numConsecutiveSearchFails = 0 ; //  no previous line search has failed
 
@@ -82,15 +82,18 @@ public class Fmincg {
 
 			double z2 ;
 
+			// Line search - find descent  
 			while( true ) {
+				
+				// Strong Wolfe condition test - find longest line in best direction
 				while( ((f2 > f1+z1*RHO*d1) || (d2 > -SIG*d1)) && (M > 0) ) { 
-
 					limit = z1;                                     	// tighten the bracket
+					
 					if( f2 > f1 ) {
-						z2 = z3 - (0.5*d3*z3*z3)/(d3*z3+f2-f3);   		// quadratic fit
+						z2 = z3 - ( 0.5*d3*z3*z3 )/( d3*z3 + f2 - f3 ); // quadratic fit
 					} else {
 						double A = 6*(f2-f3)/z3 + 3*(d2+d3);           	// cubic fit
-						double B = 3*(f3-f2) - z3*(d3+2*d2);
+						double B = 3*(f3-f2) - z3*( d3 + 2*d2 );
 						z2 = ( Math.sqrt( B*B - A*d2*z3*z3 ) - B ) / A;      
 					}
 					if( !Double.isFinite(z2) ) {
@@ -101,15 +104,16 @@ public class Fmincg {
 					z1 += z2 ;
 
 					theta.addi( s.mul(z2) ) ;
+					d2 = df2.dot( s ) ;
+					z3 -= z2 ;
 
 					df2 = gradients.call(Xin, yin, theta, lambda)  ;
 					f2 = cost.call(Xin, yin, theta, lambda)  ;
 
-					d2 = df2.dot( s ) ;
-					z3 -= z2 ;
 					M-- ;
 				}
 
+				// exit line search ?
 				if( d2>SIG*d1 ) {
 					success = true ;
 					break ;
@@ -127,13 +131,13 @@ public class Fmincg {
 					} else {
 						z2 = (limit-z1)/2;		// otherwise bisect
 					}
-				} else if( (limit > -0.5) && (z2+z1 > limit) ) { 	// extraplation beyond max?
+				} else if( (limit > -0.5) && (z2+z1 > limit) ) { 	// extrapolated past max?
 					z2 = (limit-z1)/2;   							// bisect
-				} else if( (limit < -0.5) && (z2+z1 > z1*EXT) ) { 	// extrapolation beyond limit
-					z2 = z1*(EXT-1.0);      						//	set to extrapolation limit
+				} else if( (limit < -0.5) && (z2+z1 > z1*EXT) ) { 	// extrapolation past max? 
+					z2 = z1*(EXT-1.0);      						// set to max
 				} else if( z2 < -z3*INT ) { 
 					z2 = -z3*INT;
-				} else if( (limit > -0.5) && (z2 < (limit-z1)*(1.0-INT)) ) { //  % too close to limit?
+				} else if( (limit > -0.5) && (z2 < (limit-z1)*(1.0-INT)) ) {   // too close to limit?
 					z2 = (limit-z1)*(1.0-INT);
 				}
 
@@ -183,6 +187,7 @@ public class Fmincg {
 				df1 	= df0 ;
 
 				if( numConsecutiveSearchFails>1 || iterations>maxIters ) {
+					log.info( "CGD stopped converging - early exit" ) ;
 					break ;
 				}
 
