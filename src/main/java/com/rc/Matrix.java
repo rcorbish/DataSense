@@ -484,6 +484,15 @@ public class Matrix {
 		return this ;
 	}
 
+	public Matrix map( SimpleMatrixFunction func ) {
+		for( int i=0 ; i<M ; i++ ) {
+			for( int j=0 ; j<N ; j++ ) {
+				put( i, j, func.call( get(i,j) ) ) ;
+			}
+		}
+		return this ;
+	}
+
 	public Matrix mapColumn( MatrixColFunction func ) {
 		Matrix rc = new Matrix( M, N, labels ) ;
 
@@ -576,6 +585,10 @@ public class Matrix {
     @FunctionalInterface
     static interface MatrixFunction {    	
     	public double call( double value, Matrix context, int r, int c ) ;
+    }
+    @FunctionalInterface
+    static interface SimpleMatrixFunction {    	
+    	public double call( double value ) ;
     }
     @FunctionalInterface
     static interface MatrixColFunction {    	

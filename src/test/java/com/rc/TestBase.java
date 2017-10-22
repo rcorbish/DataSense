@@ -273,17 +273,17 @@ public class TestBase {
 			}
 		}; 
 		
-		double LAMBDA 	= 0.00001;	
+		double LAMBDA 	= 0.00002;	
 
 		Fmincg cgs = new Fmincg( ) ; //(sc,it) -> { if( (it%500)==0 ){ System.out.println( it + " : " + sc ) ;} } ) ;
-		Matrix X = cgs.solve( cost, grad, A, B, LAMBDA, 10_000 ) ;
+		Matrix X = cgs.solve( cost, grad, A, B, LAMBDA, 1_000 ) ;
 		for( int i=0 ; i<X.length() ; i++ ) {
-			assertEquals( "CGD solver (AX=B) incorrect factor X[" + i + "]", (i+1), X.data[i], 0.01 ) ;
+			assertEquals( "CGD solver (AX=B) incorrect factor X[" + i + "]", (i+1), X.data[i], 0.02 ) ;
 		}
 		Matrix Bpredict = A.mmul( X ) ;
 		Bpredict.subi( B ) ;
-		double err = Bpredict.map( (v,m,r,c) -> v*v ).sum() ;
-		assertTrue( "Total error too big", err<1e-3 ) ;
+		double err = Bpredict.map( v -> v*v ).sum() ;
+		assertTrue( "Total error too big", err<1e-5 ) ;
 		
 		for( int i=0 ; i<Bpredict.length() ; i++ ) {
 			assertEquals( "CGD solver (AX=B) incorrect prediction[" + i + "]", 0, Bpredict.data[i], 0.001 ) ;
