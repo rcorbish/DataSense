@@ -2,6 +2,7 @@ package com.rc;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import org.junit.After;
@@ -240,11 +241,11 @@ public class TestBase {
 	@Test 
 	public void testConjugateGradientDescent() {
 		Matrix A = new Matrix( 5, 4,
-				1.00000 ,  1.00000 ,  1.00000 ,  1.00000 ,  1.00000 ,
-				0.57978 ,  0.93114 ,  0.20273 ,  0.58061 ,  0.74229 ,
-				0.48296 ,  0.19064 ,  0.47324 ,  0.37277 ,  0.75313 ,
-				0.76184 ,  0.53417 ,  0.93904 ,  0.34721 ,  0.76354  ) ; 
-		Matrix B = new Matrix( 5, 1,    0.464330,  0.837568,  0.083792,  0.509288,  0.746724 ) ; 
+				1.000000,   1.000000,   1.000000,   1.000000,   1.000000,
+			    0.747288,   0.806088,   0.292693,   0.079899,   0.630942,
+			    0.500764,   0.380189,   0.464858,   0.645147,   0.490761,
+			    0.124043,   0.330575,   0.880164,   0.982739,   0.723298  ) ; 
+		Matrix B = new Matrix( 5, 1,     4.4930,  5.0760,  6.5010,  7.0270, 6.6270 ) ; 
 		
 		Fmincg.CostFunction cost = new Fmincg.CostFunction() {			
 			@Override
@@ -272,17 +273,20 @@ public class TestBase {
 			}
 		}; 
 		
-		double LAMBDA 	= 0.01 ;	
+		double LAMBDA 	= 0.00001;	
 
-		Fmincg cgs = new Fmincg() ;
-		Matrix X = cgs.solve( cost, grad, A, B, LAMBDA, 1000 ) ;
-		//System.out.println( X ) ;
+		Fmincg cgs = new Fmincg( ) ; //(sc,it) -> { if( (it%500)==0 ){ System.out.println( it + " : " + sc ) ;} } ) ;
+		Matrix X = cgs.solve( cost, grad, A, B, LAMBDA, 10_000 ) ;
+		for( int i=0 ; i<X.length() ; i++ ) {
+			assertEquals( "CGD solver (AX=B) incorrect factor X[" + i + "]", (i+1), X.data[i], 0.01 ) ;
+		}
 		Matrix Bpredict = A.mmul( X ) ;
 		Bpredict.subi( B ) ;
-		double err = Bpredict.sum() ;
-		System.out.println( "Total error = " + err ) ;
+		double err = Bpredict.map( (v,m,r,c) -> v*v ).sum() ;
+		assertTrue( "Total error too big", err<1e-3 ) ;
+		
 		for( int i=0 ; i<Bpredict.length() ; i++ ) {
-			assertEquals( "CGD solver (AX=B) incorrect factor X[" + i + "]", 0, Bpredict.data[i], 0.1 ) ;
+			assertEquals( "CGD solver (AX=B) incorrect prediction[" + i + "]", 0, Bpredict.data[i], 0.001 ) ;
 		}
 	}
 }

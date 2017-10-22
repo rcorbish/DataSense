@@ -23,6 +23,10 @@ public class Blas extends Compute {
 				double A[], int LDA, 
 				double B[], int LDB
 				);
+		
+		double cblas_dnrm2( int N, 
+				double A[], int LDA
+				);
 
 		int cblas_dgemm( int order, int transA, int transB , 
 				int M, int N, int K, 
@@ -103,6 +107,16 @@ public class Blas extends Compute {
 				A.length(), 
 				A.data, 1, 
 				B.data, 1
+				) ;
+	}
+
+	@Override
+	public double norm( Matrix A ) {
+		if( !A.isVector ) throw new RuntimeException( String.format( "Norm requires vectors" ) )  ;
+
+		return  OpenBlas.INSTANCE.cblas_dnrm2( 
+				A.length(), 
+				A.data, 1
 				) ;
 	}
 

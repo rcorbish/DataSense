@@ -16,26 +16,27 @@ public class Fmincg {
 	static interface GradientsFunction {
 		public Matrix call( Matrix X, Matrix y, Matrix theta, double lambda ) ;
 	}
+	@FunctionalInterface
+	static interface ProgressFunction {
+		public void call( double score, int iteration ) ;
+	}
 
-
+	private ProgressFunction progress ;
+	public Fmincg() {
+		this( null ) ;
+	}
+	public Fmincg( ProgressFunction progress ) {
+		this.progress = progress ;
+	}
+	
 	public Matrix solve( CostFunction cost, GradientsFunction gradients, 
 			Matrix Xin, Matrix yin,
 			double lambda, int maxIters ) {
 
 		log.info( "Start conjugate gradient descent" ) ;
 
-// 		Add bias to X
-//		DoubleMatrix Xcopy = new DoubleMatrix( X.rows, X.columns + 1 ) ;
-//		for( int i=0 ; i<X.rows ; i++ ) {
-//			for( int j=0 ; j<X.columns ; j++ ) {
-//				Xcopy.put( i,  j+1, X.get( i,j ) ) ;
-//			}
-//			Xcopy.put( i,0, 1.0 ) ;
-//		}
-		//X = Xcopy ;
-		// Init theta to 0
-		
-		Matrix theta = new Matrix( Xin.N, yin.N ) ;
+		// theta starts at 0,0,0...0
+		Matrix theta = Matrix.fill( Xin.N, yin.N, 0.0 ) ;
 		
 		double RHO = 0.01;                           
 		double SIG = 0.5;       //% RHO and SIG are the constants in the Wolfe-Powell conditions
@@ -46,13 +47,13 @@ public class Fmincg {
 
 		double red = 1.0 ;
 
-		boolean ls_failed = false ; //  no previous line search has failed
+		int numConsecutiveSearchFails = 0 ; //  no previous line search has failed
 
 		Matrix df1 = gradients.call(Xin, yin, theta, lambda) ;
 		double f1 = cost.call(Xin, yin, theta, lambda) ;
 		Matrix s = df1.mul(-1) ;
 
-		double d1 = -s.dot(s) ;
+		double d1 = -s.dot() ; 
 		double z1 = red / ( 1.0 - d1 ) ;
 
 		int iterations = 0;   
@@ -88,9 +89,9 @@ public class Fmincg {
 					if( f2 > f1 ) {
 						z2 = z3 - (0.5*d3*z3*z3)/(d3*z3+f2-f3);   		// quadratic fit
 					} else {
-						double A = 6*(f2-f3)/z3+3*(d2+d3);             	// cubic fit
-						double B = 3*(f3-f2)-z3*(d3+2*d2);
-						z2 = (Math.sqrt(B*B-A*d2*z3*z3)-B)/A;      		// numerical error possible - ok!
+						double A = 6*(f2-f3)/z3 + 3*(d2+d3);           	// cubic fit
+						double B = 3*(f3-f2) - z3*(d3+2*d2);
+						z2 = ( Math.sqrt( B*B - A*d2*z3*z3 ) - B ) / A;      
 					}
 					if( !Double.isFinite(z2) ) {
 						z2 = z3 / 2.0 ;
@@ -150,13 +151,14 @@ public class Fmincg {
 				d2 = df2.dot(s) ;
 			} // end of line search
 
-			
 			if( success ) { 
+				numConsecutiveSearchFails = 0 ; 
+
 				f1 = f2 ;
 
-				Matrix dn = s.mul( df1.dot( df1 ) ) ;
+				Matrix dn = s.mul( df1.dot() ) ;
 				Matrix up = new Matrix( 1, dn.M, new double[dn.M*dn.M] ) ;
-				up.put( 0, 0, df2.dot( df2 ) - df1.dot( df2 ) );
+				up.put( 0, 0, df2.dot() - df1.dot( df2 ) );
 				
 				Matrix div = dn.divLeft( up ).transpose() ;   
 				s = div.subi( df2 ) ;
@@ -168,19 +170,19 @@ public class Fmincg {
 				d2 = df1.dot(s) ;
 				if( d2>0 ) {
 					s = df1.mul( -1 ) ;
-					d2 = -s.dot(s) ;
+					d2 = -s.dot() ;
 				}
 
 				z1 *= Math.min( RATIO, d1/(d2-Double.MIN_VALUE ) ) ;
-
 				d1 = d2;
-				ls_failed = false ;   // this line search did not fail
 			} else {
+				numConsecutiveSearchFails ++ ;
+				// reset to previous guess
 				theta 	= theta0 ;
 				f1 		= f0 ;
 				df1 	= df0 ;
 
-				if( ls_failed || iterations>maxIters ) {
+				if( numConsecutiveSearchFails>1 || iterations>maxIters ) {
 					break ;
 				}
 
@@ -189,11 +191,14 @@ public class Fmincg {
 				df2 = tmp ;
 				
 				s = df1.mul( -1 ) ;
-				d1 = s.dot( s ) ;
+				d1 = -s.dot() ;
 				z1 = 1.0 / (1.0 - d1 ) ;                     
-				ls_failed = true ;
 			}
-		}
+			
+			if( progress != null ) {
+				progress.call( f1, iterations) ;
+			}
+		} // main iteration loop
 		log.info( "Conjugate gradient descent completed in {} iterations", iterations ) ;
 
 		return theta ;

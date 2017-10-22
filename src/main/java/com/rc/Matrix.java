@@ -134,6 +134,15 @@ public class Matrix {
         return Engine.dot(this, B ) ;
     }
 
+    public double dot() {
+    	double x = norm() ;
+        return x * x ;
+    }
+
+    public double norm() {
+        return Engine.norm(this) ;
+    }
+
     //
     // X = A\B	( matlab/octave convention )
     //
@@ -157,17 +166,21 @@ public class Matrix {
     
     public Matrix transpose() {
 
-		double data2[] = new double[ data.length] ;
-    	
-        for( int i=0 ; i<M ; i++ ) {
-        	for( int j=0 ; j<N ; j++ ) {
-        		int i1 = i + j*M ;
-        		int i2 = j + i*N ;
-        		
-                data2[ i2 ] = data[ i1 ];
-        	}
-		}
-		Matrix rc = new Matrix( this.N, this.M, data2 ) ;
+    	Matrix rc ;
+    	if( isVector ) {
+    		rc = new Matrix( this.N, this.M, data.clone() ) ;	
+    	} else {
+			double data2[] = new double[ data.length] ;
+	        for( int i=0 ; i<M ; i++ ) {
+	        	for( int j=0 ; j<N ; j++ ) {
+	        		int i1 = i + j*M ;
+	        		int i2 = j + i*N ;
+	        		
+	                data2[ i2 ] = data[ i1 ];
+	        	}
+			}
+			rc = new Matrix( this.N, this.M, data2 ) ;
+    	}
         return rc ;
     }
 

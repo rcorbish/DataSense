@@ -61,6 +61,13 @@ public class Cuda extends Compute {
 				double rc[]
                 ) ;
 
+		int cublasDnrm2_v2(
+				Pointer	handle ,
+				int n,
+				Pointer x, int incx,
+				double rc[]
+                ) ;
+
 		int cublasDtrsm_v2 (
 				Pointer  handle, 
 				int side,
@@ -184,6 +191,33 @@ public class Cuda extends Compute {
 			CuBlas.INSTANCE.cublasFree( gpuB ) ;
 		}
 		return dotProduct[0] ;
+	}
+
+
+	@Override
+	public double norm( Matrix A ) {
+		if( !A.isVector ) throw new RuntimeException( String.format( "Norm requires a vector" ) )  ;
+
+		Pointer gpuA = null ;
+		double norm[] = new double[1] ;
+		try {
+			gpuA = getMemory( A.length() ) ;
+			
+			int rc = CuBlas.INSTANCE.cublasSetVector(A.length(), DoubleSize, A.data, 1, gpuA, 1 ) ;
+			checkrc( rc ) ;
+
+			rc = CuBlas.INSTANCE.cublasDnrm2_v2( 
+				cublasHandle,
+				A.length(), 
+				gpuA, 1, 
+				norm
+				) ;
+			checkrc( rc ) ;
+			
+		} finally {
+			CuBlas.INSTANCE.cublasFree( gpuA ) ;
+		}
+		return norm[0] ;
 	}
 
 	@Override
