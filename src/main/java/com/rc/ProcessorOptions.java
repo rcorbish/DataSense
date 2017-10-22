@@ -49,7 +49,7 @@ public class ProcessorOptions {
 				dateBaseline = today.get( Calendar.YEAR ) * 100 + today.get( Calendar.MONTH) ;
 			}
 		}
-		if( get( params, "to-dayss" ) != null ) {
+		if( get( params, "to-days" ) != null ) {
 			dateParser = ProcessorOptions::toDays ;
 			if( baseline.equals( "1900") ) {
 				dateBaseline = 19000000 ;

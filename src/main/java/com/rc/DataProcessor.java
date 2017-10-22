@@ -16,6 +16,7 @@ public class DataProcessor {
 		try {
 			Dataset dataset = Loader.load( 1000, data, options ) ;
 			Matrix A  = dataset.train ;
+			Matrix T  = dataset.test ;
 			
 			rc = "Unsupported method" ; 
 			if( "linear".equals( options.method ) ) {
@@ -31,7 +32,8 @@ public class DataProcessor {
 					}
 				}
 				Matrix B = A.extractColumns( feature ) ;
-				B.name = "B" ;
+				Matrix YR = T.extractColumns( feature ) ; 
+				
 				log.debug( "features {}", B ) ;		
 				
 				if( options.square ) {
@@ -39,16 +41,29 @@ public class DataProcessor {
 					A2.map( (value, context, r, c) ->  value * value ) ;			
 					A2.prefixLabels( "sqr " ) ;
 					A = A.appendColumns(A2) ;
+
+					Matrix T2 = T.dup() ;
+					T2.map( (value, context, r, c) ->  value * value ) ;			
+					T2.prefixLabels( "sqr " ) ;
+					T = T.appendColumns(T2) ;
 				}
 	
 				if( options.addOnes ) {
 					Matrix A2 = Matrix.fill( A.M, 1,  1.0, "bias" ) ;
 					A = A.appendColumns(A2) ;
+
+					Matrix T2 = Matrix.fill( T.M, 1,  1.0, "bias" ) ;
+					T = T.appendColumns(T2) ;
 				}
+				
 				Matrix X = A.divLeft(B) ;			
 				X.labels = A.labels ;
-				Matrix Y = dataset.test.mmul(X) ;
-				rc = Y ;
+				Matrix Y = T.mmul(X) ;
+				Y.labels = new String[] { "Predicted" } ;
+				Matrix YE = Y.sub(YR).map( (value, context, r, c) ->  value * value  ) ;
+				YE.labels = new String[] { "MSE" } ;
+				rc = new Dataset( X, Y.appendColumns( YR ).appendColumns(YE) ) ;
+				
 			} else if( "correlation".equals( options.method ) ) {
 				// 1st covariance
 				Matrix A4 = A.zeroMeanColumns() ;
@@ -72,6 +87,7 @@ public class DataProcessor {
 			} else if( "statistics".equals( options.method ) ) {
 				Matrix AN = A.min() ;
 				Matrix AX = A.max() ;
+				Matrix AC = A.countBuckets( 1e-4 ) ;
 				Matrix AM = A.mean() ;
 				Matrix AD = A.stddev( AM ) ;
 				Matrix AS = A.skewness( AM ) ;
@@ -82,6 +98,7 @@ public class DataProcessor {
 					.appendRows( AD )
 					.appendRows( AS )
 					.appendRows( AK )
+					.appendRows( AC )
 					;
 				rc = X ;
 			}

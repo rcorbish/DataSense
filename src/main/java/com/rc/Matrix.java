@@ -3,7 +3,9 @@ package com.rc ;
 
 import java.lang.reflect.Type;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Random;
+import java.util.Set;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -21,10 +23,13 @@ public class Matrix {
 
     double data[] ;
 
-    private boolean isVector ;
+    public boolean isVector ;
 
-    public Matrix( int rows, int columns ) {
+    public Matrix( int rows, int columns, String ... labels ) {
         this( rows, columns, new double[ rows * columns ] ) ;
+        if( labels != null ) {
+        	this.labels = labels.clone() ;
+        }
     }
 
     public Matrix( int rows, int columns, double ... data ) {
@@ -32,6 +37,10 @@ public class Matrix {
         this.N = columns ;
         this.data = data ;
         isVector = rows==1 || columns==1 ;
+    }
+    
+    public Matrix( int rows, int columns ) {
+    	this( rows, columns, new double[ rows * columns ] ) ;
     }
 
     public Matrix dup() {
@@ -48,11 +57,30 @@ public class Matrix {
     }
 
     public Matrix sub( Matrix O ) {
+    	Matrix rc = dup() ;
+    	return rc.subi( O ) ;
+    }
+    
+    public Matrix add( Matrix O ) {
+    	Matrix rc = dup() ;
+    	return rc.addi( O ) ;
+    }
+    
+
+    public Matrix subi( Matrix O ) {
     	for( int i=0 ; i<length() ; i++ ) {
     		data[i] -= O.data[i] ;
     	}    		
         return this ;
     }
+    
+    public Matrix addi( Matrix O ) {
+    	for( int i=0 ; i<length() ; i++ ) {
+    		data[i] += O.data[i] ;
+    	}    		
+        return this ;
+    }
+
     public Matrix muli( double a ) {
     	for( int i=0 ; i<length() ; i++ ) {
     		data[i] *= a ;
@@ -60,8 +88,50 @@ public class Matrix {
         return this ;
     }
 
+    public Matrix mul( double a ) {
+    	Matrix rc = dup() ;
+        return rc.muli( a )  ;
+    }
+
+    
+    public Matrix divi( double a ) {
+    	for( int i=0 ; i<length() ; i++ ) {
+    		data[i] /= a ;
+    	}    		
+        return this ;
+    }
+
+    public Matrix div( double a ) {
+    	Matrix rc = dup() ;
+        return rc.divi( a )  ;
+    }
+
+    public Matrix hmul( Matrix O) {
+    	Matrix rc = dup() ;
+        return rc.hmuli( O )  ;
+    }
+
+    public Matrix hmuli( Matrix O ) {
+    	for( int i=0 ; i<length() ; i++ ) {
+    		data[i] *= O.data[i] ;
+    	}    		
+        return this ;
+    }
+    
+    public double sum() {
+    	double rc = 0 ;
+    	for( int i=0 ; i<length() ; i++ ) {
+    		rc += data[i] ;
+    	}    		
+        return rc ;
+    }
+
     public Matrix mmul( Matrix B ) {
         return Engine.mmul(this, B ) ;
+    }
+
+    public double dot( Matrix B ) {
+        return Engine.dot(this, B ) ;
     }
 
     //
@@ -84,6 +154,7 @@ public class Matrix {
         return Engine.solve2(this, B ) ;
     }
 
+    
     public Matrix transpose() {
 
 		double data2[] = new double[ data.length] ;
@@ -100,9 +171,25 @@ public class Matrix {
         return rc ;
     }
 
+	public Matrix countBuckets( double precision ) {
+		Matrix rc = new Matrix( 1, N, labels ) ;
+
+		Set<String> buckets = new HashSet<>() ;
+		
+		int ix = 0 ;
+		for( int i=0 ; i<N ; i++ ) {
+			buckets.clear() ;
+			for( int j=0 ; j<M ; j++ ) {
+				buckets.add( String.valueOf( (int)( data[ix] / precision ) ) ) ;
+				ix++ ;
+			}
+			rc.data[i] = buckets.size() ;
+		}		
+		return rc ;
+	}
+
 	public Matrix mean() {
-		Matrix rc = new Matrix( 1, N ) ;
-		rc.labels = labels ;
+		Matrix rc = new Matrix( 1, N, labels ) ;
 
 		int ix = 0 ;
 		for( int i=0 ; i<N ; i++ ) {
@@ -118,8 +205,7 @@ public class Matrix {
 	}
 
 	public Matrix min() {
-		Matrix rc = new Matrix( 1, N ) ;
-		rc.labels = labels ;
+		Matrix rc = new Matrix( 1, N, labels ) ;
 
 		int ix = 0 ;
 		for( int i=0 ; i<N ; i++ ) {
@@ -134,8 +220,7 @@ public class Matrix {
 
 	
 	public Matrix max() {
-		Matrix rc = new Matrix( 1, N ) ;
-		rc.labels = labels ;
+		Matrix rc = new Matrix( 1, N, labels ) ;
 
 		int ix = 0 ;
 		for( int i=0 ; i<N ; i++ ) {
@@ -160,8 +245,7 @@ public class Matrix {
 	}
 	
 	public Matrix variance( Matrix means ) {
-		Matrix rc = new Matrix( 1, N ) ;
-		rc.labels = labels ;
+		Matrix rc = new Matrix( 1, N, labels ) ;
 
 		int ix = 0 ;
 		for( int i=0 ; i<N ; i++ ) {
@@ -178,8 +262,7 @@ public class Matrix {
 	}
 
 	public Matrix skewness( Matrix means ) {
-		Matrix rc = new Matrix( 1, N ) ;
-		rc.labels = labels ;
+		Matrix rc = new Matrix( 1, N, labels ) ;
 
 		int ix = 0 ;
 		for( int i=0 ; i<N ; i++ ) {
@@ -202,8 +285,7 @@ public class Matrix {
 
 
 	public Matrix kurtosis( Matrix means ) {
-		Matrix rc = new Matrix( 1, N ) ;
-		rc.labels = labels ;
+		Matrix rc = new Matrix( 1, N, labels ) ;
 
 		int ix = 0 ;
 		for( int i=0 ; i<N ; i++ ) {
@@ -226,7 +308,7 @@ public class Matrix {
 
 
 	public Matrix zeroMeanColumns() {
-		Matrix rc = new Matrix( M, N ) ;
+		Matrix rc = new Matrix( M, N, labels ) ;
 
 		for( int i=0 ; i<N ; i++ ) {
 			// Mean
@@ -248,7 +330,7 @@ public class Matrix {
 	
 	
 	public Matrix normalizeColumns() {
-		Matrix rc = new Matrix( M, N ) ;
+		Matrix rc = new Matrix( M, N, labels ) ;
 
 		for( int i=0 ; i<N ; i++ ) {
 			// Mean
@@ -299,8 +381,8 @@ public class Matrix {
 	
 	public Matrix extractColumns( int ... cols ) {
 		
-		Matrix rc = new Matrix( M, cols.length ) ;
-		rc.labels = new String[cols.length] ;
+		Matrix rc = new Matrix( M, cols.length, new String[cols.length] ) ;
+
 		for( int i=0 ; i<cols.length ; ++i ) {
 			System.arraycopy( data, M*cols[i], rc.data, M*i, M ) ;
 		}
@@ -326,37 +408,34 @@ public class Matrix {
 			throw new RuntimeException( "Incompatible row counts for appendColumns" ) ;
 		}
 		
-		Matrix rc = new Matrix( M, N+other.N ) ;
-		
+		Matrix rc = new Matrix( M, N+other.N, new String[ N+other.N ] ) ;
+
 		System.arraycopy( data, 0, rc.data, 0, length() ) ;		
 		System.arraycopy( other.data, 0, rc.data, M*N, other.length() ) ;
 
-		rc.labels = new String[ rc.N ] ;
-		System.arraycopy( labels, 0, rc.labels, 0, N ) ;		
-		System.arraycopy( other.labels, 0, rc.labels, N, other.N ) ;
-		
+		if( labels != null && other.labels != null ) {
+			System.arraycopy( labels, 0, rc.labels, 0, N ) ;		
+			System.arraycopy( other.labels, 0, rc.labels, N, other.N ) ;
+		}		
 		return rc ;
 	}
 
 	public Matrix extractRows( int ... rows ) {
 		
-		Matrix rc = new Matrix( rows.length, N ) ;
-		rc.labels = labels ;
+		Matrix rc = new Matrix( rows.length, N, labels ) ;
 
 		for( int i=0 ; i<rows.length ; i++ ) {
 			for( int j=0 ; j<N ; j++ ) {
 				rc.put( i,j, get(rows[i],j) ) ;
 			}
 		}
-		System.out.println( "Extracted " +  rc ) ;
 		for( int i=0 ; i<rows.length ; i++ ) {
 			for( int j=0 ; j<N ; j++ ) {
 				int startCopy = j*M + rows[i] ;
 				System.arraycopy( data, startCopy+1, data, startCopy, M-rows[i]-1 ) ;
 			}
 		}
-		M -= rc.M ;
-		reshape( M, N ) ;
+		reshape( M-rc.M, N ) ;
 		
 		return rc ;
 	}
@@ -367,8 +446,7 @@ public class Matrix {
 			throw new RuntimeException( "Incompatible column counts for appendRows" ) ;
 		}
 		
-		Matrix rc = new Matrix( M+other.M, N ) ;
-		rc.labels = labels ;
+		Matrix rc = new Matrix( M+other.M, N, labels ) ;
 
 		for( int i=0 ; i<M ; i++ ) {
 			for( int j=0 ; j<N ; j++ ) {
@@ -394,7 +472,8 @@ public class Matrix {
 	}
 
 	public Matrix mapColumn( MatrixColFunction func ) {
-		Matrix rc = new Matrix(M,N) ;
+		Matrix rc = new Matrix( M, N, labels ) ;
+
 		for( int i=0 ; i<N ; i++ ) {
 			rc.putColumn( i, func.call( data, this, i*M, M ) ) ;
 		}
@@ -414,7 +493,10 @@ public class Matrix {
 	}
 	
     public double get( int r, int c ) {
-        return data[r + c*M]  ;
+        return get( r + c*M ) ;
+    }
+    public double get( int ix ) {
+        return data[ix]  ;
     }
     public void put( int r, int c, double v ) {
         data[r + c*M] = v ;  ;
@@ -449,7 +531,6 @@ public class Matrix {
 		return rc ;
 	}
 	static public Matrix fill( int m,int n, double v ) {
-		Random rng = new Random() ;
 		Matrix rc = new Matrix( m, n ) ;
 		Arrays.fill( rc.data, v);
     	return rc ;
@@ -493,6 +574,9 @@ public class Matrix {
     		JsonObject object = new JsonObject();
 
     		object.addProperty("M", src.M);
+    		if( src.name != null ) {
+    			object.addProperty("name", src.name);
+    		}
 
     		if( src.isVector ) {
 	    		object.addProperty("M", src.length() );

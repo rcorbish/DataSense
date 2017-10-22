@@ -3,6 +3,7 @@ package com.rc;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.rc.Blas.OpenBlas;
 import com.sun.jna.Library;
 import com.sun.jna.Native;
 import com.sun.jna.Platform;
@@ -30,7 +31,7 @@ public class Cuda extends Compute {
 
 	public interface CuBlas extends Library {
 		CuBlas INSTANCE = (CuBlas)
-				Native.loadLibrary((Platform.isWindows() ? "msvcrt" : "cublas"),
+				Native.loadLibrary((Platform.isWindows() ? "libcublas" : "cublas"),
 						CuBlas.class);
 
 		int cublasCreate_v2( Pointer handle[] ) ;
@@ -39,6 +40,8 @@ public class Cuda extends Compute {
 		int cublasFree( Pointer buf ) ;
 		int cublasSetMatrix(int rows, int cols, int elemSize, double A[], int lda, Pointer B, int ldb ) ;
 		int cublasGetMatrix(int rows, int cols, int elemSize, Pointer A, int lda, double B[], int ldb ) ;
+		int cublasSetVector(int len, int elemSize, double A[], int lda, Pointer B, int ldb ) ;
+		int cublasGetVector(int len, int elemSize, Pointer A, int lda, double B[], int ldb ) ;
 		int cublasGetVersion_v2(Pointer handle, int version[] ) ;
 
 		int cublasDgemm_v2(Pointer handle,
@@ -49,6 +52,14 @@ public class Cuda extends Compute {
 				Pointer			B, int ldb,
 				double          beta[],
 				Pointer         C, int ldc) ;
+
+		int cublasDdot_v2(
+				Pointer	handle ,
+				int n,
+				Pointer x, int incx,
+				Pointer y, int incy,
+				double rc[]
+                ) ;
 
 		int cublasDtrsm_v2 (
 				Pointer  handle, 
@@ -128,8 +139,8 @@ public class Cuda extends Compute {
 		this.version = version[0] ;
 		
 		log.info( "Cuda version: {}", getVersion() ) ;
-
 	}
+	
 
 	@Override
 	public String getVersion() {
@@ -143,10 +154,43 @@ public class Cuda extends Compute {
 		log.info( "Diconected from GPU" ) ;
 	}
 
+	@Override
+	public double dot( Matrix A, Matrix B ) {
+		if( !A.isVector || !B.isVector ) throw new RuntimeException( String.format( "Dot product requires vectors" ) )  ;
+		if( A.length() != B.length() ) throw new RuntimeException( String.format( "Incompatible matrix sizes: %d  and %d", A.length(), B.length() ) )  ;
+
+		Pointer gpuA = null, gpuB = null;
+		double dotProduct[] = new double[1] ;
+		try {
+			gpuA = getMemory( A.length() ) ;
+			gpuB = getMemory( B.length() ) ;
+			
+			int rc = CuBlas.INSTANCE.cublasSetVector(A.length(), DoubleSize, A.data, 1, gpuA, 1 ) ;
+			checkrc( rc ) ;
+			rc = CuBlas.INSTANCE.cublasSetVector(B.length(), DoubleSize, B.data, 1, gpuB, 1 ) ;
+			checkrc( rc ) ;
+
+			rc = CuBlas.INSTANCE.cublasDdot_v2( 
+				cublasHandle,
+				A.length(), 
+				gpuA, 1, 
+				gpuB, 1,
+				dotProduct
+				) ;
+			checkrc( rc ) ;
+			
+		} finally {
+			CuBlas.INSTANCE.cublasFree( gpuA ) ;
+			CuBlas.INSTANCE.cublasFree( gpuB ) ;
+		}
+		return dotProduct[0] ;
+	}
+
+	@Override
 	public Matrix mmul( Matrix A, Matrix B ) {
 		if( A.N != B.M ) throw new RuntimeException( String.format( "Incompatible matrix sizes: %d x %d  and %d x %d", A.M, A.N, B.M, B.N ) )  ;
 
-		Matrix C = new Matrix( A.M, B.N ) ;
+		Matrix C = new Matrix( A.M, B.N, B.labels ) ;
 
 		Pointer gpuA=null, gpuB=null, gpuC=null ;
 		
@@ -155,13 +199,13 @@ public class Cuda extends Compute {
 			gpuB = getMemory(B.M*B.N) ;
 			gpuC = getMemory(A.M*B.N) ;
 	
-			log.info( "Sending A and B to GPU" ) ;
+			log.debug( "Sending A and B to GPU" ) ;
 			int rc = CuBlas.INSTANCE.cublasSetMatrix(A.M, A.N, DoubleSize, A.data, A.M, gpuA, A.M ) ;
 			checkrc( rc ) ;
 			rc = CuBlas.INSTANCE.cublasSetMatrix(B.M, B.N, DoubleSize, B.data, B.M, gpuB, B.M ) ;
 			checkrc( rc ) ;
 			
-			log.info( "Execute multiply" ) ;
+			log.debug( "Execute multiply" ) ;
 			rc = CuBlas.INSTANCE.cublasDgemm_v2( cublasHandle, 
 					CUBLAS_OP_N,  CUBLAS_OP_N,
 					A.M,B.N,B.M, 
@@ -173,7 +217,7 @@ public class Cuda extends Compute {
 					) ;
 			checkrc( rc ) ;
 	
-			log.info( "Copying C from GPU" ) ;
+			log.debug( "Copying C from GPU" ) ;
 			rc = CuBlas.INSTANCE.cublasGetMatrix(C.M, C.N, DoubleSize, gpuC, C.M, C.data, C.M ) ;
 			checkrc( rc ) ;
 		} finally {
@@ -181,7 +225,7 @@ public class Cuda extends Compute {
 			CuBlas.INSTANCE.cublasFree( gpuB ) ;
 			CuBlas.INSTANCE.cublasFree( gpuC ) ;
 		}	
-		log.info( "mpy complete");
+		log.debug( "mpy complete");
 		return C ;
 	}
 
@@ -208,19 +252,19 @@ public class Cuda extends Compute {
 		log.info( "Solve Ax=b  {} x {} ", A.M, A.N ) ;
 
 		if( A.M<A.N) throw ( new RuntimeException( "M must be >= N" ) ) ;
-		if( A.M!=B.M) throw ( new RuntimeException( "M must be the same" ) ) ;
+		//if( A.M!=B.M) throw ( new RuntimeException( "M must be the same" ) ) ;
 		Matrix x = null ;
 		
 		Pointer gpuD=null, gpuA=null, gpuB=null, gpuW=null, gpuT=null ;
 		try {
 			gpuD = getMemory(1);				// device return code
 			gpuA = getMemory(A.M*A.N);			// A
-			gpuB = getMemory(A.M*A.N);			// this will also hold Q' x b   
+			gpuB = getMemory(A.M*B.N);			// this will also hold Q' x b   
 	
 			log.info( "Sending A and B to GPU" ) ;
 			int rc = CuBlas.INSTANCE.cublasSetMatrix( A.M, A.N, DoubleSize, A.data, A.M, gpuA, A.M ) ;
 			checkrc(rc) ;
-			rc = CuBlas.INSTANCE.cublasSetMatrix( B.M, B.N, DoubleSize, B.data, B.M, gpuB, A.M ) ;
+			rc = CuBlas.INSTANCE.cublasSetMatrix( B.M, B.N, DoubleSize, B.data, B.M, gpuB, B.M ) ;
 			checkrc(rc) ;
 	
 			// workspace size
@@ -250,7 +294,7 @@ public class Cuda extends Compute {
 					) ; 
 			checkrc( rc ) ;
 			log.info( "factored QR <- A" ) ;
-//			printMatrix(A.M, B.N, gpuA);
+//			printMatrix(A.M, A.N, gpuA);
 			
 			// Q' x b   -> gpuB		
 			log.info( "Perform Q' x b" ) ;
@@ -284,10 +328,10 @@ public class Cuda extends Compute {
 					gpuB, B.M
 					) ;
 			checkrc( rc ) ;
-//			printMatrix( A.N, B.N, gpuB ) ;
+//			printMatrix( 4, 4, gpuB ) ;
 	
 			log.info( "Copying x from GPU" ); 
-			x = new Matrix( A.N, B.N ) ;
+			x = new Matrix( A.N, B.N, B.labels ) ;
 			rc = CuBlas.INSTANCE.cublasGetMatrix(x.M, x.N, DoubleSize, gpuB, B.M, x.data, x.M ) ;
 			checkrc( rc ) ;
 		} finally {		
@@ -319,7 +363,7 @@ public class Cuda extends Compute {
 	protected void printMatrix( int M, int N, Pointer A ) {
 		double a[] = new double[M*N] ;
 		int rc = CuBlas.INSTANCE.cublasGetMatrix( M, N, DoubleSize, A, M, a, M ) ;
-		System.out.println( ".... " + rc ) ;
+		System.out.println( ".... RC=" + rc ) ;
 		
 		for( int i=0 ; i<Math.min( 8, M) ; i++ ) {
 			for( int j=0 ; j<Math.min( 8, N) ; j++ ) {

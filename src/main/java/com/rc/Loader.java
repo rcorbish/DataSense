@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
-import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.DecimalFormat;
@@ -159,22 +158,21 @@ public class Loader {
 
 			verifyMappedColumns( all, maps ) ;
 
-			rc = new Dataset() ;
+			rc = new Dataset( all, new Matrix(0, N, headers ) ) ;
 			int testRows = (int)(options.testRatio*m) ;
 			
 			log.info( "Dataset has {} total and {} test data rows", m, testRows ) ;
-			rc.test = new Matrix(0, N ) ;
-			rc.test.name = "TEST" ;
-			rc.train = all ;
-			rc.train.name = "TRAIN" ;
 
 			if( options!=null && options.discrete ) {
 				rc.train = makeDiscreteColumns( rc.train, maps ) ;
+				rc.test.labels = rc.train.labels.clone() ;
+				rc.test.N = rc.train.N ;
 		   	}
 
 			for( int i=0 ; i<testRows ; i++ ) {
-				int testRow = rng.nextInt( all.M ) ;
-				rc.test.appendRows( all.extractRows( testRow ) ) ;
+				int testRow = rng.nextInt( rc.train.M ) ;
+				Matrix test = rc.train.extractRows( testRow ) ;
+				rc.test = rc.test.appendRows( test ) ;
 			}
 			  
 		} // end try()

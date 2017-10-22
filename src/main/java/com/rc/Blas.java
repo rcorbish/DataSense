@@ -13,12 +13,17 @@ public class Blas extends Compute {
 	
 	public interface OpenBlas extends Library {
 		OpenBlas INSTANCE = (OpenBlas)
-				Native.loadLibrary((Platform.isWindows() ? "msvcrt" : "openblas"), OpenBlas.class ) ;
+				Native.loadLibrary((Platform.isWindows() ? "libopenblas" : "openblas"), OpenBlas.class ) ;
 
 		void openblas_set_num_threads( int numThreads ) ;
 		String openblas_get_corename() ;
 		String openblas_get_config() ;
-		
+
+		double cblas_ddot( int N, 
+				double A[], int LDA, 
+				double B[], int LDB
+				);
+
 		int cblas_dgemm( int order, int transA, int transB , 
 				int M, int N, int K, 
 				double alpha, double A[], int LDA, 
@@ -34,7 +39,7 @@ public class Blas extends Compute {
 
 	public interface Lapacke extends Library {
 		Lapacke INSTANCE = (Lapacke)
-				Native.loadLibrary((Platform.isWindows() ? "msvcrt" : "lapacke"), Lapacke.class ) ;
+				Native.loadLibrary((Platform.isWindows() ? "liblapacke" : "lapacke"), Lapacke.class ) ;
 
 		int LAPACKE_dgeqrf_work( 
 				int matrix_layout, 
@@ -87,11 +92,25 @@ public class Blas extends Compute {
 	public String getVersion() {
 		return OpenBlas.INSTANCE.openblas_get_config()  ;
 	}
+
+	
+	@Override
+	public double dot( Matrix A, Matrix B ) {
+		if( !A.isVector || !B.isVector ) throw new RuntimeException( String.format( "Dot product requires vectors" ) )  ;
+		if( A.length() != B.length() ) throw new RuntimeException( String.format( "Incompatible matrix sizes: %d  and %d", A.length(), B.length() ) )  ;
+
+		return  OpenBlas.INSTANCE.cblas_ddot( 
+				A.length(), 
+				A.data, 1, 
+				B.data, 1
+				) ;
+	}
+
 	
 	@Override
 	public Matrix mmul( Matrix A, Matrix B ) {
 
-		Matrix C = new Matrix( A.M, B.N ) ;
+		Matrix C = new Matrix( A.M, B.N, B.labels ) ;
 
 		if( A.N != B.M ) throw new RuntimeException( String.format( "Incompatible matrix sizes: %d x %d  and %d x %d", A.M, A.N, B.M, B.N ) )  ;
 		//		--------------
@@ -111,7 +130,6 @@ public class Blas extends Compute {
 				) ;
 		
 		checkrc( rc ) ;
-		log.info( "mpy complete");
 		return C ;
 	}
 
@@ -128,7 +146,10 @@ public class Blas extends Compute {
 
 		log.info( "Solve Ax=b  {} x {} ", A.M, A.N ) ;
 
-		if( A.M<A.N) throw ( new RuntimeException( "M must be >= N" ) ) ;
+		if( A.M<A.N) {
+			throw ( new RuntimeException( "M must be >= N" ) ) ;
+		}
+		//if( A.M!=B.M) throw ( new RuntimeException( "M must be the same" ) ) ;
 
 		double work[] = new double[1] ;
 		double tau[] = new double[ Math.min(A.M, A.N) ] ;
@@ -181,13 +202,13 @@ public class Blas extends Compute {
 				A.N, B.N, 
 				one, 
 				A.data, A.M, 
-				B.data, A.M
+				B.data, B.M
 				) ;
 //		printMatrix( M, numFeatures, B ) ;
 
 		log.info( "Solved x" ) ;
 
-		Matrix x = new Matrix( A.N, B.N ) ;
+		Matrix x = new Matrix( A.N, B.N, B.labels ) ;
 		for( int f=0 ; f<B.N ; f++ ) {
 			for( int i=0 ; i<A.N ; i++ ) {
 				int xx = i + f*A.N ;
@@ -213,7 +234,11 @@ public class Blas extends Compute {
 			throw new RuntimeException( "Incompatible sizes - columns must match" ) ;
 		}
 		if( A.M > A.N ) {
-			throw new RuntimeException( "Incompatible input - M must be <= N" ) ;
+			int missingCols = A.M - A.N ;
+			Matrix Z = Matrix.fill(A.M, missingCols, 0.0) ;
+			A = A.appendColumns( Z ) ;
+			//throw new RuntimeException( "Incompatible input - M must be <= N" ) ;
+			
 		}
 		//
 		// IN

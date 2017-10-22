@@ -8,6 +8,7 @@ public abstract class Compute implements AutoCloseable {
 
 	public final static String ComputeProperty = "compute_library" ;
 	
+	public abstract double dot( Matrix A, Matrix B ) ;
 	public abstract Matrix mmul( Matrix A, Matrix B ) ;
 	public abstract Matrix solve( Matrix A, Matrix B ) ;
 	public abstract Matrix solve2( Matrix A, Matrix B ) ;
