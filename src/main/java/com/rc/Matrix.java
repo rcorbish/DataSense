@@ -499,7 +499,10 @@ public class Matrix {
         return data[ix]  ;
     }
     public void put( int r, int c, double v ) {
-        data[r + c*M] = v ;  ;
+        put( r + c*M, v ) ;
+    }
+    public void put( int ix, double v ) {
+        data[ix] = v ;  ;
     }
     public void putColumn( int c, double v[] ) {
         System.arraycopy(v, 0, data, c*M, M ) ;  ;

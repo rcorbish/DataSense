@@ -144,7 +144,7 @@ public class Blas extends Compute {
 	//
 	public Matrix solve( Matrix A, Matrix B ) {
 
-		log.info( "Solve Ax=b  {} x {} ", A.M, A.N ) ;
+		log.debug( "Solve Ax=b  {} x {} ", A.M, A.N ) ;
 
 		if( A.M<A.N) {
 			throw ( new RuntimeException( "M must be >= N" ) ) ;
@@ -163,7 +163,7 @@ public class Blas extends Compute {
 		checkrc( rc ) ;
 
 		int lwork = (int)work[0] ;
-		log.info( "Allocated double[{}] for work area", lwork ) ;
+		log.debug( "Allocated double[{}] for work area", lwork ) ;
 
 		work = new double[lwork] ;
 		rc = Lapacke.INSTANCE.LAPACKE_dgeqrf_work(
@@ -175,7 +175,7 @@ public class Blas extends Compute {
 				lwork) ;
 		checkrc( rc ) ;
 		//		printMatrix(1,  N, tau);
-		log.info( "Factored  QR = A" ) ;
+		log.debug( "Factored  QR = A" ) ;
 
 		// Q' x b   -> B		
 		rc = Lapacke.INSTANCE.LAPACKE_dormqr_work(
@@ -191,7 +191,7 @@ public class Blas extends Compute {
 		checkrc( rc ) ;
 		//		printMatrix(M, 1, B);
 
-		log.info( "Created Q'b = Rx" ) ;
+		log.debug( "Created Q'b = Rx" ) ;
 
 		//--------------------------------------
 		// Solve R = Q' x b   
@@ -206,8 +206,6 @@ public class Blas extends Compute {
 				) ;
 //		printMatrix( M, numFeatures, B ) ;
 
-		log.info( "Solved x" ) ;
-
 		Matrix x = new Matrix( A.N, B.N, B.labels ) ;
 		for( int f=0 ; f<B.N ; f++ ) {
 			for( int i=0 ; i<A.N ; i++ ) {
@@ -216,6 +214,7 @@ public class Blas extends Compute {
 				x.data[xx] = B.data[bx] ;
 			}
 		}
+		log.debug( "Solved x = ", x ) ;
 		return x ;
 	}
 

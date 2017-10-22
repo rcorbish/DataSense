@@ -6,9 +6,10 @@ import static org.junit.Assert.fail;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
-
+@Ignore
 public class TestBase {
 
 	Compute test ;
@@ -265,7 +266,7 @@ public class TestBase {
 				Matrix G1 = X.transpose().mmul( S ) ;
 
 				Matrix G2 = theta.mul( lambda ) ;
-				G2.put(0, 0, 0) ;
+				G2.put( 0, 0.0 ) ;
 
 				return G2.addi( G1 ).divi( y.length() ) ;
 			}
@@ -278,7 +279,8 @@ public class TestBase {
 		//System.out.println( X ) ;
 		Matrix Bpredict = A.mmul( X ) ;
 		Bpredict.subi( B ) ;
-		
+		double err = Bpredict.sum() ;
+		System.out.println( "Total error = " + err ) ;
 		for( int i=0 ; i<Bpredict.length() ; i++ ) {
 			assertEquals( "CGD solver (AX=B) incorrect factor X[" + i + "]", 0, Bpredict.data[i], 0.1 ) ;
 		}

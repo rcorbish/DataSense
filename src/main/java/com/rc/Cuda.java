@@ -249,7 +249,7 @@ public class Cuda extends Compute {
 	//  X is A.N x B.N		
 	//
 	public Matrix solve( Matrix A, Matrix B ) {
-		log.info( "Solve Ax=b  {} x {} ", A.M, A.N ) ;
+		log.debug( "Solve Ax=b  {} x {} ", A.M, A.N ) ;
 
 		if( A.M<A.N) throw ( new RuntimeException( "M must be >= N" ) ) ;
 		//if( A.M!=B.M) throw ( new RuntimeException( "M must be the same" ) ) ;
@@ -261,7 +261,7 @@ public class Cuda extends Compute {
 			gpuA = getMemory(A.M*A.N);			// A
 			gpuB = getMemory(A.M*B.N);			// this will also hold Q' x b   
 	
-			log.info( "Sending A and B to GPU" ) ;
+			log.debug( "Sending A and B to GPU" ) ;
 			int rc = CuBlas.INSTANCE.cublasSetMatrix( A.M, A.N, DoubleSize, A.data, A.M, gpuA, A.M ) ;
 			checkrc(rc) ;
 			rc = CuBlas.INSTANCE.cublasSetMatrix( B.M, B.N, DoubleSize, B.data, B.M, gpuB, B.M ) ;
@@ -270,7 +270,7 @@ public class Cuda extends Compute {
 			// workspace size
 			int work[] = new int[1] ;		
 	
-			log.info( "Calculating work area on GPU" ) ;
+			log.debug( "Calculating work area on GPU" ) ;
 			rc = CuSolver.INSTANCE.cusolverDnDgeqrf_bufferSize(
 					cusolverHandle, 
 					A.M, A.N, 
@@ -293,11 +293,11 @@ public class Cuda extends Compute {
 					gpuD 
 					) ; 
 			checkrc( rc ) ;
-			log.info( "factored QR <- A" ) ;
+			log.debug( "factored QR <- A" ) ;
 //			printMatrix(A.M, A.N, gpuA);
 			
 			// Q' x b   -> gpuB		
-			log.info( "Perform Q' x b" ) ;
+			log.debug( "Perform Q' x b" ) ;
 			rc = CuSolver.INSTANCE.cusolverDnDormqr(
 					cusolverHandle, 
 					CUBLAS_SIDE_LEFT, CUBLAS_OP_T, 
@@ -317,7 +317,7 @@ public class Cuda extends Compute {
 			// Solve R x = Q' x b   to find x
 			// R is upper triangular 
 	
-			log.info( "Solve Rx = Q' x b" ) ;
+			log.debug( "Solve Rx = Q' x b" ) ;
 			rc = CuBlas.INSTANCE.cublasDtrsm_v2(
 					cublasHandle, 
 					CUBLAS_SIDE_LEFT, CUBLAS_FILL_MODE_UPPER, 
@@ -330,7 +330,7 @@ public class Cuda extends Compute {
 			checkrc( rc ) ;
 //			printMatrix( 4, 4, gpuB ) ;
 	
-			log.info( "Copying x from GPU" ); 
+			log.debug( "Copying x from GPU" ); 
 			x = new Matrix( A.N, B.N, B.labels ) ;
 			rc = CuBlas.INSTANCE.cublasGetMatrix(x.M, x.N, DoubleSize, gpuB, B.M, x.data, x.M ) ;
 			checkrc( rc ) ;
@@ -341,7 +341,7 @@ public class Cuda extends Compute {
 			CuBlas.INSTANCE.cublasFree( gpuD ) ;
 			CuBlas.INSTANCE.cublasFree( gpuT ) ;
 		}
-		log.info( "Solved x" ) ;
+		log.debug( "Solved x =", x ) ;
 		return x ;
 	}
 
