@@ -14,9 +14,22 @@ import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
 
 public class Matrix {
-	int M ;     // rows
-	int N ;     // cols
+	/**
+	 * Number of rows (e.g. observations in a dataset )
+	 */
+	int M ;
+	
+	/**
+	 * Number of features in each observation
+	 */
+	int N ;     
+	/**
+	 * Friendly name - used in printing
+	 */
 	String name ;
+	/**
+	 * Column labels - e.g. name of each feature being worked on
+	 */
 	String labels[] ;
 
 	/**
