@@ -11,6 +11,7 @@ public class StatisticsDataProcessor extends DataProcessor {
 		X.minimum = dataset.train.min() ;
 		X.maximum = dataset.train.max() ;
 		X.countDistinct = dataset.train.countBuckets( 1e-4 ) ;
+		X.median = dataset.train.median() ;
 		X.mean = dataset.train.mean() ;
 		X.stddev = dataset.train.stddev( X.mean ) ;
 		X.skewness = dataset.train.skewness( X.mean ) ;
@@ -23,6 +24,7 @@ class StatisticsResults {
 	Matrix minimum ;
 	Matrix maximum ;
 	Matrix mean ;
+	Matrix median ;
 	Matrix countDistinct ;
 	Matrix stddev ;
 	Matrix skewness ;

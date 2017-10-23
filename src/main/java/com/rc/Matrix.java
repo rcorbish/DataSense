@@ -157,6 +157,31 @@ public class Matrix {
 		return this ;
 	}
 
+
+	/**
+	 * Scalar addition of value to each element in a matrix. 
+	 * @param x the scalar to add to every element
+	 * @return a new Matrix
+	 */
+	public Matrix add( double x ) {
+		Matrix rc = dup() ;
+		return rc.addi(x) ;
+	}
+
+
+	/**
+	 * Scalar addition of value to each element in a matrix. The original 
+	 * matrix is changed
+	 * @param x the scalar to add to every element
+	 * @return this
+	 */
+	public Matrix addi( double x ) {
+		for( int i=0 ; i<length() ; i++ ) {
+			data[i] += x ;
+		}    		
+		return this ;
+	}
+
 	/**
 	 * Scalar multiplication of each element in a matrix. The original 
 	 * matrix is changed
@@ -218,14 +243,23 @@ public class Matrix {
 
 	/**
 	 * Hadamard multiply - elementwise multiply of 2 matrices
-	 * The matrix is updated with the product 
+	 * The matrix is updated with the product. If O is smaller
+	 * than the receiver, the elements to multiply by starts
+	 * from the beginning of O again. This allows us to 
+	 * multiply a rectangular receiver by a column vector
 	 * 
 	 * @param O other matrix
 	 * @return this
 	 */
 	public Matrix hmuli( Matrix O ) {
-		for( int i=0 ; i<length() ; i++ ) {
-			data[i] *= O.data[i] ;
+		for( int i=0, j=0 ; i<length() ; i++, j++ ) {
+			if( j >= O.length() ) {
+				if( !O.isVector ) {
+					throw new RuntimeException( "Warning cannot multiply dissimilar matrices" ) ;
+				}
+				j=0 ; 
+			}
+			data[i] *= O.data[j] ;
 		}    		
 		return this ;
 	}
@@ -235,7 +269,7 @@ public class Matrix {
 	 * 
 	 * @return the total of all values
 	 */
-	public double sum() {
+	public double total() {
 		double rc = 0 ;
 		for( int i=0 ; i<length() ; i++ ) {
 			rc += data[i] ;
@@ -371,6 +405,47 @@ public class Matrix {
 		return rc ;
 	}
 
+	/**
+	 * Return a Matrix of the mean value in each column
+	 * 
+	 * @return a vector of each column's geometric mean
+	 */
+	public Matrix sum() {
+		Matrix rc = new Matrix( 1, N, labels ) ;
+
+		int ix = 0 ;
+		for( int i=0 ; i<N ; i++ ) {
+			double sum = 0 ;
+			for( int j=0 ; j<M ; j++ ) {
+				sum += data[ix] ;
+				ix++ ;
+			}
+			rc.data[i] = sum ;
+		}		
+		return rc ;
+	}
+
+	
+	
+	/**
+	 * Return a Matrix of the median value in each column
+	 * 
+	 * @return a vector of each column's median
+	 */
+	public Matrix median() {
+		Matrix rc = new Matrix( 1, N, labels ) ;
+
+		double col[] = new double[ M ] ; 
+	
+		for( int i=0 ; i<N ; i++ ) {
+			System.arraycopy( data, i*M, col, 0, M ) ;
+			Arrays.sort( col ) ;
+			rc.data[i] = col[ col.length/2 ] ;
+		}		
+		return rc ;
+	}
+
+	
 	
 	/**
 	 * Return a Matrix of the minimum value in each column
@@ -569,7 +644,50 @@ public class Matrix {
 		}
 		return rc ;
 	}
+	
+	
+	/**
+	 * Create a new matrix, of the same shape, with values set to 1.0 where
+	 * the original matrix had a value equal to the given test, within a given 
+	 * precision
+	 * 
+	 * @param test corresponding elements are set to one where their values equal this
+	 * @param precision allows real number comparison within this precision
+	 * @return a new Matrix
+	 */
+	public Matrix oneIfEquals( double test, double precision ) {
+		Matrix rc = dup() ;
+		for( int i=0 ; i<rc.length() ; i++ ) {
+			double d = rc.data[i] - test ;
+			rc.data[i] = d>precision || d<-precision ? 0.0 : 1.0 ;
+		}
+		return rc  ;
+	}
+	/**
+	 * Return a column vector containing the index of the max value in each
+	 * row. Used to determine logisitic regresion meaning.
+	 * 
+	 * @return a new Matrix
+	 */
+	public Matrix maxIndexOfRows() {
+		Matrix rc = new Matrix( M, 1 ) ;
+		for( int i=0 ; i<M ; i++ ) {
+			double max = get( i, 0 ) ;
+			int ix = 0 ;
+		
+			for( int j=1 ; j<N ; j++ ) {
+				if( get(i,j) > max ) {
+					ix = j ;
+					max = get(i,j) ;
+				}
+			}
+			rc.put( i,  ix ) ;
+		}
+		return rc  ;
+	}
 
+	
+	
 	/**
 	 * Change the shape of a matrix. As best as possible the 
 	 * original data is left intact. So if rows & columns are  less

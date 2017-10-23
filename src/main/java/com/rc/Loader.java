@@ -102,9 +102,7 @@ public class Loader {
 		Dataset rc = null ;
 		String SEPARATOR_CHARS = ",;\t" ; 
 
-		if( !"linear".equals( options.method ) ) {
-			options.testRatio = 0 ;			
-		}
+
 		try( Reader rdr = new InputStreamReader(is, options.cs ) ;
 				BufferedReader br = new BufferedReader(rdr) ; ) {
 			String line = br.readLine() ;
@@ -162,7 +160,7 @@ public class Loader {
 			verifyMappedColumns( all, maps ) ;
 
 			rc = new Dataset( all, new Matrix(0, N, headers ) ) ;
-			int testRows = (int)(options.testRatio*m) ;
+			int testRows = (int)Math.floor( all.M * options.testRatio ) ;
 			
 			log.info( "Dataset has {} total and {} test data rows", m, testRows ) ;
 

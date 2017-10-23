@@ -158,7 +158,7 @@ public class Blas extends Compute {
 	//
 	public Matrix solve( Matrix A, Matrix B ) {
 
-		log.debug( "Solve Ax=b  {} x {} ", A.M, A.N ) ;
+		log.debug( "Solve Ax=b {} x {} ", A.M, A.N ) ;
 
 		if( A.M<A.N) {
 			throw ( new RuntimeException( "M must be >= N" ) ) ;

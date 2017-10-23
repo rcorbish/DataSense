@@ -11,6 +11,9 @@ public class DataProcessorFactory {
 		if( "linear".equals( method ) ) {
 			return new LinearDataProcessor() ;
 		}
+		if( "logistic".equals( method ) ) {
+			return new LogisticDataProcessor() ;
+		}
 		if( "statistics".equals( method ) ) {
 			return new StatisticsDataProcessor() ;
 		}

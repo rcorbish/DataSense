@@ -249,12 +249,12 @@ public class TestBase {
 		
 		Cgd.CostFunction cost = new Cgd.CostFunction() {			
 			@Override
-			public double call(Matrix X, Matrix y, Matrix theta, double lambda) {
+			public double cost(Matrix X, Matrix y, Matrix theta, double lambda) {
 				Matrix S = X.mmul( theta ).subi( y ) ;		
-				double j1 = S.hmuli(S).sum() ;
+				double j1 = S.hmuli(S).total() ;
 
 				Matrix t = theta.hmul( theta ).muli( lambda ) ;
-				double cost = ( t.sum() - t.get(0) + j1 ) / ( 2 * y.length() ) ;
+				double cost = ( t.total() - t.get(0) + j1 ) / ( 2 * y.length() ) ;
 
 				return cost ;
 			}
@@ -262,7 +262,7 @@ public class TestBase {
 		
 		Cgd.GradientsFunction grad = new Cgd.GradientsFunction() {			
 			@Override
-			public Matrix call(Matrix X, Matrix y, Matrix theta, double lambda) {
+			public Matrix grad(Matrix X, Matrix y, Matrix theta, double lambda) {
 				Matrix S = X.mmul( theta ).subi( y ) ;		
 				Matrix G1 = X.transpose().mmul( S ) ;
 
@@ -282,7 +282,7 @@ public class TestBase {
 		}
 		Matrix Bpredict = A.mmul( X ) ;
 		Bpredict.subi( B ) ;
-		double err = Bpredict.map( v -> v*v ).sum() ;
+		double err = Bpredict.map( v -> v*v ).total() ;
 		assertTrue( "Total error too big", err<1e-5 ) ;
 		
 		for( int i=0 ; i<Bpredict.length() ; i++ ) {

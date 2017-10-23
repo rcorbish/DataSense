@@ -10,15 +10,15 @@ public class Cgd {
 
 	@FunctionalInterface
 	static interface CostFunction {
-		public double call( Matrix X, Matrix y, Matrix theta, double lambda ) ;
+		public double cost( Matrix X, Matrix y, Matrix theta, double lambda ) ;
 	}
 	@FunctionalInterface
 	static interface GradientsFunction {
-		public Matrix call( Matrix X, Matrix y, Matrix theta, double lambda ) ;
+		public Matrix grad( Matrix X, Matrix y, Matrix theta, double lambda ) ;
 	}
 	@FunctionalInterface
 	static interface ProgressFunction {
-		public void call( double score, int iteration ) ;
+		public void progress( double score, int iteration ) ;
 	}
 
 	private ProgressFunction progress ;
@@ -49,8 +49,8 @@ public class Cgd {
 
 		int numConsecutiveSearchFails = 0 ; //  no previous line search has failed
 
-		Matrix df1 = gradients.call(Xin, yin, theta, lambda) ;
-		double f1 = cost.call(Xin, yin, theta, lambda) ;
+		Matrix df1 = gradients.grad(Xin, yin, theta, lambda) ;
+		double f1 = cost.cost(Xin, yin, theta, lambda) ;
 		Matrix s = df1.mul(-1) ;
 
 		double d1 = -s.dot() ; 
@@ -66,8 +66,8 @@ public class Cgd {
 
 			theta.addi( s.mul(z1) ) ; 
 
-			Matrix df2 = gradients.call(Xin, yin, theta, lambda) ;
-			double f2 = cost.call(Xin, yin, theta, lambda) ;
+			Matrix df2 = gradients.grad(Xin, yin, theta, lambda) ;
+			double f2 = cost.cost(Xin, yin, theta, lambda) ;
 
 			double d2 = df2.dot(s);
 
@@ -107,8 +107,8 @@ public class Cgd {
 					d2 = df2.dot( s ) ;
 					z3 -= z2 ;
 
-					df2 = gradients.call(Xin, yin, theta, lambda)  ;
-					f2 = cost.call(Xin, yin, theta, lambda)  ;
+					df2 = gradients.grad(Xin, yin, theta, lambda)  ;
+					f2 = cost.cost(Xin, yin, theta, lambda)  ;
 
 					M-- ;
 				}
@@ -148,8 +148,8 @@ public class Cgd {
 				z1 += z2 ;
 				theta.addi( s.mul(z2) ) ;
 				
-				df2 = gradients.call(Xin, yin, theta, lambda)  ;
-				f2 = cost.call(Xin, yin, theta, lambda)  ;
+				df2 = gradients.grad(Xin, yin, theta, lambda)  ;
+				f2 = cost.cost(Xin, yin, theta, lambda)  ;
 
 				M-- ;
 				d2 = df2.dot(s) ;
@@ -201,7 +201,7 @@ public class Cgd {
 			}
 			
 			if( progress != null ) {
-				progress.call( f1, iterations) ;
+				progress.progress( f1, iterations) ;
 			}
 		} // main iteration loop
 		log.info( "Conjugate gradient descent completed in {} iterations", iterations ) ;
