@@ -58,6 +58,7 @@ public class Cgd {
 
 		int iterations = 0;   
 		while( iterations < maxIters ) { 
+//			log.info( "Theta: {}", theta.transpose() ) ;
 			iterations++ ;
 
 			Matrix theta0 = theta.dup() ; 
@@ -104,11 +105,12 @@ public class Cgd {
 					z1 += z2 ;
 
 					theta.addi( s.mul(z2) ) ;
-					d2 = df2.dot( s ) ;
-					z3 -= z2 ;
 
 					df2 = gradients.grad(Xin, yin, theta, lambda)  ;
 					f2 = cost.cost(Xin, yin, theta, lambda)  ;
+
+					d2 = df2.dot( s ) ;
+					z3 -= z2 ;
 
 					M-- ;
 				}
@@ -160,12 +162,8 @@ public class Cgd {
 
 				f1 = f2 ;
 
-				Matrix dn = s.mul( df1.dot() ) ;
-				Matrix up = new Matrix( 1, dn.M, new double[dn.M*dn.M] ) ;
-				up.put( 0, 0, df2.dot() - df1.dot( df2 ) );
-				
-				Matrix div = dn.divLeft( up ).transpose() ;   
-				s = div.subi( df2 ) ;
+				double factor = ( df2.dot() - df1.dot( df2 ) ) / df1.dot() ;				
+				s.muli( factor ).subi( df2 ) ;
 				
 				Matrix tmp = df1 ;
 				df1 = df2 ;

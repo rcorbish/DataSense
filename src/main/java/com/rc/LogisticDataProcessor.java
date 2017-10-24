@@ -37,7 +37,7 @@ public class LogisticDataProcessor extends DataProcessor implements com.rc.Cgd.C
 
 	
 	public Object process( Dataset dataset ) {
-		Object rc = null ;
+		LogisticResults rc = null ;
 
 		Matrix A  = dataset.train ;
 		Matrix T  = dataset.test ;
@@ -58,7 +58,7 @@ public class LogisticDataProcessor extends DataProcessor implements com.rc.Cgd.C
 		
 		Matrix theta = new Matrix( A.N, numBuckets ) ;
 		
-		double lambda = 0.00001 ;
+		double lambda = 0.0001 ;
 		int maxIterations = 500 ;
 		Cgd cgd = new Cgd() ;
 		for( int i=0 ; i<numBuckets ; i++ ) {
@@ -77,8 +77,35 @@ public class LogisticDataProcessor extends DataProcessor implements com.rc.Cgd.C
 		
 		Matrix YE = Y.sub(YR).map( (value, context, r, c) ->  value * value  ) ;
 		YE.labels = new String[] { "MSE" } ;
-		rc = new Dataset( A, Y.appendColumns( YR ).appendColumns(YE) ) ;
+		rc = new LogisticResults() ;
 
+		Matrix precision = new Matrix( numBuckets, 1 ) ;
+		Matrix recall = new Matrix( numBuckets, 1 ) ;
+		
+		for( int n=0 ; n<numBuckets ; n++ ) {
+			int nfp = 0 ;
+			int ntp = 0 ;
+			int nfn  = 0 ;
+			for( int i=0 ; i<Y.length() ; i++ ) {
+				
+				if( YR.get(i) == n && Y.get(i) == n ) {	// true positives
+					ntp++ ;
+				}
+				if( YR.get(i) != n && Y.get(i) == n ) {	// false positives
+					nfp++ ;
+				}
+
+				if( YR.get(i) == n && Y.get(i) != n ) {	// false negatives
+					nfn++ ;
+				}
+				
+			}
+			precision.put( n, (double)ntp / (double)(ntp + nfp) ) ;
+			recall.put( n, (double)ntp / (double)(ntp + nfn) ) ;
+		}
+		rc.precision = precision ;
+		rc.recall = recall ;
+		rc.f1 = precision.hmul( recall ).muli(2.0).hdivi( precision.add( recall ) ) ;
 		return rc ;
 	}
 
@@ -115,4 +142,10 @@ public class LogisticDataProcessor extends DataProcessor implements com.rc.Cgd.C
 	protected double sigmoid( double z ) {
 		return  1.0 / ( Math.exp(-z) + 1 ) ;
 	}
+}
+
+class LogisticResults {
+	Matrix precision ;
+	Matrix recall ;
+	Matrix f1 ;
 }

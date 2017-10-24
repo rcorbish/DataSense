@@ -264,6 +264,43 @@ public class Matrix {
 		return this ;
 	}
 
+	
+	/**
+	 * Hadamard divide - elementwise divide of 2 matrices
+	 * 
+	 * @param O other matrix
+	 * @return a new Matrix
+	 */
+	public Matrix hdiv( Matrix O) {
+		Matrix rc = dup() ;
+		return rc.hdivi( O )  ;
+	}
+
+	/**
+	 * Hadamard multiply - elementwise divide of 2 matrices
+	 * The matrix is updated with the product. If O is smaller
+	 * than the receiver, the elements to divide by starts
+	 * from the beginning of O again. This allows us to 
+	 * divide a rectangular receiver by a column vector
+	 * 
+	 * @param O other matrix
+	 * @return this
+	 */
+	public Matrix hdivi( Matrix O ) {
+		for( int i=0, j=0 ; i<length() ; i++, j++ ) {
+			if( j >= O.length() ) {
+				if( !O.isVector ) {
+					throw new RuntimeException( "Warning cannot multiply dissimilar matrices" ) ;
+				}
+				j=0 ; 
+			}
+			data[i] /= O.data[j] ;
+		}    		
+		return this ;
+	}
+
+	
+	
 	/**
 	 * Total all values in the matrix
 	 * 
@@ -1041,10 +1078,11 @@ public class Matrix {
 		}
 		for( int i=0 ; i<Math.min( MAX_PRINT, M) ; i++ ) {
 			for( int j=0 ; j<Math.min( MAX_PRINT, N) ; j++ ) {
-				rc.append( String.format( "%10.3f", get(i,j) ) );
+				rc.append( String.format( "%10.4f", get(i,j) ) );
 			}
 			rc.append( '\n' ); 
 		}
+		rc.deleteCharAt( rc.length()-1 ) ;
 		return rc.toString() ;
 	}
 

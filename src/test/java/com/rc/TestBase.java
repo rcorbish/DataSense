@@ -5,6 +5,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.util.Random;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -288,5 +290,72 @@ public class TestBase {
 		for( int i=0 ; i<Bpredict.length() ; i++ ) {
 			assertEquals( "CGD solver (AX=B) incorrect prediction[" + i + "]", 0, Bpredict.data[i], 0.001 ) ;
 		}
+	}
+	
+
+	@Test 
+	public void testLogisticRegression() {
+		Matrix A = new Matrix( 100, 2 ) ; 
+		Matrix B = new Matrix( A.M, 1 ) ;
+		Random rng = new Random( 10 ) ;
+		for( int i=0 ; i<A.M ; i++ ) {
+			A.put( i, 0, rng.nextInt( 100 ) ); 
+			A.put( i, 1, rng.nextInt( 100 ) );
+			
+			B.put( i, A.get( i,1 ) > (3*A.get( i,0 )-150) ? 1 : 0 );
+		}
+		
+		
+		Cgd.CostFunction cost = new Cgd.CostFunction() {			
+			@Override
+			public double cost(Matrix X, Matrix y, Matrix theta, double lambda) {
+				Matrix ht = X.mmul( theta ) ;
+				ht.map( v -> sigmoid(v) ) ;
+				Matrix loght = ht.dup().map( v -> Math.log(v) ) ;
+				Matrix loght2 = ht.dup().map( v -> Math.log(1.0-v) ) ;
+
+				double ts = theta.total() - theta.get(0) ;
+
+				double J = loght.hmuli( y.mul(-1) ).subi( loght2.hmuli( y.mul(-1).add(1) ) ).total() / y.length() ;
+				J += lambda * ts * ts / (2 * y.length() ) ;
+				
+				return J;
+			}
+		};
+		
+		Cgd.GradientsFunction grad = new Cgd.GradientsFunction() {			
+			@Override
+			public Matrix grad(Matrix X, Matrix y, Matrix theta, double lambda) {
+				Matrix ht = X.mmul( theta ) ;
+				ht.map( v -> sigmoid(v) ) ;
+
+				Matrix G1 = X.hmul( ht.subi( y ) ).sum().muli( 1.0/y.length() ) ;
+				Matrix G2 = theta.mul( lambda/y.length() ) ;
+				G2.put(0,  0.0 ); 
+				
+				return G2.addi( G1 ) ;
+			}
+		}; 
+		
+		double LAMBDA 	= 0.0000;	
+
+		Matrix X = Matrix.fill( A.M, 1, 1.0 ).appendColumns( A ) ;
+
+		Matrix theta = Matrix.fill( X.N, 1, 0.0 ) ;
+		double c = cost.cost( X, B, theta, LAMBDA ) ;
+		Matrix g = grad.grad( X, B, theta, LAMBDA ) ;
+
+		
+		Cgd cgd = new Cgd( ) ; //(sc,it) -> { if( (it%500)==0 ){ System.out.println( it + " : " + sc ) ;} } ) ;
+		Matrix T = cgd.solve( cost, grad, X, B, LAMBDA, 300 ) ;
+
+		Matrix YH = X.mmul( T ) ;
+		YH.map( v -> sigmoid(v) ) ;
+		
+		assertArrayEquals(  "Error is too big for this simple solution", B.data, YH.data, 0.1 ) ;
+	}
+	
+	protected double sigmoid( double z ) {
+		return  1.0 / ( Math.exp(-z) + 1 ) ;
 	}
 }
