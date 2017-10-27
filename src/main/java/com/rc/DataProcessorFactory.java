@@ -14,6 +14,9 @@ public class DataProcessorFactory {
 		if( "logistic".equals( method ) ) {
 			return new LogisticDataProcessor() ;
 		}
+		if( "centroids".equals( method ) ) {
+			return new CentroidDataProcessor() ;
+		}
 		if( "statistics".equals( method ) ) {
 			return new StatisticsDataProcessor() ;
 		}

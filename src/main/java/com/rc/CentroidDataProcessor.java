@@ -2,14 +2,15 @@ package com.rc;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class LogisticDataProcessor extends DataProcessor implements com.rc.Cgd.CostFunction, com.rc.Cgd.GradientsFunction {
-	final static Logger log = LoggerFactory.getLogger( LogisticDataProcessor.class ) ;
+public class CentroidDataProcessor extends DataProcessor {
+	final static Logger log = LoggerFactory.getLogger( CentroidDataProcessor.class ) ;
 
 	final static String FEATURE_LABELS[] = { "Score", "Feature", "Result" } ;
 
@@ -28,19 +29,11 @@ public class LogisticDataProcessor extends DataProcessor implements com.rc.Cgd.C
 			dataset.test = dataset.test.appendColumns(T) ;
 		}
 		
-		// Prefix with a bias column
-		Matrix A = Matrix.fill( dataset.train.M, 1,  1.0, "bias" ) ;
-		dataset.train = A.appendColumns( dataset.train ) ;
-
-		Matrix T = Matrix.fill( dataset.test.M, 1,  1.0, "bias" ) ;
-		dataset.test = T.appendColumns(dataset.test) ;
-
 		return dataset ;
 	}
 
 	
 	public Object process( Dataset dataset ) {
-		LogisticResults rc = null ;
 
 		Matrix A  = dataset.train ;
 		Matrix T  = dataset.test ;
@@ -65,30 +58,37 @@ public class LogisticDataProcessor extends DataProcessor implements com.rc.Cgd.C
 				featureKeys.put( featureKeys.size(), f ) ;
 			}
 		}
+		Matrix Y = T.extractColumns( feature ) ;
 		
-		int numBuckets = featureKeys.size() ; // (int) Math.floor( F.countBuckets( 1 ).get( 0 ) ) ;
+		int numBuckets = featureKeys.size() ;
 		
-		Matrix theta = new Matrix( A.N, numBuckets ) ;
-		
-		double lambda = 0.0001 ;
-		int maxIterations = 500 ;
-		Cgd cgd = new Cgd() ;
-		for( int i=0 ; i<numBuckets ; i++ ) {
-			int f = featureKeys.get(i) ;
-			Matrix y = F.oneIfEquals( f, 1e-2 ) ;
-			Matrix t = cgd.solve(this::cost, this::grad, A, y, lambda, maxIterations ) ;
-			theta.putColumn( i, t.data ) ;
+		Matrix centroids = Matrix.fill( numBuckets, A.N, 0.0 ) ;
+		Matrix counts    = Matrix.fill( numBuckets, A.N, 0.0 ) ;
+		Matrix means     = A.mean() ;
+		Matrix stddevs   = A.stddev(means) ;
+		Matrix AN = A.normalizeColumns() ;
+		for( int i=0 ; i<AN.M ; i++ ) {
+			int f = featureKeys.get( (int)F.get(i) ) ;
+			for( int j=0 ; j<AN.N ; j++ ) {
+				centroids.put( f, j, centroids.get( f, j ) + AN.get(i,j) )  ;
+				counts.add( f,j, 1 ) ;
+			}
 		}
-				
-		Matrix YR = T.extractColumns( feature ) ; 
-
-		Matrix Y = T.mmul(theta) ;
-		Y.map( v -> sigmoid(v) ) ;
-		Y = Y.maxIndexOfRows();
-		Y.map( v -> featureKeys.get((int)v) ) ;
-		Y.labels = new String[] { "Predicted" } ;
+		centroids.hdivi( counts ) ;
+		Matrix YR = new Matrix( T.length(), 1 ) ;
 		
-		rc = new LogisticResults() ;
+		//Matrix m = T.sub( centroids ) ;
+		for( int i=0 ; i<T.M ; i++ ) {
+			Matrix row = T.extractRows( 0 ) ;
+			row.subi( means ) ;
+			row.hdivi( stddevs ) ;
+			Matrix D = centroids.sub( row ) ;
+			D.hmuli( D ) ;
+			Matrix euclideanDistanceToCentroid = D.transpose().sum().map( v -> Math.sqrt(v) ) ;
+			YR.put( i, 0, euclideanDistanceToCentroid.minIndexOfRows().get(0) ) ;			
+		}
+		
+		CentroidResults rc = new CentroidResults() ;
 
 		Matrix precision = new Matrix( numBuckets, 1 ) ;
 		Matrix recall = new Matrix( numBuckets, 1 ) ;
@@ -123,44 +123,11 @@ public class LogisticDataProcessor extends DataProcessor implements com.rc.Cgd.C
 		rc.recall = recall ;
 		rc.f1 = precision.hmul( recall ).muli(2.0).hdivi( precision.add( recall ) ) ;
 		return rc ;
-	}
 
-
-	@Override
-	public Matrix grad(Matrix X, Matrix y, Matrix theta, double lambda) {
-		
-		Matrix ht = X.mmul( theta ) ;
-		ht.map( v -> sigmoid(v) ) ;
-
-		Matrix G1 = X.hmul( ht.subi( y ) ).sum().muli( 1.0/y.length() ) ;
-		Matrix G2 = theta.mul( lambda/y.length() ) ;
-		G2.put(0,  0.0 ); 
-		
-		return G2.addi( G1.transpose() ) ;
-	}
-	
-	@Override
-	public double cost(Matrix X, Matrix y, Matrix theta, double lambda) {
-		Matrix ht = X.mmul( theta ) ;
-		ht.map( v -> sigmoid(v) ) ;
-		Matrix loght = ht.dup().map( v -> Math.log(v) ) ;
-		Matrix loght2 = ht.dup().map( v -> Math.log(1.0-v) ) ;
-
-		double ts = theta.total() - theta.get(0) ;
-
-		double J = loght.hmuli( y.mul(-1) ).subi( loght2.hmuli( y.mul(-1).add(1) ) ).total() / y.length() ;
-		J += lambda * ts * ts / (2 * y.length() ) ;
-		
-		return J;
-	}
-	
-		
-	protected double sigmoid( double z ) {
-		return  1.0 / ( Math.exp(-z) + 1 ) ;
 	}
 }
 
-class LogisticResults {
+class CentroidResults {
 	Matrix precision ;
 	Matrix recall ;
 	Matrix f1 ;

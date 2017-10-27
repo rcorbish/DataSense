@@ -58,7 +58,6 @@ public class Cgd {
 
 		int iterations = 0;   
 		while( iterations < maxIters ) { 
-//			log.info( "Theta: {}", theta.transpose() ) ;
 			iterations++ ;
 
 			Matrix theta0 = theta.dup() ; 
@@ -185,7 +184,7 @@ public class Cgd {
 				df1 	= df0 ;
 
 				if( numConsecutiveSearchFails>1 || iterations>maxIters ) {
-					log.info( "CGD stopped converging - early exit" ) ;
+					log.debug( "CGD stopped converging - early exit" ) ;
 					break ;
 				}
 

@@ -2,6 +2,8 @@ package com.rc;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,20 +28,18 @@ public class LinearDataProcessor extends DataProcessor {
 			dataset.test = dataset.test.appendColumns(T) ;
 		}
 
-		if( options.addOnes ) {
-			Matrix A = Matrix.fill( dataset.train.M, 1,  1.0, "bias" ) ;
-			dataset.train = dataset.train.appendColumns(A) ;
+		// Prefix with a bias column
+		Matrix A = Matrix.fill( dataset.train.M, 1,  1.0, "bias" ) ;
+		dataset.train = A.appendColumns( dataset.train ) ;
 
-			Matrix T = Matrix.fill( dataset.test.M, 1,  1.0, "bias" ) ;
-			dataset.test = dataset.test.appendColumns(T) ;
-		}
+		Matrix T = Matrix.fill( dataset.test.M, 1,  1.0, "bias" ) ;
+		dataset.test = T.appendColumns(dataset.test) ;
 
 		return dataset ;
 	}
 
 	
 	public Object process( Dataset dataset ) {
-		Object rc = null ;
 
 		Matrix A  = dataset.train ;
 		Matrix T  = dataset.test ;
@@ -55,21 +55,68 @@ public class LinearDataProcessor extends DataProcessor {
 					}
 				}
 			}
-		Matrix B = A.extractColumns( feature ) ;
+		Matrix F = A.extractColumns( feature ) ;
 		Matrix YR = T.extractColumns( feature ) ; 
 
-		log.debug( "features {}", B ) ;		
+		Map<Integer,Integer> featureKeys = new HashMap<>() ;
+		for( int i=0 ; i<F.length() ; i++ ) {
+			int f = (int)F.get(i) ;
+			Integer n = featureKeys.get( f ) ;
+			if( n == null ) {
+				featureKeys.put( featureKeys.size(), f ) ;
+			}
+		}
+		
+		int numBuckets = featureKeys.size() ; // (int) Math.floor( F.countBuckets( 1 ).get( 0 ) ) ;
 
-		Matrix X = A.divLeft(B) ;			
+		
+		Matrix X = A.divLeft(F) ;			
 		X.labels = A.labels ;
 		
 		Matrix Y = T.mmul(X) ;
+		Y.map( v -> Math.round(v) ) ;
 		Y.labels = new String[] { "Predicted" } ;
 		
-		Matrix YE = Y.sub(YR).map( (value, context, r, c) ->  value * value  ) ;
-		YE.labels = new String[] { "MSE" } ;
-		rc = new Dataset( X, Y.appendColumns( YR ).appendColumns(YE) ) ;
+		LinearResults rc = new LinearResults() ;
 
+		Matrix precision = new Matrix( numBuckets, 1 ) ;
+		Matrix recall = new Matrix( numBuckets, 1 ) ;
+		
+		for( int n=0 ; n<numBuckets ; n++ ) {
+			int fn = featureKeys.get(n) ;
+			
+			int nfp = 0 ;
+			int ntp = 0 ;
+			int nfn  = 0 ;
+			for( int i=0 ; i<Y.length() ; i++ ) {
+				
+				int yn = featureKeys.get( (int)Y.get(i) ) ;
+				int yrn = featureKeys.get( (int)YR.get(i) ) ;
+				
+				if( yrn == fn && yn == fn ) {	// true positives
+					ntp++ ;
+				}
+				if( yrn != fn && yn == fn ) {	// false positives
+					nfp++ ;
+				}
+
+				if( yrn == fn && yn != fn ) {	// false negatives
+					nfn++ ;
+				}
+				
+			}
+			precision.put( n, (double)ntp / (double)(ntp + nfp) ) ;
+			recall.put( n, (double)ntp / (double)(ntp + nfn) ) ;
+		}
+		rc.precision = precision ;
+		rc.recall = recall ;
+		rc.f1 = precision.hmul( recall ).muli(2.0).hdivi( precision.add( recall ) ) ;
 		return rc ;
 	}
+}
+
+class LinearResults {
+	Matrix precision ;
+	Matrix recall ;
+	Matrix f1 ;
 }

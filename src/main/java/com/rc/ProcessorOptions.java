@@ -12,7 +12,6 @@ public class ProcessorOptions {
 	Charset cs ;
 	boolean square ;
 	boolean discrete ;
-	boolean addOnes;
 	String  method ;
 	DateParserFunction dateParser ;
 	int dateBaseline ;
@@ -22,7 +21,6 @@ public class ProcessorOptions {
 	public ProcessorOptions( Map<String, String[]> params ) throws ParseException {
 		square   = get( params, "square-values") != null  ;
 		discrete = get( params, "discrete-to-col") != null  ;
-		addOnes  = get( params, "add-ones-column") != null  ;
 		method   = get( params, "method" ) ;
 
 		String baseline = get( params, "date-baseline" ) ;

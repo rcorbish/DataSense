@@ -7,6 +7,8 @@ import java.util.HashSet;
 import java.util.Random;
 import java.util.Set;
 
+import javax.management.RuntimeErrorException;
+
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -127,11 +129,32 @@ public class Matrix {
 	 * @return this
 	 */
 	public Matrix subi( Matrix O ) {
-		for( int i=0 ; i<length() ; i++ ) {
-			data[i] -= O.data[i] ;
-		}    		
+		if( O.M == 1 && M>1 ) { // row vector vs matrix
+			if( O.N != N ) {
+				throw new RuntimeException( "Invalid subtraction of row vector" ) ;
+			}
+			for( int i=0 ; i<M ; i++ ) {
+				for( int j=0 ; j<N ; j++ ) {
+					data[ i + j*M  ] -= O.data[j] ;
+				}
+			}
+		} else if( O.N == 1 && N>1 ) { // col vector  vs matrix
+			if( O.M != M ) {
+				throw new RuntimeException( "Invalid subtraction of columns vector" ) ;
+			}
+			for( int i=0 ; i<M ; i++ ) {
+				for( int j=0 ; j<N ; j++ ) {
+					data[ i + j*M  ] -= O.data[i] ;
+				}
+			}
+		} else { // compatible matrix
+			for( int i=0 ; i<length() ; i++ ) {
+				data[i] -= O.data[i] ;
+			}
+		}
 		return this ;
 	}
+
 
 	/**
 	 * Elementwise addition of each element in a matrix. 
@@ -151,9 +174,29 @@ public class Matrix {
 	 * @return this
 	 */
 	public Matrix addi( Matrix O ) {
-		for( int i=0 ; i<length() ; i++ ) {
-			data[i] += O.data[i] ;
-		}    		
+		if( O.M == 1 && M>1 ) { // row vector vs matrix
+			if( O.N != N ) {
+				throw new RuntimeException( "Invalid addition of columns vector" ) ;
+			}
+			for( int i=0 ; i<M ; i++ ) {
+				for( int j=0 ; j<N ; j++ ) {
+					data[ i + j*M  ] += O.data[j] ;
+				}
+			}
+		} else if( O.N==1 && N>1 ) { // col vector  vs matrix 
+			if( O.M != M ) {
+				throw new RuntimeException( "Invalid addition of columns vector" ) ;
+			}
+			for( int i=0 ; i<M ; i++ ) {
+				for( int j=0 ; j<N ; j++ ) {
+					data[ i + j*M  ] += O.data[i] ;
+				}
+			}
+		} else { // compatible matrix
+			for( int i=0 ; i<length() ; i++ ) {
+				data[i] += O.data[i] ;
+			}
+		}
 		return this ;
 	}
 
@@ -351,6 +394,7 @@ public class Matrix {
 		return Engine.norm(this) ;
 	}
 
+	
 	/**
 	* X = A\B	( matlab/octave convention )
 	*
@@ -700,6 +744,8 @@ public class Matrix {
 		}
 		return rc  ;
 	}
+	
+	
 	/**
 	 * Return a column vector containing the index of the max value in each
 	 * row. Used to determine logisitic regresion meaning.
@@ -716,6 +762,29 @@ public class Matrix {
 				if( get(i,j) > max ) {
 					ix = j ;
 					max = get(i,j) ;
+				}
+			}
+			rc.put( i,  ix ) ;
+		}
+		return rc  ;
+	}
+
+	/**
+	 * Return a column vector containing the index of the max value in each
+	 * row. Used to determine logisitic regresion meaning.
+	 * 
+	 * @return a new Matrix
+	 */
+	public Matrix minIndexOfRows() {
+		Matrix rc = new Matrix( M, 1 ) ;
+		for( int i=0 ; i<M ; i++ ) {
+			double min = get( i, 0 ) ;
+			int ix = 0 ;
+		
+			for( int j=1 ; j<N ; j++ ) {
+				if( get(i,j) < min ) {
+					ix = j ;
+					min = get(i,j) ;
 				}
 			}
 			rc.put( i,  ix ) ;
@@ -933,6 +1002,20 @@ public class Matrix {
 		for( int i=0 ; i<N ; i++ ) {
 			labels[i] = prefix + labels[i] ;
 		}
+	}
+
+
+	/**
+	 * Add a value to an address in the array. Address is row,column
+	 * No error checking is done ( args should be sensible to avoid exceptions )
+	 * 
+	 * @param r row ( 0 based )
+	 * @param c column ( 0 based )
+	 * @param v value to add to the address
+	 * @return the value at the given address
+	 */
+	public void add( int r, int c, double v ) {
+		data[ r + c*M ] += v ;
 	}
 
 

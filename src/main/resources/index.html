@@ -7,7 +7,7 @@
 <style>
 </style>
 
-<title>Data Sense</title>
+<title>zudat</title>
 </head>
 <body>
 	<div class="upload" data-target='upload-data'>Drop CSV</div>
@@ -15,7 +15,6 @@
 		<form class='control' accept-charset="UTF-8" >
 			<input type='checkbox' name='square-values'>Synthesize x<sup>2</sup>
 			<input type='checkbox' name='discrete-to-col'>Discrete column values for labels
-			<input type='checkbox' name='add-ones-column'>Add ones column
 			<input type='radio'    name='date-treatment' value='to-year'>Dates to years
 			<input type='radio'    name='date-treatment' value='to-months'>Dates to month
 			<input type='radio'    name='date-treatment' value='to-days'>Dates to days
@@ -24,6 +23,7 @@
 			<input type='radio'    name='date-baseline'  value='2000' >Baseline for dates is 01-Jan-2000
 			<input type='radio'    name='method' value='linear' checked>Linear Regression
 			<input type='radio'    name='method' value='logistic' >Logistic Regression
+			<input type='radio'    name='method' value='centroids' >Nearest Centroid
 			<input type='radio'    name='method' value='correlation' >Correlation
 			<input type='radio'    name='method' value='statistics' >Statistics
 		</form>

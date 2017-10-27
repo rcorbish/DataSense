@@ -102,6 +102,49 @@ public class TestBase {
 	}
 
 
+	@Test
+	public void testAdd1() {
+		Matrix A = Matrix.rand(4,4) ;
+		Matrix B = Matrix.rand(4,4) ;
+
+		Matrix C = A.add( B ) ;
+		double tst[] = new double[16] ;
+		for( int i=0 ; i<A.length() ; i++ ) {
+			tst[i] = A.data[i] + B.data[i] ;
+		}		
+		assertArrayEquals( "Unexpected value in A+B", tst, C.data, 1e-6) ;
+	}
+
+
+	@Test
+	public void testAdd2() {
+		Matrix A = Matrix.rand(4,4) ;
+		Matrix B = Matrix.rand(1,4) ;
+
+		Matrix C = A.add( B ) ;
+		double tst[] = new double[16] ;
+		for( int i=0 ; i<A.length() ; i++ ) {
+			tst[i] = A.data[i] + B.data[i/4] ;
+		}		
+		assertArrayEquals( "Unexpected value in A+B", tst, C.data, 1e-6) ;
+	}
+
+
+	@Test
+	public void testAdd3() {
+		Matrix A = Matrix.rand(4,4) ;
+		Matrix B = Matrix.rand(4,1) ;
+
+		Matrix C = A.add( B ) ;
+		
+		double tst[] = new double[16] ;
+		for( int i=0 ; i<A.length() ; i++ ) {
+			tst[i] = A.data[i] + B.data[i%4] ;
+		}		
+		assertArrayEquals( "Unexpected value in A+B", tst, C.data, 1e-6) ;
+	}
+
+
 
 	@Test
 	public void testMap() {
@@ -333,7 +376,7 @@ public class TestBase {
 				Matrix G2 = theta.mul( lambda/y.length() ) ;
 				G2.put(0,  0.0 ); 
 				
-				return G2.addi( G1 ) ;
+				return G2.addi( G1.transpose() ) ;
 			}
 		}; 
 		
