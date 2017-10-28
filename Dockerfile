@@ -7,10 +7,10 @@ RUN \
 
 WORKDIR /datasense
 
-ADD run.sh  			/datasense/run.sh
-ADD src/main/resources  /datasense/resources/
-ADD libs			  	/datasense/libs/
-ADD build/libs/*	  	/datasense/libs/
+ADD run.sh  				/datasense/run.sh
+ADD src/main/resources/*  	/datasense/resources/
+ADD libs			  		/datasense/libs/
+ADD build/libs/*	  		/datasense/libs/
 
 ENV CP libs:resources
 

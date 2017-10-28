@@ -37,18 +37,18 @@ public class Monitor implements AutoCloseable {
 	final Gson gson ;
 
 	public Monitor() {
-		this.random = new Random() ;
+		this.random = new Random( ) ;
 		gson = new GsonBuilder()
 				.registerTypeAdapter( Matrix.class, new Matrix.Deserializer() )
 				.setPrettyPrinting()
 				.create() ;
-	}
+	} 
 	
-	
+	 
 	public void start( int port ) {
 		try {			
 			spark.Spark.port( port ) ;
-			URL mainPage = getClass().getClassLoader().getResource( "Client.html" ) ;
+			URL mainPage = getClass().getClassLoader().getResource( "index.html" ) ;
 			File path = new File( mainPage.getPath() ) ;
 			spark.Spark.staticFiles.externalLocation( path.getParent() ) ;
 			spark.Spark.get( "/", (req,rsp) -> { rsp.redirect("/Client.html"); return null ; } ) ;
