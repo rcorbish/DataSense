@@ -4,14 +4,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class LogisticDataProcessor extends DataProcessor implements com.rc.Cgd.CostFunction, com.rc.Cgd.GradientsFunction {
 	final static Logger log = LoggerFactory.getLogger( LogisticDataProcessor.class ) ;
-
-	final static String FEATURE_LABELS[] = { "Score", "Feature", "Result" } ;
 
 	public Dataset load( InputStream data, ProcessorOptions options ) throws IOException {
 		Dataset dataset = Loader.load( 1000, data, options ) ;
@@ -28,12 +27,7 @@ public class LogisticDataProcessor extends DataProcessor implements com.rc.Cgd.C
 			dataset.test = dataset.test.appendColumns(T) ;
 		}
 		
-		// Prefix with a bias column
-		Matrix A = Matrix.fill( dataset.train.M, 1,  1.0, "bias" ) ;
-		dataset.train = A.appendColumns( dataset.train ) ;
-
-		Matrix T = Matrix.fill( dataset.test.M, 1,  1.0, "bias" ) ;
-		dataset.test = T.appendColumns(dataset.test) ;
+		dataset.addBias() ;
 
 		return dataset ;
 	}
@@ -44,28 +38,17 @@ public class LogisticDataProcessor extends DataProcessor implements com.rc.Cgd.C
 
 		Matrix A  = dataset.train ;
 		Matrix T  = dataset.test ;
+		int feature = dataset.getFeatureColumnIndex() ;
 
-		int feature = 0 ;
-
-		featureSearch:
-			for( int i=0 ; i<FEATURE_LABELS.length ; i++ ) {
-				for( int j=0 ; j<A.N; j++ ) {
-					if( FEATURE_LABELS[i].equalsIgnoreCase( A.labels[j] ) ) {
-						feature = j ;
-						break featureSearch ;
-					}
-				}
-			}
-		Matrix F = A.extractColumns( feature ) ;
-		Map<Integer,Integer> featureKeys = new HashMap<>() ;
-		for( int i=0 ; i<F.length() ; i++ ) {
-			int f = (int)F.get(i) ;
-			Integer n = featureKeys.get( f ) ;
-			if( n == null ) {
-				featureKeys.put( featureKeys.size(), f ) ;
-			}
+		// value in dataset -> zero based index
+		Map<Integer,Integer> featureKeys = dataset.getFeatureKeys() ;
+		Map<Integer,Integer> inverseFeatureKeys = new HashMap<>() ;
+		for( Entry<Integer, Integer> e :featureKeys.entrySet() ) {
+			inverseFeatureKeys.put( e.getValue(), e.getKey() ) ;
 		}
-		
+
+		Matrix F = A.extractColumns( feature ) ;
+
 		int numBuckets = featureKeys.size() ; // (int) Math.floor( F.countBuckets( 1 ).get( 0 ) ) ;
 		
 		Matrix theta = new Matrix( A.N, numBuckets ) ;
@@ -74,7 +57,7 @@ public class LogisticDataProcessor extends DataProcessor implements com.rc.Cgd.C
 		int maxIterations = 500 ;
 		Cgd cgd = new Cgd() ;
 		for( int i=0 ; i<numBuckets ; i++ ) {
-			int f = featureKeys.get(i) ;
+			int f = inverseFeatureKeys.get(i) ;
 			Matrix y = F.oneIfEquals( f, 1e-2 ) ;
 			Matrix t = cgd.solve(this::cost, this::grad, A, y, lambda, maxIterations ) ;
 			theta.putColumn( i, t.data ) ;
@@ -85,7 +68,7 @@ public class LogisticDataProcessor extends DataProcessor implements com.rc.Cgd.C
 		Matrix Y = T.mmul(theta) ;
 		Y.map( v -> sigmoid(v) ) ;
 		Y = Y.maxIndexOfRows();
-		Y.map( v -> featureKeys.get((int)v) ) ;
+		Y.map( v -> inverseFeatureKeys.get((int)v) ) ;
 		Y.labels = new String[] { "Predicted" } ;
 		
 		rc = new LogisticResults() ;
@@ -94,27 +77,21 @@ public class LogisticDataProcessor extends DataProcessor implements com.rc.Cgd.C
 		Matrix recall = new Matrix( numBuckets, 1 ) ;
 		
 		for( int n=0 ; n<numBuckets ; n++ ) {
-			int fn = featureKeys.get(n) ;
-			
+			int f = inverseFeatureKeys.get( n ) ;
+
 			int nfp = 0 ;
 			int ntp = 0 ;
 			int nfn  = 0 ;
 			for( int i=0 ; i<Y.length() ; i++ ) {
-				
-				int yn = featureKeys.get( (int)Y.get(i) ) ;
-				int yrn = featureKeys.get( (int)YR.get(i) ) ;
-				
-				if( yrn == fn && yn == fn ) {	// true positives
+				int yn = (int)Y.get(i) ;
+				int yrn = (int)YR.get(i) ;
+				if( yrn == f && yn == f ) {	// true positives
 					ntp++ ;
-				}
-				if( yrn != fn && yn == fn ) {	// false positives
+				} else if( yrn != f && yn == f ) {	// false positives
 					nfp++ ;
-				}
-
-				if( yrn == fn && yn != fn ) {	// false negatives
+				} else if( yrn == f && yn != f ) {	// false negatives
 					nfn++ ;
 				}
-				
 			}
 			precision.put( n, (double)ntp / (double)(ntp + nfp) ) ;
 			recall.put( n, (double)ntp / (double)(ntp + nfn) ) ;

@@ -8,6 +8,12 @@ public class DataProcessorFactory {
 	
 	public static DataProcessor getInstance( String method ) {
 		
+		if( "svmc".equals( method ) ) {
+			return new SvmcDataProcessor() ;
+		}
+		if( "svmr".equals( method ) ) {
+			return new SvmrDataProcessor() ;
+		}
 		if( "linear".equals( method ) ) {
 			return new LinearDataProcessor() ;
 		}

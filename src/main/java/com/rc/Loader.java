@@ -38,17 +38,18 @@ public class Loader {
 	 * 
 	 * @param in will be altered by this process
 	 * @param maps 
+	 * @param feature do NOT remap feature column to multi cols
 	 * 
 	 * @return a new Matrix containing remapped columns 
 	 * @throws IOException
 	 */
-	public static Matrix makeDiscreteColumns( Matrix in, List<String> maps[] ) throws IOException {
+	public static Matrix makeDiscreteColumns( Matrix in, List<String> maps[], int feature ) throws IOException {
 
 		Matrix rc = in ;
-		
+
 		for( int c=0 ; c<maps.length ; c++ ) {
 			List<String> map = maps[c] ;
-			if( map == null ) {
+			if( map == null || c==feature ) {
 				continue ;
 			}
 
@@ -163,9 +164,10 @@ public class Loader {
 			int testRows = (int)Math.floor( all.M * options.testRatio ) ;
 			
 			log.info( "Dataset has {} total and {} test data rows", m, testRows ) ;
-
+			int feature = rc.getFeatureColumnIndex() ;
+			
 			if( options!=null && options.discrete ) {
-				rc.train = makeDiscreteColumns( rc.train, maps ) ;
+				rc.train = makeDiscreteColumns( rc.train, maps, feature ) ;
 				rc.test.labels = rc.train.labels.clone() ;
 				rc.test.N = rc.train.N ;
 		   	}

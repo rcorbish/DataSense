@@ -851,6 +851,28 @@ public class Matrix {
 		return rc ;
 	}
 
+	
+
+	/**
+	 * Copy some columns from a matrix, they should be copied to a new Matrix
+	 * The original Matrix is unchanged by this operation
+	 * 
+	 * @param cols which columns to pull out
+	 * @return a new Matrix containing the removed columns
+	 */
+	public Matrix copyColumns( int ... cols ) {
+
+		Matrix rc = new Matrix( M, cols.length, new String[cols.length] ) ;
+		rc.labels = new String[ cols.length ] ;
+
+		for( int i=0 ; i<cols.length ; ++i ) {
+			System.arraycopy( data, M*cols[i], rc.data, M*i, M ) ;
+			rc.labels[i] = labels[cols[i]] ;
+		}
+
+		return rc ;
+	}
+
 	/**
 	 * Add new columns to the'rhs' of the matrix.  The original matrix is unchanged.
 	 * 

@@ -5,14 +5,13 @@ import java.io.InputStream;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class CentroidDataProcessor extends DataProcessor {
 	final static Logger log = LoggerFactory.getLogger( CentroidDataProcessor.class ) ;
-
-	final static String FEATURE_LABELS[] = { "Score", "Feature", "Result" } ;
 
 	public Dataset load( InputStream data, ProcessorOptions options ) throws IOException {
 		Dataset dataset = Loader.load( 1000, data, options ) ;
@@ -38,27 +37,17 @@ public class CentroidDataProcessor extends DataProcessor {
 		Matrix A  = dataset.train ;
 		Matrix T  = dataset.test ;
 
-		int feature = 0 ;
-
-		featureSearch:
-			for( int i=0 ; i<FEATURE_LABELS.length ; i++ ) {
-				for( int j=0 ; j<A.N; j++ ) {
-					if( FEATURE_LABELS[i].equalsIgnoreCase( A.labels[j] ) ) {
-						feature = j ;
-						break featureSearch ;
-					}
-				}
-			}
-		Matrix F = A.extractColumns( feature ) ;
-		Map<Integer,Integer> featureKeys = new HashMap<>() ;
-		for( int i=0 ; i<F.length() ; i++ ) {
-			int f = (int)F.get(i) ;
-			Integer n = featureKeys.get( f ) ;
-			if( n == null ) {
-				featureKeys.put( featureKeys.size(), f ) ;
-			}
+		// value in dataset -> zero based index
+		Map<Integer,Integer> featureKeys = dataset.getFeatureKeys() ;
+		Map<Integer,Integer> inverseFeatureKeys = new HashMap<>() ;
+		for( Entry<Integer, Integer> e :featureKeys.entrySet() ) {
+			inverseFeatureKeys.put( e.getValue(), e.getKey() ) ;
 		}
-		Matrix Y = T.extractColumns( feature ) ;
+		int feature = dataset.getFeatureColumnIndex() ;
+
+		Matrix F = A.extractColumns( feature ) ;
+		Matrix YR = T.extractColumns( feature ) ; 
+
 		
 		int numBuckets = featureKeys.size() ;
 		
@@ -75,7 +64,7 @@ public class CentroidDataProcessor extends DataProcessor {
 			}
 		}
 		centroids.hdivi( counts ) ;
-		Matrix YR = new Matrix( T.length(), 1 ) ;
+		Matrix Y = new Matrix( T.M, 1 ) ;
 		
 		//Matrix m = T.sub( centroids ) ;
 		for( int i=0 ; i<T.M ; i++ ) {
@@ -85,7 +74,7 @@ public class CentroidDataProcessor extends DataProcessor {
 			Matrix D = centroids.sub( row ) ;
 			D.hmuli( D ) ;
 			Matrix euclideanDistanceToCentroid = D.transpose().sum().map( v -> Math.sqrt(v) ) ;
-			YR.put( i, 0, euclideanDistanceToCentroid.minIndexOfRows().get(0) ) ;			
+			Y.put( i, 0, euclideanDistanceToCentroid.minIndexOfRows().get(0) ) ;			
 		}
 		
 		CentroidResults rc = new CentroidResults() ;
@@ -94,27 +83,21 @@ public class CentroidDataProcessor extends DataProcessor {
 		Matrix recall = new Matrix( numBuckets, 1 ) ;
 		
 		for( int n=0 ; n<numBuckets ; n++ ) {
-			int fn = featureKeys.get(n) ;
-			
+			int f = inverseFeatureKeys.get( n ) ;
+
 			int nfp = 0 ;
 			int ntp = 0 ;
 			int nfn  = 0 ;
 			for( int i=0 ; i<Y.length() ; i++ ) {
-				
-				int yn = featureKeys.get( (int)Y.get(i) ) ;
-				int yrn = featureKeys.get( (int)YR.get(i) ) ;
-				
-				if( yrn == fn && yn == fn ) {	// true positives
+				int yn = (int)Y.get(i) ;
+				int yrn = (int)YR.get(i) ;
+				if( yrn == f && yn == f ) {	// true positives
 					ntp++ ;
-				}
-				if( yrn != fn && yn == fn ) {	// false positives
+				} else if( yrn != f && yn == f ) {	// false positives
 					nfp++ ;
-				}
-
-				if( yrn == fn && yn != fn ) {	// false negatives
+				} else if( yrn == f && yn != f ) {	// false negatives
 					nfn++ ;
 				}
-				
 			}
 			precision.put( n, (double)ntp / (double)(ntp + nfp) ) ;
 			recall.put( n, (double)ntp / (double)(ntp + nfn) ) ;

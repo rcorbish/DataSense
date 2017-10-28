@@ -20,6 +20,8 @@
 			<input type='radio'    name='date-baseline'  value='today' >Baseline for dates is today
 			<input type='radio'    name='date-baseline'  value='1900' >Baseline for dates is 01-Jan-1900
 			<input type='radio'    name='date-baseline'  value='2000' >Baseline for dates is 01-Jan-2000
+			<input type='radio'    name='method' value='svmc' checked>SVM-C
+			<input type='radio'    name='method' value='svmr' checked>SVM-R
 			<input type='radio'    name='method' value='linear' checked>Linear Regression
 			<input type='radio'    name='method' value='logistic' >Logistic Regression
 			<input type='radio'    name='method' value='centroids' >Nearest Centroid
@@ -63,7 +65,13 @@
 					this.classList.remove( "dropok" ) 
 					e.preventDefault()
 					
-					uploadFile( e.dataTransfer.files[0], this.dataset.target, this )
+					var u = e.dataTransfer.getData('url' ) ;
+					if( u ) {
+						document.getElementById("results").innerHTML = "Uploading urls like " + u + " isn't supported yet" ;						console.log( "Uploaded a url", u ) ;
+						this.innerHTML = "Drop CSV" 
+					} else {
+						uploadFile( e.dataTransfer.files[0], this.dataset.target, this )
+					}
 					return false
 				}.bind( div ) ;
 			}

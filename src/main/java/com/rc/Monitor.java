@@ -51,7 +51,8 @@ public class Monitor implements AutoCloseable {
 			URL mainPage = getClass().getClassLoader().getResource( "index.html" ) ;
 			File path = new File( mainPage.getPath() ) ;
 			spark.Spark.staticFiles.externalLocation( path.getParent() ) ;
-			spark.Spark.get( "/", (req,rsp) -> { rsp.redirect("/Client.html"); return null ; } ) ;
+			spark.Spark.get( "/app/", (req,rsp) -> { rsp.redirect("/app.html"); return null ; } ) ;
+			spark.Spark.get( "/app" , (req,rsp) -> { rsp.redirect("/app.html"); return null ; } ) ;
 			
 			spark.Spark.post( "/upload-data", this::postData, gson::toJson ) ;
 			spark.Spark.awaitInitialization() ;
