@@ -16,15 +16,11 @@ public class LogisticDataProcessor extends DataProcessor implements com.rc.Cgd.C
 		Dataset dataset = Loader.load( 1000, data, options ) ;
 
 		if( options.square ) {
-			Matrix A = dataset.train.dup() ;
-			A.map( (value, context, r, c) ->  value * value ) ;			
-			A.prefixLabels( "sqr " ) ;
-			dataset.train = dataset.train.appendColumns(A) ;
-
-			Matrix T = dataset.test.dup() ;
-			T.hmuli( T ) ;			
-			T.prefixLabels( "sqr " ) ;
-			dataset.test = dataset.test.appendColumns(T) ;
+			dataset.square(); 
+		}		
+		
+		if( options.log ) {
+			dataset.log(); 
 		}
 		
 		dataset.addBias() ;
@@ -99,6 +95,8 @@ public class LogisticDataProcessor extends DataProcessor implements com.rc.Cgd.C
 		rc.precision = precision ;
 		rc.recall = recall ;
 		rc.f1 = precision.hmul( recall ).muli(2.0).hdivi( precision.add( recall ) ) ;
+		rc.labels = new String[A.N] ;
+		System.arraycopy(A.labels, 0, rc.labels,0, A.N ) ;
 		return rc ;
 	}
 
@@ -141,4 +139,5 @@ class LogisticResults {
 	Matrix precision ;
 	Matrix recall ;
 	Matrix f1 ;
+	String labels [] ;
 }

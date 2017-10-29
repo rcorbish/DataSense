@@ -1,10 +1,27 @@
 package com.rc;
 
+import java.io.IOException;
+import java.io.InputStream;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class CorrelationDataProcessor extends DataProcessor {
 	final static Logger log = LoggerFactory.getLogger( CorrelationDataProcessor.class ) ;
+
+	public Dataset load( InputStream data, ProcessorOptions options ) throws IOException {
+		Dataset dataset = Loader.load( 1000, data, options ) ;
+
+		if( options.square ) {
+			dataset.square(); 
+		}		
+		
+		if( options.log ) {
+			dataset.log(); 
+		}
+				
+		return dataset ;
+	}
 
 	public Object process( Dataset dataset ) {
 		

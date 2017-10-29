@@ -13,6 +13,7 @@
 	<div class="controls">
 		<form class='control' accept-charset="UTF-8" >
 			<input type='checkbox' name='square-values'>Synthesize x<sup>2</sup>
+			<input type='checkbox' name='log-values'>Synthesize log<sub>e</sub>( 1.0 + x<sup>2</sup> )
 			<input type='checkbox' name='discrete-to-col'>Discrete column values for labels
 			<input type='radio'    name='date-treatment' value='to-year'>Dates to years
 			<input type='radio'    name='date-treatment' value='to-months'>Dates to month
@@ -59,7 +60,7 @@
 				};
 				div.ondrop = function(e) {
 					this.innerHTML = "Uploading ...." 
-					
+					this.classList.add( "active" ) 
 					//const query = buildQuery() 
 					
 					this.classList.remove( "dropok" ) 
@@ -69,6 +70,7 @@
 					if( u ) {
 						document.getElementById("results").innerHTML = "Uploading urls like " + u + " isn't supported yet" ;						console.log( "Uploaded a url", u ) ;
 						this.innerHTML = "Drop CSV" 
+						this.classList.remove( "active" )
 					} else {
 						uploadFile( e.dataTransfer.files[0], this.dataset.target, this )
 					}
@@ -86,11 +88,13 @@
 			var xhr = new XMLHttpRequest();
 			xhr.onload = function(e) {
 				div.innerHTML = "Drop CSV" ;
+				div.classList.remove( "active" )
 				document.getElementById("results").innerHTML = "<pre>"
 						+ e.target.responseText + "</pre>";
 			} ;
 			xhr.onerror = function(e) {
 				div.innerHTML = "Drop CSV" ;
+				div.classList.remove( "active" )
 				document.getElementById("results").innerHTML = "<pre>"
 						+ e.target.responseText + "</pre>";
 			} ;

@@ -321,6 +321,10 @@ public class TestBase {
 		double LAMBDA 	= 0.00002;	
 
 		Cgd cgd = new Cgd( ) ; //(sc,it) -> { if( (it%500)==0 ){ System.out.println( it + " : " + sc ) ;} } ) ;
+
+		double gradErr = cgd.checkGrad( cost, grad ) ;
+		assertTrue( "Gradient functions are incorrect - error too large", gradErr<1e-8 ) ;
+
 		Matrix X = cgd.solve( cost, grad, A, B, LAMBDA, 1_000 ) ;
 		for( int i=0 ; i<X.length() ; i++ ) {
 			assertEquals( "CGD solver (AX=B) incorrect factor X[" + i + "]", (i+1), X.data[i], 0.02 ) ;
@@ -380,20 +384,29 @@ public class TestBase {
 			}
 		}; 
 		
-		double LAMBDA 	= 0.0000;	
+		double LAMBDA 	= 0.01;	
 
 		Matrix X = Matrix.fill( A.M, 1, 1.0 ).appendColumns( A ) ;
 
-		Matrix theta = Matrix.fill( X.N, 1, 0.0 ) ;
-		double c = cost.cost( X, B, theta, LAMBDA ) ;
-		Matrix g = grad.grad( X, B, theta, LAMBDA ) ;
-
 		
-		Cgd cgd = new Cgd( ) ; //(sc,it) -> { if( (it%500)==0 ){ System.out.println( it + " : " + sc ) ;} } ) ;
+		Cgd cgd = new Cgd( ) ; 
+		
+		double gradErr = cgd.checkGrad( cost, grad ) ;
+		assertTrue( "Gradient functions are incorrect - error too large", gradErr<1e-8 ) ;
+		
 		Matrix T = cgd.solve( cost, grad, X, B, LAMBDA, 300 ) ;
 
+		assertEquals( "Theta has incorrect number of columns",  1, T.N ) ;
+		assertEquals( "Theta has incorrect number of rows", X.N, T.M ) ;
+		
+		System.out.println( "Theta = " + T ) ;
+		
 		Matrix YH = X.mmul( T ) ;
 		YH.map( v -> sigmoid(v) ) ;
+		
+//		for( int i=0 ; i<YH.length() ; i++ ) {
+//			System.out.println( String.format("YH[%d] %6.4f",  i, YH.data[i] ) ) ;
+//		}
 		
 		assertArrayEquals(  "Error is too big for this simple solution", B.data, YH.data, 0.1 ) ;
 	}

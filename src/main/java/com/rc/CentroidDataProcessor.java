@@ -17,15 +17,11 @@ public class CentroidDataProcessor extends DataProcessor {
 		Dataset dataset = Loader.load( 1000, data, options ) ;
 
 		if( options.square ) {
-			Matrix A = dataset.train.dup() ;
-			A.map( (value, context, r, c) ->  value * value ) ;			
-			A.prefixLabels( "sqr " ) ;
-			dataset.train = dataset.train.appendColumns(A) ;
-
-			Matrix T = dataset.test.dup() ;
-			T.hmuli( T ) ;			
-			T.prefixLabels( "sqr " ) ;
-			dataset.test = dataset.test.appendColumns(T) ;
+			dataset.square(); 
+		}		
+		
+		if( options.log ) {
+			dataset.log(); 
 		}
 		
 		return dataset ;

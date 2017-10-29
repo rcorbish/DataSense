@@ -57,4 +57,38 @@ public class Dataset {
 		}
 		return featureKeys ;
 	}
+	
+	public void square() {
+		int feature = getFeatureColumnIndex() ;
+		Matrix A = train.dup() ;
+		A.extractColumns(feature) ;
+		A.map( v -> v*v ) ;			
+		A.prefixLabels( "sqr " ) ;
+		train = train.appendColumns(A) ;
+
+		Matrix T = test.dup() ;
+		T.extractColumns(feature) ;
+		
+		T.map( v -> v*v ) ;			
+		T.prefixLabels( "sqr " ) ;
+		test = test.appendColumns(T) ;
+	}		
+	
+	public void log() {
+		int feature = getFeatureColumnIndex() ;
+		Matrix A = train.dup() ;
+		A.extractColumns(feature) ;
+		
+		A.map( v ->  Math.log1p( v*v ) ) ;			
+		A.prefixLabels( "logsqr " ) ;
+		train = train.appendColumns(A) ;
+
+		// Test data 
+		Matrix T = test.dup() ;
+		T.extractColumns(feature) ;
+		
+		T.map( v ->  Math.log1p( v*v ) ) ;			
+		T.prefixLabels( "logsqr " ) ;
+		test = test.appendColumns(T) ;
+	}
 }

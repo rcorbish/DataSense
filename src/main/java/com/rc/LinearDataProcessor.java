@@ -16,17 +16,13 @@ public class LinearDataProcessor extends DataProcessor {
 		Dataset dataset = Loader.load( 1000, data, options ) ;
 
 		if( options.square ) {
-			Matrix A = dataset.train.dup() ;
-			A.map( (value, context, r, c) ->  value * value ) ;			
-			A.prefixLabels( "sqr " ) ;
-			dataset.train = dataset.train.appendColumns(A) ;
-
-			Matrix T = dataset.test.dup() ;
-			T.hmuli( T ) ;			
-			T.prefixLabels( "sqr " ) ;
-			dataset.test = dataset.test.appendColumns(T) ;
+			dataset.square(); 
+		}		
+		
+		if( options.log ) {
+			dataset.log(); 
 		}
-
+		
 		dataset.addBias() ;
 		return dataset ;
 	}
@@ -72,7 +68,7 @@ public class LinearDataProcessor extends DataProcessor {
 			for( int i=0 ; i<Y.length() ; i++ ) {
 				int yn = (int)Y.get(i) ;
 				int yrn = (int)YR.get(i) ;
-				if( yrn == f && yn == f ) {	// true positives
+				if( yrn == f && yn == f ) {			// true positives
 					ntp++ ;
 				} else if( yrn != f && yn == f ) {	// false positives
 					nfp++ ;

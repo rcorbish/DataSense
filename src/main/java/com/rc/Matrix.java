@@ -888,7 +888,7 @@ public class Matrix {
 		Matrix rc = new Matrix( M, N+other.N, new String[ N+other.N ] ) ;
 
 		System.arraycopy( data, 0, rc.data, 0, length() ) ;		
-		System.arraycopy( other.data, 0, rc.data, M*N, other.length() ) ;
+		System.arraycopy( other.data, 0, rc.data, M*N, other.M * other.N ) ;
 
 		if( labels != null && other.labels != null ) {
 			System.arraycopy( labels, 0, rc.labels, 0, N ) ;		

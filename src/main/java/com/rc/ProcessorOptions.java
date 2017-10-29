@@ -11,6 +11,7 @@ import java.util.Map;
 public class ProcessorOptions {
 	Charset cs ;
 	boolean square ;
+	boolean log ;
 	boolean discrete ;
 	String  method ;
 	DateParserFunction dateParser ;
@@ -20,6 +21,7 @@ public class ProcessorOptions {
 
 	public ProcessorOptions( Map<String, String[]> params ) throws ParseException {
 		square   = get( params, "square-values") != null  ;
+		log		 = get( params, "log-values") != null  ;
 		discrete = get( params, "discrete-to-col") != null  ;
 		method   = get( params, "method" ) ;
 

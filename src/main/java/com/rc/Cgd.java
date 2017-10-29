@@ -41,8 +41,8 @@ public class Cgd {
 		double RHO = 0.01;                           
 		double SIG = 0.5;	// RHO and SIG are the constants in the Wolfe-Powell conditions
 		double INT = 0.1;   // don't reevaluate within 0.1 of the limit of the current bracket
-		double EXT = 3.0;   // extrapolate maximum 3 times the current bracket
-		double MAX = 40;    // max evaluations per line search
+		double EXT = 4.0;   // extrapolate maximum ext times the current bracket
+		double MAX = 30;    // max evaluations per line search
 		double RATIO = 100; // maximum allowed slope ratio
 
 		double red = 1.0 ;	
@@ -115,10 +115,12 @@ public class Cgd {
 				}
 
 				// exit line search ?
-				if( d2>SIG*d1 ) {
+				if( f2 > f1+z1*RHO*d1 || d2>-SIG*d1) {
+					break ;
+				} else if( d2>SIG*d1 ) {
 					success = true ;
 					break ;
-				} else if( f2 > f1+z1*RHO*d1  || d2>-SIG*d1 || M == 0 ) {
+				} else if( M == 0 ) {
 					break ;
 				}
 				
@@ -161,7 +163,7 @@ public class Cgd {
 
 				f1 = f2 ;
 
-				double factor = ( df2.dot() - df1.dot( df2 ) ) / df1.dot() ;				
+				double factor = ( df2.dot() - df2.dot( df1 ) ) / df1.dot() ;				
 				s.muli( factor ).subi( df2 ) ;
 				
 				Matrix tmp = df1 ;
@@ -204,5 +206,28 @@ public class Cgd {
 		log.info( "Conjugate gradient descent completed in {} iterations", iterations ) ;
 
 		return theta ;
+	}
+	
+	public double checkGrad( CostFunction cost, GradientsFunction gradients ) {
+		boolean rc = true ;
+		Matrix X = Matrix.rand(1, 10) ;
+		Matrix y = Matrix.rand(1, 1 ) ;
+		Matrix theta = Matrix.rand(10, 1) ;
+		double lambda = 0 ;
+		double e = 1e-5 ;
+		Matrix origGrad = gradients.grad(X, y, theta, lambda) ;
+		Matrix finiteGrad = new Matrix( origGrad.M, origGrad.N ) ;
+		
+		for( int i=0 ; i<X.N ; i++ ) {
+			Matrix dx = Matrix.fill( 10, 1, 0) ;
+			dx.put( i, 1e-5 ) ;
+			double y2 = cost.cost(X, y, theta.add(dx), lambda) ;
+			double y1 = cost.cost(X, y, theta.sub(dx), lambda) ;
+			finiteGrad.put( i, (y2-y1) / (2*e) ) ;
+		}
+		
+		double diff = finiteGrad.sub( origGrad ).norm() /  origGrad.add( finiteGrad ).norm();
+		log.debug( "Check grad diff is {}", diff ) ;
+		return diff ;
 	}
 }
