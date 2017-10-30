@@ -346,8 +346,8 @@ public class TestBase {
 		Matrix B = new Matrix( A.M, 1 ) ;
 		Random rng = new Random( 10 ) ;
 		for( int i=0 ; i<A.M ; i++ ) {
-			A.put( i, 0, rng.nextInt( 100 ) ); 
-			A.put( i, 1, rng.nextInt( 100 ) );
+			A.put( i, 0, rng.nextInt( 100 )/10.0 ); 
+			A.put( i, 1, rng.nextInt( 100 )/10.0 );
 			
 			B.put( i, A.get( i,1 ) > (3*A.get( i,0 )-150) ? 1 : 0 );
 		}
@@ -384,7 +384,7 @@ public class TestBase {
 			}
 		}; 
 		
-		double LAMBDA 	= 0.01;	
+		double LAMBDA 	= 0.001;	
 
 		Matrix X = Matrix.fill( A.M, 1, 1.0 ).appendColumns( A ) ;
 
