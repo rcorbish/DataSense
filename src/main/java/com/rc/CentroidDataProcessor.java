@@ -14,16 +14,20 @@ public class CentroidDataProcessor extends DataProcessor {
 	final static Logger log = LoggerFactory.getLogger( CentroidDataProcessor.class ) ;
 
 	public Dataset load( InputStream data, ProcessorOptions options ) throws IOException {
-		Dataset dataset = Loader.load( 1000, data, options ) ;
+		Dataset dataset = Loader.load( DataProcessor.ROWS_TO_KEEP, data, options ) ;
 
 		if( options.square ) {
-			dataset.square(); 
+			dataset.square( options.keepOriginal ); 
 		}		
 		
 		if( options.log ) {
-			dataset.log(); 
+			dataset.log( options.keepOriginal ); 
 		}
 		
+		if( options.reciprocal ) {
+			dataset.reciprocal( options.keepOriginal );
+		}
+				
 		return dataset ;
 	}
 

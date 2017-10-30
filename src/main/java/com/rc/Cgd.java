@@ -41,9 +41,9 @@ public class Cgd {
 		double RHO = 0.01;                           
 		double SIG = 0.5;	// RHO and SIG are the constants in the Wolfe-Powell conditions
 		double INT = 0.1;   // don't reevaluate within 0.1 of the limit of the current bracket
-		double EXT = 4.0;   // extrapolate maximum ext times the current bracket
-		double MAX = 30;    // max evaluations per line search
-		double RATIO = 100; // maximum allowed slope ratio
+		double EXT = 2.0;   // extrapolate maximum ext times the current bracket
+		double MAX = 20;    // max evaluations per line search
+		double RATIO = 150; // maximum allowed slope ratio
 
 		double red = 1.0 ;	
 

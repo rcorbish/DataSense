@@ -12,7 +12,9 @@ public class ProcessorOptions {
 	Charset cs ;
 	boolean square ;
 	boolean log ;
+	boolean reciprocal ;
 	boolean discrete ;
+	boolean keepOriginal ;
 	String  method ;
 	DateParserFunction dateParser ;
 	int dateBaseline ;
@@ -20,11 +22,14 @@ public class ProcessorOptions {
 
 
 	public ProcessorOptions( Map<String, String[]> params ) throws ParseException {
-		square   = get( params, "square-values") != null  ;
-		log		 = get( params, "log-values") != null  ;
-		discrete = get( params, "discrete-to-col") != null  ;
+		square   	= get( params, "square-values") != null  ;
+		log		 	= get( params, "log-values") != null  ;
+		discrete 	= get( params, "discrete-to-col") != null  ;
+		keepOriginal= get( params, "keep-original" ) != null  ;
+		reciprocal  = get( params, "reciprocal" ) != null  ;
+		
 		method   = get( params, "method" ) ;
-
+		
 		String baseline = get( params, "date-baseline" ) ;
 		Calendar today = Calendar.getInstance() ;
 		dateBaseline = 0 ;

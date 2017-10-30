@@ -20,16 +20,20 @@ public class SvmcDataProcessor extends DataProcessor implements svm_print_interf
 	final static Logger log = LoggerFactory.getLogger( SvmcDataProcessor.class ) ;
 
 	public Dataset load( InputStream data, ProcessorOptions options ) throws IOException {
-		Dataset dataset = Loader.load( 1000, data, options ) ;
+		Dataset dataset = Loader.load( DataProcessor.ROWS_TO_KEEP, data, options ) ;
 
 		if( options.square ) {
-			dataset.square(); 
+			dataset.square( options.keepOriginal ); 
 		}		
 		
 		if( options.log ) {
-			dataset.log(); 
+			dataset.log( options.keepOriginal );
 		}
-			
+		
+		if( options.reciprocal ) {
+			dataset.reciprocal( options.keepOriginal );
+		}
+				
 		return dataset ;
 	}
 
@@ -85,8 +89,8 @@ public class SvmcDataProcessor extends DataProcessor implements svm_print_interf
 		parameter.degree = 2 ;	// poly only
 		parameter.gamma = 0.001 ;	// exp( -gamma * (u-v)^2 )
 		parameter.coef0 = 0 ; 	// sigmoid / poly only
-		parameter.cache_size = 100 ;	// MB
-		parameter.C = 10 ; // normal C parameter in svm
+		parameter.cache_size = 500 ;	// MB
+		parameter.C = 100 ; // normal C parameter in svm
 		parameter.eps = 0.0001 ; // error to stop
 		parameter.nr_weight = 0 ; // all weights equal
 		parameter.weight_label = null ; // all weights equal

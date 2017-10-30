@@ -8,10 +8,11 @@ import org.slf4j.LoggerFactory;
 
 abstract public class DataProcessor {
 	final static Logger log = LoggerFactory.getLogger( DataProcessor.class ) ;
+	final static public int ROWS_TO_KEEP = 5_000 ;
 	
 	public Dataset load( InputStream data, ProcessorOptions options ) throws IOException {
 		options.testRatio = 0 ;
-		Dataset dataset = Loader.load( 1000, data, options ) ;
+		Dataset dataset = Loader.load( ROWS_TO_KEEP, data, options ) ;
 		return dataset ;
 	}
 	

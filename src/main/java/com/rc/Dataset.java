@@ -58,37 +58,56 @@ public class Dataset {
 		return featureKeys ;
 	}
 	
-	public void square() {
+	public void square( boolean keepOriginals ) {
 		int feature = getFeatureColumnIndex() ;
 		Matrix A = train.dup() ;
-		A.extractColumns(feature) ;
+		Matrix F = A.extractColumns(feature) ;
 		A.map( v -> v*v ) ;			
 		A.prefixLabels( "sqr " ) ;
-		train = train.appendColumns(A) ;
+		train = keepOriginals ? train.appendColumns(A) : F.appendColumns(A) ;
 
 		Matrix T = test.dup() ;
-		T.extractColumns(feature) ;
+		F = T.extractColumns(feature) ;
 		
 		T.map( v -> v*v ) ;			
 		T.prefixLabels( "sqr " ) ;
-		test = test.appendColumns(T) ;
+		test = keepOriginals ? test.appendColumns(T) : F.appendColumns(T) ;
 	}		
 	
-	public void log() {
+	public void log( boolean keepOriginals ) {
 		int feature = getFeatureColumnIndex() ;
 		Matrix A = train.dup() ;
-		A.extractColumns(feature) ;
+		Matrix F = A.extractColumns(feature) ;
 		
 		A.map( v ->  Math.log1p( v*v ) ) ;			
 		A.prefixLabels( "logsqr " ) ;
-		train = train.appendColumns(A) ;
+		train = keepOriginals ? train.appendColumns(A) : F.appendColumns(A) ;
 
 		// Test data 
 		Matrix T = test.dup() ;
-		T.extractColumns(feature) ;
+		F = T.extractColumns(feature) ;
 		
 		T.map( v ->  Math.log1p( v*v ) ) ;			
 		T.prefixLabels( "logsqr " ) ;
-		test = test.appendColumns(T) ;
+		test = keepOriginals ? test.appendColumns(T) : F.appendColumns(T) ;
 	}
+	
+	public void reciprocal( boolean keepOriginals ) {
+		int feature = getFeatureColumnIndex() ;
+		Matrix A = train.dup() ;
+		Matrix F = A.extractColumns(feature) ;
+		
+		A.map( v -> 1.0 / (v + 1.0) ) ;			
+		A.prefixLabels( "recip. " ) ;
+		train = keepOriginals ? train.appendColumns(A) : F.appendColumns(A) ;
+
+		// Test data 
+		Matrix T = test.dup() ;
+		F = T.extractColumns(feature) ;
+		
+		T.map( v -> 1.0 / (v + 1.0) ) ;			
+		T.prefixLabels( "recip. " ) ;
+		test = keepOriginals ? test.appendColumns(T) : F.appendColumns(T) ;
+	}
+
 }

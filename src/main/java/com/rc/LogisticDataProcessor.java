@@ -13,16 +13,20 @@ public class LogisticDataProcessor extends DataProcessor implements com.rc.Cgd.C
 	final static Logger log = LoggerFactory.getLogger( LogisticDataProcessor.class ) ;
 
 	public Dataset load( InputStream data, ProcessorOptions options ) throws IOException {
-		Dataset dataset = Loader.load( 1000, data, options ) ;
+		Dataset dataset = Loader.load( DataProcessor.ROWS_TO_KEEP, data, options ) ;
 
 		if( options.square ) {
-			dataset.square(); 
+			dataset.square( options.keepOriginal );
 		}		
 		
 		if( options.log ) {
-			dataset.log(); 
+			dataset.log( options.keepOriginal );
 		}
 		
+		if( options.reciprocal ) {
+			dataset.reciprocal( options.keepOriginal );
+		}
+				
 		dataset.addBias() ;
 
 		return dataset ;
@@ -49,8 +53,8 @@ public class LogisticDataProcessor extends DataProcessor implements com.rc.Cgd.C
 		
 		Matrix theta = new Matrix( A.N, numBuckets ) ;
 		
-		double lambda = 0.0001 ;
-		int maxIterations = 500 ;
+		double lambda = 0.001 ;
+		int maxIterations = 1000 ;
 		Cgd cgd = new Cgd() ;
 		for( int i=0 ; i<numBuckets ; i++ ) {
 			int f = inverseFeatureKeys.get(i) ;
