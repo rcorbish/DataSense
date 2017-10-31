@@ -6,6 +6,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Random;
 import java.util.Set;
+import java.util.function.DoubleUnaryOperator;
 
 import javax.management.RuntimeErrorException;
 
@@ -980,11 +981,10 @@ public class Matrix {
 	 * @param func the lambda to change a value
 	 * @return this
 	 */
-	public Matrix map( SimpleMatrixFunction func ) {
-		for( int i=0 ; i<M ; i++ ) {
-			for( int j=0 ; j<N ; j++ ) {
-				put( i, j, func.call( get(i,j) ) ) ;
-			}
+	public Matrix map( DoubleUnaryOperator func ) {
+		// Arrays.stream( data ).parallel().map( func ) ;
+		for( int i=0 ; i<length() ; i++ ) {
+			put( i, func.applyAsDouble( get(i) ) ) ;
 		}
 		return this ;
 	}
@@ -1198,10 +1198,10 @@ public class Matrix {
 	static interface MatrixFunction {    	
 		public double call( double value, Matrix context, int r, int c ) ;
 	}
-	@FunctionalInterface
-	static interface SimpleMatrixFunction {    	
-		public double call( double value ) ;
-	}
+	// @FunctionalInterface
+	// static interface SimpleMatrixFunction {    	
+	// 	public double call( double value ) ;
+	// }
 	@FunctionalInterface
 	static interface MatrixColFunction {    	
 		public double [] call( double values[], Matrix context, int offset, int len ) ;

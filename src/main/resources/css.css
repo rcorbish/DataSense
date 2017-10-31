@@ -13,10 +13,20 @@ input {
 	margin: 8px ;
 }
 
+.dropok {
+	background-color: #1c3d1c ;
+}
+
+
+.controls {
+	position: relative ;
+	padding-left: 25px ;
+	background-color: #181619 ;
+	z-index: 100 ;	
+}
 
 .upload {
 	display: inline-block ;
-	position: relative ;
 	width: 80px ;
 	height: 80px ;
 	border: 3px dashed #a6a6af ;
@@ -29,9 +39,19 @@ input {
 	font-size: 9pt ;
 }
 
-.dropok {
-	background-color: #1c3d1c ;
-}
+.menu {
+	position: absolute ;
+	margin: 5px ;
+	height: 0 ;
+	top: 100px ;
+	right: 0 ;
+	left: 0 ;
+	transition: 0.375s ;
+	opacity: 0 ;
+	overflow: hidden ;
+	border: solid 2px #678 ;
+	background-color: #181619 ;
+} 
 
 #results {
 	display: block ;
@@ -70,22 +90,6 @@ input {
   	background-position: 50px 50px;
   }
 }	
-
-.controls {
-	display: flex ;
-	xposition: absolute ;
-	top: 0 ;
-	left: 130px ;
-}
-
-.menu {
-	margin: 5px ;
-	height: 0 ;
-	transition: 0.375s ;
-	opacity: 0 ;
-	overflow: hidden ;
-	border: solid 2px #678 ;
-} 
 
 .expanded  {
 	height: inherit ;

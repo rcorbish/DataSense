@@ -9,15 +9,15 @@
 <title>zudat</title>
 </head>
 <body>
-	<div class="upload" data-target='upload-data'>Drop CSV</div>
 	<div id='menu-group' class='controls'>
 		<div class="hamburger collapsible">
 			<div class="collapsible bar1"></div>
 			<div class="collapsible bar2"></div>
 			<div class="collapsible bar3"></div>
 		</div>
-				
-		<div id="menu" class="collapsible menu" >				  
+
+		<div id="menu" class="collapsible menu" >
+			<div class="upload" data-target='upload-data'>Drop CSV</div>
 			<form class='control' accept-charset="UTF-8" >
 				<input type='checkbox' name='square-values'>Synthesize x<sup>2</sup>
 				<input type='checkbox' name='log-values'>Synthesize log<sub>e</sub>( 1 + x<sup>2</sup> )
@@ -46,6 +46,15 @@
 	<script>
 		window.addEventListener("load", function(e) {
 			initUploadDivs()
+			const menuGroup = document.getElementById( "menu-group" ) ;
+			const menuHamburger = menuGroup.querySelector( ".hamburger" ) ;
+
+			menuHamburger.addEventListener( "click", function(e) {
+			const collapsibles = menuGroup.querySelectorAll( ".collapsible" ) ;
+			for( var i=0 ; i<collapsibles.length ; i++ ) {
+				collapsibles[i].classList.toggle("expanded");
+			}
+			}) ;
 		});
 
 		function initUploadDivs() {
@@ -54,11 +63,12 @@
 			for (var i = 0; i < divs.length; i++) {
 				div = divs[i];
 				div.ondragover = function(e) {
+					console.log( "Drag:", e ) ;
 					e.dataTransfer.dropEffect = 'copy';
 					this.classList.add( "dropok" ) ;
 					e.preventDefault();
 					return false;
-				}.bind(div);
+				};
 				div.ondragend = function(e) {
 					this.classList.remove( "dropok" ) ;
 					e.preventDefault();
@@ -113,19 +123,6 @@
 			xhr.send(formData);			
 		}
 		
-
-  window.addEventListener( "load", function(e) {
-    const menuGroup = document.getElementById( "menu-group" ) ;
-    const menuHamburger = menuGroup.querySelector( ".hamburger" ) ;
-
-    menuHamburger.addEventListener( "click", function(e) {
-      const collapsibles = menuGroup.querySelectorAll( ".collapsible" ) ;
-      for( var i=0 ; i<collapsibles.length ; i++ ) {
-        collapsibles[i].classList.toggle("expanded");
-      }
-    }) ;
-
-  }) ;
 
 </script>
 

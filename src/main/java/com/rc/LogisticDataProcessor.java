@@ -53,8 +53,8 @@ public class LogisticDataProcessor extends DataProcessor implements com.rc.Cgd.C
 		
 		Matrix theta = new Matrix( A.N, numBuckets ) ;
 		
-		double lambda = 0.001 ;
-		int maxIterations = 250 ;
+		double lambda = 0.01 ;
+		int maxIterations = 500 ;
 		Cgd cgd = new Cgd() ;
 		for( int i=0 ; i<numBuckets ; i++ ) {
 			int f = inverseFeatureKeys.get(i) ;
