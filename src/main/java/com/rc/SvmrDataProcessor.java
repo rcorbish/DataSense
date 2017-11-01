@@ -129,26 +129,7 @@ public class SvmrDataProcessor extends DataProcessor implements svm_print_interf
 //		Y.map( v -> ( v*std + mean ) ) ;
 		Y.labels = new String[] { "Predicted" } ;
 		
-		SvmrResults rc = new SvmrResults() ;
-
-		double accuracy = 0 ;
-		double harmonic = 1 ;
-		double precision = 0 ;
-		double recall = 0 ;
-		
-		for( int i=0 ; i<Y.length() ; i++ ) {
-			double err = Y.get(i) - YR.get(i) ;
-			precision+=Math.abs(err) ;
-			accuracy += err * err ;
-			harmonic *= err ;
-			if( Math.abs(err)<0.5 ) recall++ ;
-		}
-
-		rc.accuracy = 1.0 - Math.sqrt( accuracy ) / Y.length() ;
-		rc.averageError = precision / Y.length() ;
-		rc.recall = recall / Y.length() ;
-		rc.harmonic = Math.pow( Math.abs(harmonic), 1.0/Y.length() ) ;
-		return rc ;
+		return score(YR, Y ) ;
 	}
 	
 	public void print(String s)	{
@@ -156,11 +137,4 @@ public class SvmrDataProcessor extends DataProcessor implements svm_print_interf
 			log.info( s.trim() ) ;
 		}
 	};
-}
-
-class SvmrResults {
-	double accuracy ;
-	double harmonic ;
-	double averageError ;
-	double recall ;
 }

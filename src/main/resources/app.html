@@ -9,7 +9,7 @@
 <title>zudat</title>
 </head>
 <body>
-	<div id='menu-group' class='controls'>
+	<div id='menu-section' class='controls'>
 		<div class="hamburger collapsible">
 			<div class="collapsible bar1"></div>
 			<div class="collapsible bar2"></div>
@@ -19,32 +19,35 @@
 		<div id="menu" class="collapsible menu" >
 			<div class="upload" data-target='upload-data'>Drop CSV</div>
 			<form class='control' accept-charset="UTF-8" >
-				<input type='checkbox' name='square-values'>Synthesize x<sup>2</sup>
-				<br/>
-				<input type='checkbox' name='log-values'>Synthesize log<sub>e</sub>( 1 + x<sup>2</sup> )
-				<br/>
-				<input type='checkbox' name='reciprocal'>Synthesize 1 / ( 1 + x )
-				<br/>
-				<input type='checkbox' name='discrete-to-col'>Discrete labels
-				<br/>
-				<input type='checkbox' name='keep-original'>Keep original labels
-				<br/>
-				<input type='radio'    name='date-treatment' value='to-year'>Dates to years
-				<input type='radio'    name='date-treatment' value='to-months'>Dates to month
-				<input type='radio'    name='date-treatment' value='to-days'>Dates to days
-				<br/>
-				<input type='radio'    name='date-baseline'  value='today' >Baseline for dates is today
-				<input type='radio'    name='date-baseline'  value='1900' >Baseline for dates is 01-Jan-1900
-				<input type='radio'    name='date-baseline'  value='2000' >Baseline for dates is 01-Jan-2000
-				<br/>
-				<input type='radio'    name='method' value='svmc' checked>SVM-C
-				<input type='radio'    name='method' value='svmr' checked>SVM-R
-				<input type='radio'    name='method' value='linear' checked>Linear Regression
-				<input type='radio'    name='method' value='logistic' >Logistic Regression
-				<input type='radio'    name='method' value='centroids' >Nearest Centroid
-				<br/>
-				<input type='radio'    name='method' value='correlation' >Correlation
-				<input type='radio'    name='method' value='statistics' >Statistics
+				<div class='menu-group'>
+					<input type='checkbox' name='square-values'>Synthesize x<sup>2</sup>
+					<input type='checkbox' name='log-values'>Synthesize log<sub>e</sub>( 1 + x<sup>2</sup> )
+					<br/>
+					<input type='checkbox' name='reciprocal'>Synthesize 1 / ( 1 + x )
+					<input type='checkbox' name='discrete-to-col'>Discrete labels
+					<br/>
+					<input type='checkbox' name='keep-original'>Keep original labels
+				</div>
+				<div class='menu-group'>
+					<input type='radio'    name='date-treatment' value='to-year'>Dates to years
+					<input type='radio'    name='date-treatment' value='to-months'>Dates to month
+					<input type='radio'    name='date-treatment' value='to-days'>Dates to days
+				</div>
+				<div class='menu-group'>
+					<input type='radio'    name='date-baseline'  value='today' >Date baseline today
+					<input type='radio'    name='date-baseline'  value='1900' >Date baseline 01-Jan-1900
+					<input type='radio'    name='date-baseline'  value='2000' >Date baseline 01-Jan-2000
+				</div>
+				<div class='menu-group'>
+					<input type='radio'    name='method' value='svmc'>SVM-C
+					<input type='radio'    name='method' value='svmr'>SVM-R
+					<input type='radio'    name='method' value='linear' checked>Linear Regression
+					<input type='radio'    name='method' value='logistic' >Logistic Regression
+					<input type='radio'    name='method' value='centroids' >Nearest Centroid
+					<br/>
+					<input type='radio'    name='method' value='correlation' >Correlation
+					<input type='radio'    name='method' value='statistics' >Statistics
+				</div>
 			</form>
 		</div>
 	</div>
@@ -55,8 +58,8 @@
 		window.addEventListener("load", function(e) {
 			initUploadDivs()
 			
-			const menuGroup = document.getElementById( "menu-group" ) ;
-			const menuHamburger = menuGroup.querySelector( ".hamburger" ) ;
+			const menuSection = document.getElementById( "menu-section" ) ;
+			const menuHamburger = menuSection.querySelector( ".hamburger" ) ;
 
 			menuHamburger.addEventListener( "click", function(e) {
 				toggleMenuCollapse() 
@@ -64,8 +67,8 @@
 		});
 
 		function toggleMenuCollapse() {
-			const menuGroup = document.getElementById( "menu-group" ) ;
-			const collapsibles = menuGroup.querySelectorAll( ".collapsible" ) ;
+			const menuSection = document.getElementById( "menu-section" ) ;
+			const collapsibles = menuSection.querySelectorAll( ".collapsible" ) ;
 			for( var i=0 ; i<collapsibles.length ; i++ ) {
 				collapsibles[i].classList.toggle("expanded");
 			}

@@ -53,6 +53,12 @@ input {
 	background-color: #181619 ;
 } 
 
+.menu-group {
+	border: solid 1px #456 ;
+	margin: 15px ;
+	background-color: #181619 ;
+} 
+
 #results {
 	display: block ;
 	position: relative ;

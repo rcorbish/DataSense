@@ -83,14 +83,15 @@ public class SvmcDataProcessor extends DataProcessor implements svm_print_interf
 		problem.x = data ;
 		problem.y = F.data.clone() ;
 		problem.l = F.length() ; 
+		
 		svm_parameter parameter = new svm_parameter() ;
 		parameter.svm_type = svm_parameter.C_SVC ;
 		parameter.kernel_type = svm_parameter.RBF ;
 		parameter.degree = 2 ;	// poly only
-		parameter.gamma = 0.001 ;	// exp( -gamma * (u-v)^2 )
+		parameter.gamma = 0.0003 ;	// exp( -gamma * (u-v)^2 )
 		parameter.coef0 = 0 ; 	// sigmoid / poly only
 		parameter.cache_size = 500 ;	// MB
-		parameter.C = 100 ; // normal C parameter in svm
+		parameter.C = 300 ; // normal C parameter in svm
 		parameter.eps = 0.0001 ; // error to stop
 		parameter.nr_weight = 0 ; // all weights equal
 		parameter.weight_label = null ; // all weights equal
@@ -120,42 +121,8 @@ public class SvmcDataProcessor extends DataProcessor implements svm_print_interf
 			}
 			Y.put(i, svm.svm_predict( model, test )  ) ;
 		}
-		
 
-		int numBuckets = model.nr_class ;		
-
-		Y.labels = new String[] { "Predicted" } ;
-
-		SvmcResults rc = new SvmcResults() ;
-
-		Matrix precision = new Matrix( numBuckets, 1 ) ;
-		Matrix recall = new Matrix( numBuckets, 1 ) ;
-		
-		for( int n=0 ; n<numBuckets ; n++ ) {
-			int f = inverseFeatureKeys.get( n ) ;
-
-			int nfp = 0 ;
-			int ntp = 0 ;
-			int nfn  = 0 ;
-			for( int i=0 ; i<Y.length() ; i++ ) {
-				int yn = (int)Y.get(i) ;
-				int yrn = (int)YR.get(i) ;
-				if( yrn == f && yn == f ) {	// true positives
-					ntp++ ;
-				} else if( yrn != f && yn == f ) {	// false positives
-					nfp++ ;
-				} else if( yrn == f && yn != f ) {	// false negatives
-					nfn++ ;
-				}
-			}
-			precision.put( n, (double)ntp / (double)(ntp + nfp) ) ;
-			recall.put( n, (double)ntp / (double)(ntp + nfn) ) ;
-		}
-		rc.precision = precision ;
-		rc.recall = recall ;
-		rc.f1 = precision.hmul( recall ).muli(2.0).hdivi( precision.add( recall ) ) ;
-		
-		return rc ;
+		return score(YR, Y, inverseFeatureKeys ) ;
 	}
 	
 	public void print(String s)	{

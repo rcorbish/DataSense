@@ -77,41 +77,7 @@ public class CentroidDataProcessor extends DataProcessor {
 			Y.put( i, 0, euclideanDistanceToCentroid.minIndexOfRows().get(0) ) ;			
 		}
 		
-		CentroidResults rc = new CentroidResults() ;
-
-		Matrix precision = new Matrix( numBuckets, 1 ) ;
-		Matrix recall = new Matrix( numBuckets, 1 ) ;
-		
-		for( int n=0 ; n<numBuckets ; n++ ) {
-			int f = inverseFeatureKeys.get( n ) ;
-
-			int nfp = 0 ;
-			int ntp = 0 ;
-			int nfn  = 0 ;
-			for( int i=0 ; i<Y.length() ; i++ ) {
-				int yn = (int)Y.get(i) ;
-				int yrn = (int)YR.get(i) ;
-				if( yrn == f && yn == f ) {	// true positives
-					ntp++ ;
-				} else if( yrn != f && yn == f ) {	// false positives
-					nfp++ ;
-				} else if( yrn == f && yn != f ) {	// false negatives
-					nfn++ ;
-				}
-			}
-			precision.put( n, (double)ntp / (double)(ntp + nfp) ) ;
-			recall.put( n, (double)ntp / (double)(ntp + nfn) ) ;
-		}
-		rc.precision = precision ;
-		rc.recall = recall ;
-		rc.f1 = precision.hmul( recall ).muli(2.0).hdivi( precision.add( recall ) ) ;
-		return rc ;
-
+		return score( YR, Y, inverseFeatureKeys )  ;
 	}
 }
 
-class CentroidResults {
-	Matrix precision ;
-	Matrix recall ;
-	Matrix f1 ;
-}

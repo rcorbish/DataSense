@@ -34,7 +34,6 @@ public class LogisticDataProcessor extends DataProcessor implements com.rc.Cgd.C
 
 	
 	public Object process( Dataset dataset ) {
-		LogisticResults rc = null ;
 
 		Matrix A  = dataset.train ;
 		Matrix T  = dataset.test ;
@@ -67,41 +66,9 @@ public class LogisticDataProcessor extends DataProcessor implements com.rc.Cgd.C
 
 		Matrix Y = T.mmul(theta) ;
 		Y.map( v -> sigmoid(v) ) ;
-		Y = Y.maxIndexOfRows();
-		Y.map( v -> inverseFeatureKeys.get((int)v) ) ;
-		Y.labels = new String[] { "Predicted" } ;
+		Y = Y.maxIndexOfRows() ;
 		
-		rc = new LogisticResults() ;
-
-		Matrix precision = new Matrix( numBuckets, 1 ) ;
-		Matrix recall = new Matrix( numBuckets, 1 ) ;
-		
-		for( int n=0 ; n<numBuckets ; n++ ) {
-			int f = inverseFeatureKeys.get( n ) ;
-
-			int nfp = 0 ;
-			int ntp = 0 ;
-			int nfn  = 0 ;
-			for( int i=0 ; i<Y.length() ; i++ ) {
-				int yn = (int)Y.get(i) ;
-				int yrn = (int)YR.get(i) ;
-				if( yrn == f && yn == f ) {	// true positives
-					ntp++ ;
-				} else if( yrn != f && yn == f ) {	// false positives
-					nfp++ ;
-				} else if( yrn == f && yn != f ) {	// false negatives
-					nfn++ ;
-				}
-			}
-			precision.put( n, (double)ntp / (double)(ntp + nfp) ) ;
-			recall.put( n, (double)ntp / (double)(ntp + nfn) ) ;
-		}
-		rc.precision = precision ;
-		rc.recall = recall ;
-		rc.f1 = precision.hmul( recall ).muli(2.0).hdivi( precision.add( recall ) ) ;
-		rc.labels = new String[A.N] ;
-		System.arraycopy(A.labels, 0, rc.labels,0, A.N ) ;
-		return rc ;
+		return score( YR, Y, inverseFeatureKeys )  ;
 	}
 
 
@@ -139,9 +106,3 @@ public class LogisticDataProcessor extends DataProcessor implements com.rc.Cgd.C
 	}
 }
 
-class LogisticResults {
-	Matrix precision ;
-	Matrix recall ;
-	Matrix f1 ;
-	String labels [] ;
-}
