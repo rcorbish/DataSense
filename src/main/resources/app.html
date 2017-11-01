@@ -20,21 +20,29 @@
 			<div class="upload" data-target='upload-data'>Drop CSV</div>
 			<form class='control' accept-charset="UTF-8" >
 				<input type='checkbox' name='square-values'>Synthesize x<sup>2</sup>
+				<br/>
 				<input type='checkbox' name='log-values'>Synthesize log<sub>e</sub>( 1 + x<sup>2</sup> )
+				<br/>
 				<input type='checkbox' name='reciprocal'>Synthesize 1 / ( 1 + x )
+				<br/>
 				<input type='checkbox' name='discrete-to-col'>Discrete labels
+				<br/>
 				<input type='checkbox' name='keep-original'>Keep original labels
+				<br/>
 				<input type='radio'    name='date-treatment' value='to-year'>Dates to years
 				<input type='radio'    name='date-treatment' value='to-months'>Dates to month
 				<input type='radio'    name='date-treatment' value='to-days'>Dates to days
+				<br/>
 				<input type='radio'    name='date-baseline'  value='today' >Baseline for dates is today
 				<input type='radio'    name='date-baseline'  value='1900' >Baseline for dates is 01-Jan-1900
 				<input type='radio'    name='date-baseline'  value='2000' >Baseline for dates is 01-Jan-2000
+				<br/>
 				<input type='radio'    name='method' value='svmc' checked>SVM-C
 				<input type='radio'    name='method' value='svmr' checked>SVM-R
 				<input type='radio'    name='method' value='linear' checked>Linear Regression
 				<input type='radio'    name='method' value='logistic' >Logistic Regression
 				<input type='radio'    name='method' value='centroids' >Nearest Centroid
+				<br/>
 				<input type='radio'    name='method' value='correlation' >Correlation
 				<input type='radio'    name='method' value='statistics' >Statistics
 			</form>
@@ -46,57 +54,62 @@
 	<script>
 		window.addEventListener("load", function(e) {
 			initUploadDivs()
+			
 			const menuGroup = document.getElementById( "menu-group" ) ;
 			const menuHamburger = menuGroup.querySelector( ".hamburger" ) ;
 
 			menuHamburger.addEventListener( "click", function(e) {
+				toggleMenuCollapse() 
+			}) ;
+		});
+
+		function toggleMenuCollapse() {
+			const menuGroup = document.getElementById( "menu-group" ) ;
 			const collapsibles = menuGroup.querySelectorAll( ".collapsible" ) ;
 			for( var i=0 ; i<collapsibles.length ; i++ ) {
 				collapsibles[i].classList.toggle("expanded");
 			}
-			}) ;
-		});
-
+		}
+		
 		function initUploadDivs() {
 			var divs = document.querySelectorAll(".upload");
 			var div;
 			for (var i = 0; i < divs.length; i++) {
 				div = divs[i];
-				div.ondragover = function(e) {
-					console.log( "Drag:", e ) ;
+				div.addEventListener( "dragover", function(e) {
+					e.preventDefault();
 					e.dataTransfer.dropEffect = 'copy';
-					this.classList.add( "dropok" ) ;
-					e.preventDefault();
+					e.target.classList.add( "dropok" ) ;
 					return false;
-				};
-				div.ondragend = function(e) {
-					this.classList.remove( "dropok" ) ;
+				});
+				div.addEventListener( "dragend", function(e) {
 					e.preventDefault();
+					e.target.classList.remove( "dropok" ) ;
 					return false;
-				};
-				div.ondragleave = function(e) {
-					this.classList.remove( "dropok" ) ;
+				});
+				div.addEventListener( "dragleave", function(e) {
 					e.preventDefault();
+					e.target.classList.remove( "dropok" ) ;
 					return false;
-				};
-				div.ondrop = function(e) {
-					this.innerHTML = "Uploading ...." 
-					this.classList.add( "active" ) 
-					//const query = buildQuery() 
-					
-					this.classList.remove( "dropok" ) 
+				});
+				div.addEventListener( "drop", function(e) {
+					e.stopPropagation()
 					e.preventDefault()
+					e.target.innerHTML = "Uploading ...." 
+					e.target.classList.add( "active" ) 
+					
+					e.target.classList.remove( "dropok" ) 
 					
 					var u = e.dataTransfer.getData('url' ) ;
 					if( u ) {
 						document.getElementById("results").innerHTML = "Uploading urls like " + u + " isn't supported yet" ;						console.log( "Uploaded a url", u ) ;
-						this.innerHTML = "Drop CSV" 
-						this.classList.remove( "active" )
+						e.target.innerHTML = "Drop CSV" 
+						e.target.classList.remove( "active" )
 					} else {
-						uploadFile( e.dataTransfer.files[0], this.dataset.target, this )
+						uploadFile( e.dataTransfer.files[0], e.target.dataset.target, e.target )
 					}
 					return false
-				}.bind( div ) ;
+				}) ;
 			}
 		}
 		
@@ -112,6 +125,7 @@
 				div.classList.remove( "active" )
 				document.getElementById("results").innerHTML = "<pre>"
 						+ e.target.responseText + "</pre>";
+				toggleMenuCollapse() 
 			} ;
 			xhr.onerror = function(e) {
 				div.innerHTML = "Drop CSV" ;
