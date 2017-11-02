@@ -77,13 +77,13 @@ abstract public class DataProcessor {
 		for( int i=0 ; i<Y.length() ; i++ ) {
 			double err = Y.get(i) - YH.get(i) ;
 			accuracy += err * err ;
-			harmonicError += 1.0 / ( 1.0 + err ) ;
+			harmonicError += 1.0 / ( 1.0 + Math.abs(err) ) ;
 			if( Math.abs(err)<0.5 ) correct++ ;
 		}
 
 		rc.accuracy = 1.0 - Math.sqrt( accuracy ) / Y.length() ;
 		rc.correctRatio = correct / Y.length() ;
-		rc.harmonic = Y.length() / harmonicError ;
+		rc.harmonicError = Y.length() / harmonicError - 1.0 ;
 		return rc ;
 	}
 
@@ -95,7 +95,7 @@ class ProcessScores {
 	Matrix f1 ;
 
 	double accuracy ;
-	double harmonic ;
+	double harmonicError ;
 	double correctRatio ;
 }
 

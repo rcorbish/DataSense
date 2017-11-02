@@ -52,7 +52,10 @@
 		</div>
 	</div>
 
-	<div id="results"> </div>
+	<div id="main-area">
+		<div id="results"> </div>
+		<div id="blotter"> </div>
+	</div>
 
 	<script>
 		window.addEventListener("load", function(e) {
@@ -128,7 +131,9 @@
 				div.classList.remove( "active" )
 				document.getElementById("results").innerHTML = "<pre>"
 						+ e.target.responseText + "</pre>";
-				toggleMenuCollapse() 
+				toggleMenuCollapse()
+				const o = JSON.parse( e.target.responseText ) ;
+				drawCorrelations(o.R )  
 			} ;
 			xhr.onerror = function(e) {
 				div.innerHTML = "Drop CSV" ;
@@ -140,6 +145,35 @@
 			xhr.send(formData);			
 		}
 		
+		function drawCorrelations( R ) {
+			const blotter = document.getElementById( "blotter" )
+			while( blotter.hasChildNodes() ) {
+				blotter.removeChild( blotter.lastChild )
+			}
+			const canvas = document.createElement( "canvas" ) 
+			canvas.classList.add( "fill-blotter" )
+			blotter.appendChild( canvas ) ;
+			const ctx = canvas.getContext( "2d" )
+
+			var dx = canvas.width / R.length
+			var dy = canvas.height / R.length
+
+			for( var i=0 ; i<R.length ; i++ ) {
+				for( var j=0 ; j<R.length ; j++ ) {
+					ctx.beginPath()
+					const r = Math.round( Math.abs(R[i][j]) * 0xf).toString(16) 
+					if( Math.abs(R[i][j]) > 0.9999999 ) {
+						ctx.fillStyle = "#fff" 
+					} else if( R[i][j]<0 ) {
+						ctx.fillStyle = "#" +  r + "00" 
+					} else {
+						ctx.fillStyle = "#0" + r + "0" 
+					}  
+					ctx.fillRect( i*dx, j*dy, dx, dy ) 
+					ctx.fill()
+				} 
+			} 
+		}
 
 </script>
 
