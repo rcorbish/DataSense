@@ -127,7 +127,6 @@ public class SvmrDataProcessor extends DataProcessor implements svm_print_interf
 		}
 		
 //		Y.map( v -> ( v*std + mean ) ) ;
-		Y.labels = new String[] { "Predicted" } ;
 		
 		return score(YR, Y ) ;
 	}

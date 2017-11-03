@@ -39,7 +39,9 @@ abstract public class DataProcessor {
 		
 		ProcessScores rc = new ProcessScores() ;
 		rc.Y = Y.dup();
+		rc.Y.labels = null ;
 		rc.YH = YH.dup() ;
+		rc.YH.labels = null ;
 		
 		// Logistic
 		if( inverseFeatureKeys != null ) {

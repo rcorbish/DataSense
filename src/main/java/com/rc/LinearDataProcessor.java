@@ -2,9 +2,6 @@ package com.rc;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Map.Entry;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,6 +44,7 @@ public class LinearDataProcessor extends DataProcessor {
 		X.labels = A.labels ;
 		
 		Matrix Y = T.mmul(X) ;
+		log.info( "Calculated Y={}", Y ) ;
 		
 		return score( YR, Y ) ;		
 	}
