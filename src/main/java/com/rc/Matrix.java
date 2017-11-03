@@ -1228,8 +1228,22 @@ public class Matrix {
 
 			if( src.isVector ) {
 				object.addProperty("M", src.length() );
-				for( int i=0 ; i<src.length() ; i++ ) {
-					object.addProperty( src.labels==null ? String.valueOf(i) : src.labels[i], src.data[i] ) ;
+				if( src.labels == null ) {
+					JsonArray data = new JsonArray( src.length() ) ;
+					for( int i=0 ; i<src.length() ; i++ ) {
+						data.add( src.data[i] ) ;
+					}
+					object.add( "data", data ) ;
+				} else if( src.labels.length >= src.length() ) {
+					for( int i=0 ; i<src.length() ; i++ ) {
+						object.addProperty( src.labels[i] , src.data[i] ) ;
+					}
+				} else if( src.labels.length == 1 ) {
+					JsonArray data = new JsonArray( src.length() ) ;
+					for( int i=0 ; i<src.length() ; i++ ) {
+						data.add( src.data[i] ) ;
+					}
+					object.add( src.labels[0], data ) ;
 				}
 			} else {
 				object.addProperty("N", src.N);

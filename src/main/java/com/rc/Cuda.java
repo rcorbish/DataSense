@@ -224,7 +224,7 @@ public class Cuda extends Compute {
 	public Matrix mmul( Matrix A, Matrix B ) {
 		if( A.N != B.M ) throw new RuntimeException( String.format( "Incompatible matrix sizes: %d x %d  and %d x %d", A.M, A.N, B.M, B.N ) )  ;
 
-		Matrix C = new Matrix( A.M, B.N, B.labels ) ;
+		Matrix C = new Matrix( A.M, B.N ) ;
 
 		Pointer gpuA=null, gpuB=null, gpuC=null ;
 		

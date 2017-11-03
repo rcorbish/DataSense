@@ -38,10 +38,12 @@ abstract public class DataProcessor {
 	public ProcessScores score( Matrix Y, Matrix YH, Map<Integer,Integer> inverseFeatureKeys ) {
 		
 		ProcessScores rc = new ProcessScores() ;
-
+		rc.Y = Y.dup();
+		rc.YH = YH.dup() ;
+		
 		// Logistic
 		if( inverseFeatureKeys != null ) {
-			int numBuckets = (int)YH.dup().map( v -> Math.round(v) ).countBuckets(0.5).get(0) ;
+			int numBuckets = inverseFeatureKeys.size() ;
 			Matrix precision = new Matrix( numBuckets, 1 ) ;
 			Matrix recall = new Matrix( numBuckets, 1 ) ;
 			
@@ -97,6 +99,9 @@ class ProcessScores {
 	double accuracy ;
 	double harmonicError ;
 	double correctRatio ;
+	
+	Matrix Y ;
+	Matrix YH ;
 }
 
 

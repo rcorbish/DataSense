@@ -133,7 +133,7 @@
 						+ e.target.responseText + "</pre>";
 				toggleMenuCollapse()
 				const o = JSON.parse( e.target.responseText ) ;
-				drawCorrelations(o.R )  
+				draw( form.method.value, o )  
 			} ;
 			xhr.onerror = function(e) {
 				div.innerHTML = "Drop CSV" ;
@@ -145,7 +145,8 @@
 			xhr.send(formData);			
 		}
 		
-		function drawCorrelations( R ) {
+		
+		function draw( method, obj ) {
 			const blotter = document.getElementById( "blotter" )
 			while( blotter.hasChildNodes() ) {
 				blotter.removeChild( blotter.lastChild )
@@ -154,29 +155,16 @@
 			canvas.classList.add( "fill-blotter" )
 			blotter.appendChild( canvas ) ;
 			const ctx = canvas.getContext( "2d" )
-
-			var dx = canvas.width / R.length
-			var dy = canvas.height / R.length
-
-			for( var i=0 ; i<R.length ; i++ ) {
-				for( var j=0 ; j<R.length ; j++ ) {
-					ctx.beginPath()
-					const r = Math.round( Math.abs(R[i][j]) * 0xf).toString(16) 
-					if( Math.abs(R[i][j]) > 0.9999999 ) {
-						ctx.fillStyle = "#fff" 
-					} else if( R[i][j]<0 ) {
-						ctx.fillStyle = "#" +  r + "00" 
-					} else {
-						ctx.fillStyle = "#0" + r + "0" 
-					}  
-					ctx.fillRect( i*dx, j*dy, dx, dy ) 
-					ctx.fill()
-				} 
-			} 
+			
+			if( method==='correlation' ) {
+				drawCorrelations( ctx, obj.R, canvas.width, canvas.height ) ;
+			} else if( method==='linear' ) {
+				drawLinear( ctx, obj.Y, obj.YH, canvas.width, canvas.height ) ;
+			}
 		}
 
-</script>
-
 	</script>
+	<script src="draw.js" ></script>
+	
 </body>
 </html>
