@@ -132,8 +132,4 @@ public class SvmcDataProcessor extends DataProcessor implements svm_print_interf
 	};
 }
 
-class SvmcResults {
-	Matrix precision ;
-	Matrix recall ;
-	Matrix f1 ;
-}
+

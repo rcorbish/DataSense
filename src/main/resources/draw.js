@@ -26,15 +26,19 @@ function drawLinear( ctx, Y, YH, w, h ) {
 	var dx = w / Y.M
 	//var dy = h / R.length
 	
+	var min = Math.min.apply( null, Y.data ) 
+	var max = Math.max.apply( null, Y.data ) 
+	var range = ( h - 50 ) / ( max - min ) 
+	
 	ctx.beginPath()
 	ctx.strokeStyle = "#fff"
 			
 	var x = 0 
 	var y = Y.data[0]
-	
+	ctx.moveTo( x, y ) 
 	for( var i=1 ; i<Y.M ; i++ ) {
 		x += dx
-		y = h - Y.data[i] * 25 - 10 
+		y = h - ( Y.data[i] - min ) * range - 25   
 		ctx.lineTo( x, y )
 	}
 	ctx.stroke()
@@ -44,11 +48,52 @@ function drawLinear( ctx, Y, YH, w, h ) {
 			
 	x = 0 
 	y = YH.data[0]
-	
+	ctx.moveTo( x, y ) 
 	for( var i=1 ; i<YH.M ; i++ ) {
 		x += dx
-		y = h - YH.data[i] * 25 - 10 
+		y = h - ( YH.data[i] - min ) * range - 25 
 		ctx.lineTo( x, y )
+	}
+	ctx.stroke()
+
+}
+
+
+function drawLogistic( ctx, yHist, yhHist, w, h ) {
+
+	var dx = (w-50) / yHist.length
+
+	var max = Math.max.apply( null, yHist ) 
+	max = Math.max.apply( max, yhHist ) 
+	var range = ( h - 50 ) / max  
+	
+	ctx.beginPath()
+	ctx.strokeStyle = "#fff"
+	ctx.fillStyle = "#fff"
+			
+	var x = 25
+	var y = yHist[0]
+	for( var i=0 ; i<yHist.length ; i++ ) {
+		//ctx.moveTo( x, h ) 
+		y = h - yHist[i] * range    
+		//ctx.lineTo( x, y )
+		ctx.fillRect( x, y, 25, h-y )
+		x += dx
+	}
+	ctx.stroke()
+
+	ctx.beginPath()
+	ctx.strokeStyle = "#090"
+	ctx.fillStyle = "#090"
+			
+	var x = 50
+	var y = yhHist[0]
+	for( var i=0 ; i<yhHist.length ; i++ ) {
+//		ctx.moveTo( x, h ) 
+		y = h - yhHist[i] * range 
+//		ctx.lineTo( x, y )
+		ctx.fillRect( x, y, 25, h-y )
+		x += dx
 	}
 	ctx.stroke()
 

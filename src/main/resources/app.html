@@ -122,27 +122,27 @@
 		function uploadFile( file, target, div ) {
 			// Will upload and send the controls info 
 			// 
-			const form = document.querySelector( ".control" ) ;
-			var formData = new FormData( form );
-			formData.append( file.name, file ) ;
-			var xhr = new XMLHttpRequest();
+			const form = document.querySelector( ".control" ) 
+			var formData = new FormData( form )
+			formData.append( file.name, file ) 
+			var xhr = new XMLHttpRequest()
 			xhr.onload = function(e) {
-				div.innerHTML = "Drop CSV" ;
+				div.innerHTML = "Drop CSV" 
 				div.classList.remove( "active" )
 				document.getElementById("results").innerHTML = "<pre>"
-						+ e.target.responseText + "</pre>";
+						+ e.target.responseText + "</pre>"
 				toggleMenuCollapse()
-				const o = JSON.parse( e.target.responseText ) ;
+				const o = JSON.parse( e.target.responseText ) 
 				draw( form.method.value, o )  
 			} ;
 			xhr.onerror = function(e) {
-				div.innerHTML = "Drop CSV" ;
+				div.innerHTML = "Drop CSV" 
 				div.classList.remove( "active" )
 				document.getElementById("results").innerHTML = "<pre>"
-						+ e.target.responseText + "</pre>";
+						+ e.target.responseText + "</pre>"
 			} ;
-			xhr.open("POST", target);
-			xhr.send(formData);			
+			xhr.open("POST", target)
+			xhr.send(formData)	
 		}
 		
 		
@@ -155,6 +155,7 @@
 			canvas.classList.add( "fill-blotter" )
 			blotter.appendChild( canvas ) ;
 			const ctx = canvas.getContext( "2d" )
+			canvas.width = canvas.width
 			
 			if( method==='correlation' ) {
 				drawCorrelations( ctx, obj.R, canvas.width, canvas.height ) ;
@@ -162,6 +163,8 @@
 				drawLinear( ctx, obj.Y, obj.YH, canvas.width, canvas.height ) ;
 			} else if( method==='svmr' ) {
 				drawLinear( ctx, obj.Y, obj.YH, canvas.width, canvas.height ) ;
+			} else {
+				drawLogistic( ctx, obj.yHistogram, obj.yhHistogram, canvas.width, canvas.height ) 		
 			}
 		}
 

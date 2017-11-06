@@ -38,13 +38,11 @@ public class LinearDataProcessor extends DataProcessor {
 
 		Matrix F = A.extractColumns( feature ) ;
 		Matrix YR = T.extractColumns( feature ) ; 
-		YR.labels = null ;
 
 		Matrix X = A.divLeft(F) ;			
-		X.labels = A.labels ;
 		
 		Matrix Y = T.mmul(X) ;
-		log.info( "Calculated Y={}", Y ) ;
+		//log.info( "Calculated Y={}", Y ) ;
 		
 		return score( YR, Y ) ;		
 	}

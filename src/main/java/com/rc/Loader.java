@@ -1,6 +1,5 @@
 package com.rc;
 
-import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStream;
@@ -16,6 +15,8 @@ import java.util.StringJoiner;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import au.com.bytecode.opencsv.CSVReader;
 
 public class Loader {
 	final static Logger log = LoggerFactory.getLogger( Loader.class ) ;
@@ -101,31 +102,13 @@ public class Loader {
 	public static Dataset load( int dataM, InputStream is, ProcessorOptions options ) throws IOException {
 
 		Dataset rc = null ;
-		String SEPARATOR_CHARS = ",;\t" ; 
-
 
 		try( Reader rdr = new InputStreamReader(is, options.cs ) ;
-				BufferedReader br = new BufferedReader(rdr) ; ) {
-			String line = br.readLine() ;
-			String regex = "\\," ;
-			for( int i=0 ; i<line.length() ; i++ ) {
-				if( SEPARATOR_CHARS.indexOf( line.charAt(i) ) > 0 ) {
-					regex=String.valueOf( line.charAt(i) ) ;
-					break ;
-				}
-			}
+				CSVReader reader = new CSVReader(rdr) ; ) {
 			
-			String headers[] = line.split( regex ) ;
+			String headers[] = reader.readNext() ;
 			int N = headers.length ;
 			 
-			for( int i=0 ; i<headers.length ; i++ ) {
-				String col = headers[i].trim() ;
-				if( col.charAt(0) == col.charAt(col.length()-1) && (col.charAt(0)=='"' || col.charAt(0)=='\'') ) {
-					col = col.substring(1,col.length()-1 ) ;					
-				}
-				headers[i] = col ;
-			}
-			
 			int m = 0 ;
 			int M = (int)( (1.0+options.testRatio)*dataM ) ;
 			double reservoir[] = new double[M*N] ;
@@ -134,10 +117,8 @@ public class Loader {
 			@SuppressWarnings("unchecked")
 			List<String> maps[] = new ArrayList[N] ;
 			
-			line = br.readLine() ;
-			while( line != null ) {
-				if( line.trim().length() == 0 ) continue ;
-				String cols[] = line.split( regex ) ;
+			String cols[] = reader.readNext() ;
+			while( cols != null ) {
 				double row[] = parse( cols, maps ) ;
 				if( m==M ) { log.info( "Switching to reservoir mode. Keeping {} samples", M ) ; }
 				if( m<M ) {
@@ -150,7 +131,7 @@ public class Loader {
 						reservoir[r + c*M] = row[c] ;
 					}
 				}
-				line=br.readLine() ;
+				cols = reader.readNext() ;
 				m++ ;
 			}
 			log.info( "Parsed {} lines", m ) ;
@@ -202,6 +183,9 @@ public class Loader {
 
 	static String REGEX_NUMERIC =  "[+-]?[\\d\\.\\,]+" ;
 	private static double mapToDouble( String col, List<String> map ) {
+		if( col.length()==0 ) {
+			return - 1e14 ;
+		}
 		String icol =
 		( col.charAt(0) == col.charAt(col.length()-1) && (col.charAt(0)=='"' || col.charAt(0)=='\'') ) ?
 				col.substring(1,col.length()-1 ).intern() :

@@ -2,6 +2,7 @@ package com.rc;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.HashMap;
 import java.util.Map;
 
 import org.slf4j.Logger;
@@ -35,9 +36,14 @@ abstract public class DataProcessor {
 	public ProcessScores score( Matrix Y, Matrix YH ) {
 		return score( Y, YH, null ) ;
 	}
+	
 	public ProcessScores score( Matrix Y, Matrix YH, Map<Integer,Integer> inverseFeatureKeys ) {
 		
 		ProcessScores rc = new ProcessScores() ;
+		
+		rc.yhHistogram = histogram(YH, inverseFeatureKeys) ;
+		rc.yHistogram = histogram(Y, inverseFeatureKeys) ;
+		
 		rc.Y = Y.dup();
 		rc.Y.labels = null ;
 		rc.YH = YH.dup() ;
@@ -72,6 +78,9 @@ abstract public class DataProcessor {
 			rc.precision = precision ;
 			rc.recall = recall ;
 			rc.f1 = precision.hmul( recall ).muli(2.0).hdivi( precision.add( recall ) ) ;
+			rc.recall.map( v -> Double.isFinite(v) ? v : 0 ) ;
+			rc.precision.map( v -> Double.isFinite(v) ? v : 0 ) ;
+			rc.f1.map( v -> Double.isFinite(v) ? v : 0 ) ;
 		}
 		// Linear 
 		double accuracy = 0.0 ;
@@ -91,6 +100,40 @@ abstract public class DataProcessor {
 		return rc ;
 	}
 
+	public int[] histogram( Matrix Y, Map<Integer,Integer> inverseFeatureKeys ) {
+		Map<Integer,Integer> counts = new HashMap<Integer, Integer>() ;
+
+		int min = Integer.MAX_VALUE ;
+		int max = Integer.MIN_VALUE ;
+
+		for( int k : inverseFeatureKeys.values() ) {
+			min = Math.min( k, min ) ;
+			max = Math.max( k, max ) ;			
+		}
+		
+		for( int i=0 ; i<Y.length() ; i++ ) {
+			int k = (int)Math.round( Y.get(i) ) ;
+			if( inverseFeatureKeys.containsKey(k) ) {
+				int v = inverseFeatureKeys.get( k ) ;
+				
+				Integer x = counts.get( v ) ;
+				if( x==null ) {
+					counts.put( v , 1 ) ;
+				} else {
+					counts.put( v , x+1 ) ;
+				}
+			}
+		}
+		
+		int histogram[] = new int[ max-min+1 ] ;
+		for( int i=0 ; i<histogram.length ; i++ ) {
+			Integer c = counts.get( i+min ) ;
+			if( c != null ) {
+				histogram[i] = c ;
+			}
+		}
+		return histogram ;		
+	}
 }
 
 class ProcessScores {
@@ -104,6 +147,9 @@ class ProcessScores {
 	
 	Matrix Y ;
 	Matrix YH ;
+	
+	int yHistogram[] ;
+	int yhHistogram[] ;
 }
 
 

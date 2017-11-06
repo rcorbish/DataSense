@@ -3,9 +3,15 @@
 ## Building
 
 ```
-gradle build
 gradle copyDependencies
 ```
+
+for a Docker image ...
+
+```
+gradle docker
+```
+
 
 ## Running
 
@@ -13,8 +19,8 @@ gradle copyDependencies
 ./run.sh
 ```
 
-Then open a browser to [http://localhost:8111/Client.html](http://localhost:8111/Client.html)
-At present I'd reccommend an environment variable *compute_library* be set to *openblas*. The cuda needs performance for conjugate gradient descent. It works - but too much copying to & from GPU
+Then open a browser to [http://localhost:8111/app](http://localhost:8111/app)
+At present I'd recommend an environment variable *compute_library* be set to *openblas*. The cuda needs performance for conjugate gradient descent. It works - but too much copying to & from GPU
 
 Drag and drop CSV files to the drop zone to see things work
 
