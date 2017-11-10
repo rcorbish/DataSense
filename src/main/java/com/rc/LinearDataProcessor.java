@@ -23,7 +23,11 @@ public class LinearDataProcessor extends DataProcessor {
 		if( options.reciprocal ) {
 			dataset.reciprocal( options.keepOriginal );
 		}
-				
+
+		if( options.normalize ) {
+			dataset.normalize();
+		}
+		
 		dataset.addBias() ;
 		return dataset ;
 	}

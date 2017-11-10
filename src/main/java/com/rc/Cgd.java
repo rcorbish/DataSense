@@ -36,7 +36,7 @@ public class Cgd {
 		log.info( "Start conjugate gradient descent" ) ;
 
 		// theta starts at 0,0,0...0
-		Matrix theta = Matrix.fill( Xin.N, yin.N, 0.0 ) ;
+		Matrix theta = Matrix.rand( Xin.N, yin.N ) ;
 		
 		double RHO = 0.01;                           
 		double SIG = 0.25;	// RHO and SIG are the constants in the Wolfe-Powell conditions

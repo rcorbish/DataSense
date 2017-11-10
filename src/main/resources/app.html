@@ -20,33 +20,33 @@
 			<div class="upload" data-target='upload-data'>Drop CSV</div>
 			<form class='control' accept-charset="UTF-8" >
 				<div class='menu-group'>
-					<input type='checkbox' name='square-values'>Synthesize x<sup>2</sup>
-					<input type='checkbox' name='log-values'>Synthesize log<sub>e</sub>( 1 + x<sup>2</sup> )
+					<label><input type='checkbox' name='square-values'>Synthesize x<sup>2</sup></label>
+					<label><input type='checkbox' name='log-values'>Synthesize log<sub>e</sub>( 1 + x<sup>2</sup> )</label>
+					<label><input type='checkbox' name='reciprocal'>Synthesize 1 / ( 1 + x )</label>
 					<br/>
-					<input type='checkbox' name='reciprocal'>Synthesize 1 / ( 1 + x )
-					<input type='checkbox' name='discrete-to-col'>Discrete labels
-					<br/>
-					<input type='checkbox' name='keep-original'>Keep original labels
+					<label><input type='checkbox' name='normalize'>Zero mean/unit variance</label>
+					<label><input type='checkbox' name='discrete-to-col'>Discrete labels</label>
+					<label><input type='checkbox' name='keep-original'>Keep original</label>
 				</div>
 				<div class='menu-group'>
-					<input type='radio'    name='date-treatment' value='to-year'>Dates to years
-					<input type='radio'    name='date-treatment' value='to-months'>Dates to month
-					<input type='radio'    name='date-treatment' value='to-days'>Dates to days
+					<label><input type='radio'    name='date-treatment' value='to-year'>Dates to years</label>
+					<label><input type='radio'    name='date-treatment' value='to-months'>Dates to month</label>
+					<label><input type='radio'    name='date-treatment' value='to-days'>Dates to days</label>
 				</div>
 				<div class='menu-group'>
-					<input type='radio'    name='date-baseline'  value='today' >Date baseline today
-					<input type='radio'    name='date-baseline'  value='1900' >Date baseline 01-Jan-1900
-					<input type='radio'    name='date-baseline'  value='2000' >Date baseline 01-Jan-2000
+					<label><input type='radio'    name='date-baseline'  value='today' >Date baseline today</label>
+					<label><input type='radio'    name='date-baseline'  value='1900' >Date baseline 01-Jan-1900</label>
+					<label><input type='radio'    name='date-baseline'  value='2000' >Date baseline 01-Jan-2000</label>
 				</div>
 				<div class='menu-group'>
-					<input type='radio'    name='method' value='svmc'>SVM-C
-					<input type='radio'    name='method' value='svmr'>SVM-R
-					<input type='radio'    name='method' value='linear' checked>Linear Regression
-					<input type='radio'    name='method' value='logistic' >Logistic Regression
-					<input type='radio'    name='method' value='centroids' >Nearest Centroid
+					<label><input type='radio'    name='method' value='svmc'>SVM-C</label>
+					<label><input type='radio'    name='method' value='svmr'>SVM-R</label>
+					<label><input type='radio'    name='method' value='linear'>Linear Regression</label>
+					<label><input type='radio'    name='method' value='logistic' checked>Logistic Regression</label>
+					<label><input type='radio'    name='method' value='centroids' >Nearest Centroid</label>
 					<br/>
-					<input type='radio'    name='method' value='correlation' >Correlation
-					<input type='radio'    name='method' value='statistics' >Statistics
+					<label><input type='radio'    name='method' value='correlation' >Correlation</label>
+					<label><input type='radio'    name='method' value='statistics' >Statistics</label>
 				</div>
 			</form>
 		</div>
@@ -163,6 +163,8 @@
 				drawLinear( ctx, obj.Y, obj.YH, canvas.width, canvas.height ) ;
 			} else if( method==='svmr' ) {
 				drawLinear( ctx, obj.Y, obj.YH, canvas.width, canvas.height ) ;
+			} else if( method==='statistics' ) {
+				drawStatistics( ctx, obj, canvas.width, canvas.height ) ;
 			} else {
 				drawLogistic( ctx, obj.yHistogram, obj.yhHistogram, canvas.width, canvas.height ) 		
 			}

@@ -6,9 +6,9 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Random;
 import java.util.Set;
+import java.util.function.DoubleBinaryOperator;
 import java.util.function.DoubleUnaryOperator;
 
-import javax.management.RuntimeErrorException;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -296,15 +296,29 @@ public class Matrix {
 	 * @return this
 	 */
 	public Matrix hmuli( Matrix O ) {
-		for( int i=0, j=0 ; i<length() ; i++, j++ ) {
-			if( j >= O.length() ) {
-				if( !O.isVector ) {
-					throw new RuntimeException( "Warning cannot multiply dissimilar matrices" ) ;
-				}
-				j=0 ; 
+		if( O.M == 1 && M>1 ) { // row vector vs matrix
+			if( O.N != N ) {
+				throw new RuntimeException( "Invalid addition of columns vector" ) ;
 			}
-			data[i] *= O.data[j] ;
-		}    		
+			for( int i=0 ; i<M ; i++ ) {
+				for( int j=0 ; j<N ; j++ ) {
+					data[ i + j*M  ] *= O.data[j] ;
+				}
+			}
+		} else if( O.N==1 && N>1 ) { // col vector  vs matrix 
+			if( O.M != M ) {
+				throw new RuntimeException( "Invalid addition of columns vector" ) ;
+			}
+			for( int i=0 ; i<M ; i++ ) {
+				for( int j=0 ; j<N ; j++ ) {
+					data[ i + j*M  ] *= O.data[i] ;
+				}
+			}
+		} else { // compatible matrix
+			for( int i=0 ; i<length() ; i++ ) {
+				data[i] *= O.data[i] ;
+			}
+		}
 		return this ;
 	}
 
@@ -331,19 +345,32 @@ public class Matrix {
 	 * @return this
 	 */
 	public Matrix hdivi( Matrix O ) {
-		for( int i=0, j=0 ; i<length() ; i++, j++ ) {
-			if( j >= O.length() ) {
-				if( !O.isVector ) {
-					throw new RuntimeException( "Warning cannot multiply dissimilar matrices" ) ;
-				}
-				j=0 ; 
+		if( O.M == 1  ) { // row vector vs matrix
+			if( O.N != N && M>1 ) {
+				throw new RuntimeException( "Invalid addition of columns vector" ) ;
 			}
-			data[i] /= O.data[j] ;
-		}    		
+			for( int i=0 ; i<M ; i++ ) {
+				for( int j=0 ; j<N ; j++ ) {
+					data[ i + j*M  ] /= O.data[j] ;
+				}
+			}
+		} else if( O.N==1 && N>1 ) { // col vector  vs matrix 
+			if( O.M != M ) {
+				throw new RuntimeException( "Invalid addition of columns vector" ) ;
+			}
+			for( int i=0 ; i<M ; i++ ) {
+				for( int j=0 ; j<N ; j++ ) {
+					data[ i + j*M  ] /= O.data[i] ;
+				}
+			}
+		} else { // compatible matrix
+			for( int i=0 ; i<length() ; i++ ) {
+				data[i] /= O.data[i] ;
+			}
+		}
 		return this ;
 	}
 
-	
 	
 	/**
 	 * Total all values in the matrix
@@ -450,7 +477,7 @@ public class Matrix {
 	 * @return a vector of each column's minimum
 	 */
 	public Matrix countBuckets( double precision ) {
-		Matrix rc = new Matrix( 1, N, labels ) ;
+		Matrix rc = new Matrix( 1, N ) ;
 
 		Set<String> buckets = new HashSet<>() ;
 
@@ -472,7 +499,7 @@ public class Matrix {
 	 * @return a vector of each column's geometric mean
 	 */
 	public Matrix mean() {
-		Matrix rc = new Matrix( 1, N, labels ) ;
+		Matrix rc = new Matrix( 1, N ) ;
 
 		int ix = 0 ;
 		for( int i=0 ; i<N ; i++ ) {
@@ -493,7 +520,7 @@ public class Matrix {
 	 * @return a vector of each column's geometric mean
 	 */
 	public Matrix sum() {
-		Matrix rc = new Matrix( 1, N, labels ) ;
+		Matrix rc = new Matrix( 1, N ) ;
 
 		int ix = 0 ;
 		for( int i=0 ; i<N ; i++ ) {
@@ -515,7 +542,7 @@ public class Matrix {
 	 * @return a vector of each column's median
 	 */
 	public Matrix median() {
-		Matrix rc = new Matrix( 1, N, labels ) ;
+		Matrix rc = new Matrix( 1, N ) ;
 
 		double col[] = new double[ M ] ; 
 	
@@ -535,7 +562,7 @@ public class Matrix {
 	 * @return a vector of each column's minimum
 	 */
 	public Matrix min() {
-		Matrix rc = new Matrix( 1, N, labels ) ;
+		Matrix rc = new Matrix( 1, N ) ;
 
 		int ix = 0 ;
 		for( int i=0 ; i<N ; i++ ) {
@@ -554,7 +581,7 @@ public class Matrix {
 	 * @return a vector of each column's maximum
 	 */
 	public Matrix max() {
-		Matrix rc = new Matrix( 1, N, labels ) ;
+		Matrix rc = new Matrix( 1, N ) ;
 
 		int ix = 0 ;
 		for( int i=0 ; i<N ; i++ ) {
@@ -591,7 +618,7 @@ public class Matrix {
 	 * @return a vector of each column's variance
 	 */
 	public Matrix variance( Matrix means ) {
-		Matrix rc = new Matrix( 1, N, labels ) ;
+		Matrix rc = new Matrix( 1, N ) ;
 
 		int ix = 0 ;
 		for( int i=0 ; i<N ; i++ ) {
@@ -614,7 +641,7 @@ public class Matrix {
 	 * @return a vector of each column's skewness
 	 */
 	public Matrix skewness( Matrix means ) {
-		Matrix rc = new Matrix( 1, N, labels ) ;
+		Matrix rc = new Matrix( 1, N ) ;
 
 		int ix = 0 ;
 		for( int i=0 ; i<N ; i++ ) {
@@ -642,7 +669,7 @@ public class Matrix {
  * @return a vector of each column's kurtosis
  */
 	public Matrix kurtosis( Matrix means ) {
-		Matrix rc = new Matrix( 1, N, labels ) ;
+		Matrix rc = new Matrix( 1, N ) ;
 
 		int ix = 0 ;
 		for( int i=0 ; i<N ; i++ ) {
@@ -1007,6 +1034,51 @@ public class Matrix {
 		}
 		return this ;
 	}
+
+
+	/**
+	 * Call a function on each element of a Matrix. The Matrix 
+	 * is not changed. The function takes the previous value 
+	 * and the current value as arguments.  
+	 * 
+	 * @param func the lambda to call a value
+	 * @return the result of the last function call for each column
+	 */
+	public Matrix reduce( DoubleBinaryOperator func ) {
+		Matrix rc = new Matrix( N, 1 ) ;
+		for( int j=0 ; j<N ; j++ ) {
+			rc.put( j, get(0,j) ) ;
+		}
+		for( int i=1 ; i<M ; i++ ) {
+			for( int j=0 ; j<N ; j++ ) {
+				rc.put( j, func.applyAsDouble( rc.get(j), get(i,j) ) ) ;
+			}
+		}
+		return rc ;
+	}
+
+	/**
+	 * Call a function on each element of a Matrix. The Matrix 
+	 * is not changed. The function takes the previous value 
+	 * and the current value as arguments.  
+	 * 
+	 * @param func the lambda to call a value
+	 * @param start the initial value for all items
+	 * @return the result of the last function call for each column
+	 */
+	public Matrix reduce( DoubleBinaryOperator func, double start ) {
+		Matrix rc = new Matrix( N, 1 ) ;
+		for( int j=0 ; j<N ; j++ ) {
+			rc.put( j, start ) ;
+		}
+		for( int i=0 ; i<M ; i++ ) {
+			for( int j=0 ; j<N ; j++ ) {
+				rc.put( j, func.applyAsDouble( rc.get(j), get(i,j) ) ) ;
+			}
+		}
+		return rc ;
+	}
+
 
 	/**
 	 * Update labels with a prefix. Add the given prefix to each label 

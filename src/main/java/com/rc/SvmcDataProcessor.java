@@ -33,7 +33,11 @@ public class SvmcDataProcessor extends DataProcessor implements svm_print_interf
 		if( options.reciprocal ) {
 			dataset.reciprocal( options.keepOriginal );
 		}
-				
+		
+		if( options.normalize ) {
+			dataset.normalize();
+		}
+
 		return dataset ;
 	}
 

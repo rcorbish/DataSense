@@ -27,6 +27,10 @@ public class CentroidDataProcessor extends DataProcessor {
 		if( options.reciprocal ) {
 			dataset.reciprocal( options.keepOriginal );
 		}
+			
+		if( options.normalize ) {
+			dataset.normalize();
+		}
 				
 		return dataset ;
 	}

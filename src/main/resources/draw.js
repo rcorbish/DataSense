@@ -21,6 +21,36 @@ function drawCorrelations( ctx, R, w, h ) {
 }
 
 
+
+function drawStatistics( ctx, obj, w, h ) {
+
+		const stats = [ obj.minimum, obj.mean, obj.median, 
+						obj.maximum, obj.stddev, obj.skewness, 
+						obj.kurtosis, obj.countDistinct ]
+	
+		const N=stats[0].M 
+
+		var dx = w / N
+		var dy = h / stats.length
+	
+		for( var i=0 ; i<stats.length ; i++ ) {
+			var data = stats[i].data
+			for( var j=0 ; j<N ; j++ ) {
+				if( i==j ) continue ;
+				ctx.beginPath()
+				const r = Math.round( Math.abs(data[j]) * 0xf).toString(16) 
+				if( data[j]<0 ) {
+					ctx.fillStyle = "#" +  r + "00" 
+				} else {
+					ctx.fillStyle = "#0" + r + "0" 
+				}  
+				ctx.fillRect( j*dx, i*dy, dx, dy ) 
+				ctx.fill()
+			} 
+		} 
+	}
+	
+
 function drawLinear( ctx, Y, YH, w, h ) {
 
 	var dx = w / Y.M
@@ -77,7 +107,7 @@ function drawLogistic( ctx, yHist, yhHist, w, h ) {
 		//ctx.moveTo( x, h ) 
 		y = h - yHist[i] * range    
 		//ctx.lineTo( x, y )
-		ctx.fillRect( x, y, 25, h-y )
+		ctx.fillRect( x, y-25, 25, h-y )
 		x += dx
 	}
 	ctx.stroke()
@@ -92,7 +122,7 @@ function drawLogistic( ctx, yHist, yhHist, w, h ) {
 //		ctx.moveTo( x, h ) 
 		y = h - yhHist[i] * range 
 //		ctx.lineTo( x, y )
-		ctx.fillRect( x, y, 25, h-y )
+		ctx.fillRect( x, y-25, 25, h-y )
 		x += dx
 	}
 	ctx.stroke()

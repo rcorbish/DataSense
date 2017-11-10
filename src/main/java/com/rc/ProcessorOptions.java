@@ -15,6 +15,7 @@ public class ProcessorOptions {
 	boolean reciprocal ;
 	boolean discrete ;
 	boolean keepOriginal ;
+	boolean normalize ;
 	String  method ;
 	DateParserFunction dateParser ;
 	int dateBaseline ;
@@ -27,6 +28,7 @@ public class ProcessorOptions {
 		discrete 	= get( params, "discrete-to-col") != null  ;
 		keepOriginal= get( params, "keep-original" ) != null  ;
 		reciprocal  = get( params, "reciprocal" ) != null  ;
+		normalize   = get( params, "normalize" ) != null  ;
 		
 		method   = get( params, "method" ) ;
 		

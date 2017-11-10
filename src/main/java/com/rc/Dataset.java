@@ -4,10 +4,14 @@ package com.rc ;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class Dataset {
 	public final static String FEATURE_LABELS[] = { "Score", "Feature", "Result" } ;
 	public final static String BIAS = "Bias" ;
-
+	final static Logger log = LoggerFactory.getLogger( Dataset.class ) ;
+	
 	Matrix train ;
 	Matrix test ;
 
@@ -57,7 +61,21 @@ public class Dataset {
 		}
 		return featureKeys ;
 	}
-	
+
+	public void normalize() {
+		int feature = getFeatureColumnIndex() ;
+		Matrix M = train.mean() ;
+		// log.info( "Mean : {}", M ) ;
+		Matrix S = train.stddev(M) ;
+		M.put( feature, 0 ) ;
+		S.put( feature, 1.0 ) ;
+		
+		train.subi(M).hdivi(S) ;
+		test.subi(M).hdivi(S) ;
+		train.prefixLabels( "nrm " ) ;
+		test.prefixLabels( "nrm " ) ;
+	}		
+
 	public void square( boolean keepOriginals ) {
 		int feature = getFeatureColumnIndex() ;
 		Matrix A = train.dup() ;

@@ -40,10 +40,7 @@ abstract public class DataProcessor {
 	public ProcessScores score( Matrix Y, Matrix YH, Map<Integer,Integer> inverseFeatureKeys ) {
 		
 		ProcessScores rc = new ProcessScores() ;
-		
-		rc.yhHistogram = histogram(YH, inverseFeatureKeys) ;
-		rc.yHistogram = histogram(Y, inverseFeatureKeys) ;
-		
+				
 		rc.Y = Y.dup();
 		rc.Y.labels = null ;
 		rc.YH = YH.dup() ;
@@ -51,6 +48,9 @@ abstract public class DataProcessor {
 		
 		// Logistic
 		if( inverseFeatureKeys != null ) {
+			rc.yhHistogram = histogram(YH, inverseFeatureKeys) ;
+			rc.yHistogram = histogram(Y, inverseFeatureKeys) ;
+
 			int numBuckets = inverseFeatureKeys.size() ;
 			Matrix precision = new Matrix( numBuckets, 1 ) ;
 			Matrix recall = new Matrix( numBuckets, 1 ) ;

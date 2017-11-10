@@ -215,6 +215,36 @@ public class TestBase {
 	}
 
 	@Test
+	public void testReduce() {
+		Matrix A = Matrix.fill( 4, 4, 17 ) ;
+		A.put( 0, 0, 20 ) ;
+		A.put( 0, 1, 21 ) ;
+		A.put( 0, 2, 22 ) ;
+		A.put( 0, 3, 23 ) ;
+
+		Matrix mx = A.reduce( (a,b) -> Math.max(a,b) ) ; 
+		assertArrayEquals("Incorrect maximum", new double[] { 20, 21, 22, 23 }, mx.data, 1e-6 ) ;
+	}
+
+
+	@Test
+	public void testReduceStart() {
+		Matrix A = Matrix.rand( 4, 4 ) ;
+		A.put( 0, 0, 20 ) ;
+		A.put( 0, 1, 21 ) ;
+		A.put( 0, 2, 22 ) ;
+		A.put( 0, 3, 23 ) ;
+
+		Matrix ct1 = A.reduce( (a,b) -> (a + ( b>170 ? 1 : 0)), 0 ) ; 
+		assertArrayEquals("Incorrect maximum", new double[] { 0,0,0,0 }, ct1.data, 1e-6 ) ;
+
+
+		Matrix ct2 = A.reduce( (a,b) -> (a + ( b>20 ? 1 : 0)), 0 ) ; 
+		assertArrayEquals("Incorrect maximum", new double[] { 0,1,1,1 }, ct2.data, 1e-6 ) ;
+	}
+
+
+	@Test
 	public void testIdentity() {
 		Matrix A = Matrix.eye( 4 ) ;
 		assertEquals( "Unexpected M size in identity", 4, A.M ) ;

@@ -26,6 +26,10 @@ public class LogisticDataProcessor extends DataProcessor implements com.rc.Cgd.C
 		if( options.reciprocal ) {
 			dataset.reciprocal( options.keepOriginal );
 		}
+		
+		if( options.normalize ) {
+			dataset.normalize();
+		}
 				
 		dataset.addBias() ;
 
