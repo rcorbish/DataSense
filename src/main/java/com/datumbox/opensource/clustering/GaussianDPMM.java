@@ -85,6 +85,9 @@ public class GaussianDPMM extends DPMM {
         public Cluster(int dimensionality, int kappa0, int nu0, Matrix mu0, Matrix psi0) {
             super(dimensionality);
             
+            if( nu0<dimensionality ) {
+                nu0 = dimensionality;
+            }
             if(mu0==null) {
                 mu0 = new Matrix(dimensionality) ; //0 vector
             }
@@ -211,8 +214,7 @@ public class GaussianDPMM extends DPMM {
             log.debug( "Covariance {}", covariance ) ;
             log.debug( "Mu {}", x_mu ) ;
             
-            // double x_muInvSx_muT = (invCovariance.preMultiply(x_mu)).dot(x_mu);
-            double x_muInvSx_muT = x_mu.divLeft( covariance ).dot( x_mu ) ;
+            double x_muInvSx_muT = covariance.divLeft( x_mu ).dot( x_mu ) ;
 
             double normConst = 1.0/( Math.pow(2*Math.PI, dimensionality/2.0) * Math.pow(cache_covariance_determinant, 0.5) );
 

@@ -490,7 +490,7 @@ public class Matrix {
 			rc *= lu.get(i,i) ;
 		}
 		for( int i=0 ; i<ipiv.length ; i++ ) {
-			rc *= ipiv[i] == i ? 1 : -1 ;
+			rc *= ipiv[i] == (i+1) ? 1 : -1 ;
 		}
 		return rc ;
 	}

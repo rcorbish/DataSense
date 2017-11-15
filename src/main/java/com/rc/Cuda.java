@@ -42,6 +42,7 @@ public class Cuda extends Compute {
 		int cublasGetMatrix(int rows, int cols, int elemSize, Pointer A, int lda, double B[], int ldb ) ;
 		int cublasSetVector(int len, int elemSize, double A[], int lda, Pointer B, int ldb ) ;
 		int cublasGetVector(int len, int elemSize, Pointer A, int lda, double B[], int ldb ) ;
+		int cublasGetVector(int len, int elemSize, Pointer A, int lda, int B[], int ldb ) ;
 		int cublasGetVersion_v2(Pointer handle, int version[] ) ;
 
 		int cublasDgemm_v2(Pointer handle,
@@ -91,6 +92,17 @@ public class Cuda extends Compute {
 
 		int cusolverDnCreate( Pointer handle[] ) ;
 		int cusolverDnDestroy( Pointer handle) ;
+		
+		int cusolverDnDgetrf_bufferSize( Pointer handle, int m, int n, Pointer A, int lda, int work[] ) ;
+		int cusolverDnDgetrf( 
+				Pointer handle,
+				int m, int n, 
+				Pointer A, int lda,
+				Pointer work,
+				Pointer ipiv,
+				Pointer devInfo 
+				) ;
+
 		int cusolverDnDgeqrf_bufferSize( Pointer handle, int m, int n, Pointer A, int lda, int work[] ) ;
 		int cusolverDnDgeqrf( 
 				Pointer handle,
@@ -395,7 +407,60 @@ public class Cuda extends Compute {
 	}
 
 	public Matrix lud( Matrix A, int ipiv[] ) {
-		return null ;
+		log.debug( "Solve LU = A  {} x {} ", A.M, A.N ) ;
+
+		Matrix X = null ;
+		Pointer gpuD=null, gpuA=null, gpuI=null, gpuW=null ;
+		try {
+			gpuD = getMemory(1);				// device return code
+			gpuA = getMemory(A.M*A.N);			// A
+			gpuI = getMemory(A.M);				// IPIV
+	
+			log.debug( "Sending A to GPU" ) ;
+			int rc = CuBlas.INSTANCE.cublasSetMatrix( A.M, A.N, DoubleSize, A.data, A.M, gpuA, A.M ) ;
+			checkrc(rc) ;
+	
+			// workspace size
+			int work[] = new int[1] ;		
+	
+			log.debug( "Calculating work area on GPU" ) ;
+			rc = CuSolver.INSTANCE.cusolverDnDgetrf_bufferSize(
+					cusolverHandle, 
+					A.M, A.N, 
+					gpuA, A.M, 
+					work
+					) ; 		
+			checkrc( rc ) ;
+			int lwork = work[0] ;
+			gpuW = getMemory(lwork) ;
+			log.debug( "Allocated double[{}] on GPU", lwork ) ;
+	
+			// LU ( step 1 )
+			rc = CuSolver.INSTANCE.cusolverDnDgetrf( 
+					cusolverHandle, 
+					A.M, A.N, 
+					gpuA, A.M, 
+					gpuW, 
+					gpuI, 
+					gpuD 
+					) ; 
+			checkrc( rc ) ;
+	
+			log.debug( "Copying IPIV from GPU" ); 
+			rc = CuBlas.INSTANCE.cublasGetVector(ipiv.length, IntSize, gpuI, 1, ipiv, 1) ;
+			checkrc( rc ) ;
+
+			log.debug( "Copying A from GPU" ); 
+			X = new Matrix( A.M, A.N ) ;
+			rc = CuBlas.INSTANCE.cublasGetMatrix(X.M, X.N, DoubleSize, gpuA, A.M, X.data, X.M ) ;			
+			checkrc( rc ) ;
+		} finally {		
+			CuBlas.INSTANCE.cublasFree( gpuA ) ;
+			CuBlas.INSTANCE.cublasFree( gpuW ) ;
+			CuBlas.INSTANCE.cublasFree( gpuD ) ;
+		}
+		log.debug( "Factored LU = {}", X ) ;
+		return X ;
 	}	
 
 	protected void printMatrix( int M, int N, Pointer A ) {

@@ -69,32 +69,21 @@ public class DpmmcDataProcessor extends DataProcessor {
 
 		log.info( "Processing {} data items", pointList.size() ) ;
 		
-        double alpha = 100000 ;
-        double alphaWords = 0.0 ;        
+        double alpha = 10 ;
         //Hyper parameters of Base Function
         
         int kappa0 = 0 ;
-        int nu0 = 0 ;
-        Matrix mu0 = new Matrix( dimensionality );
-//        mu0.setEntry( 0, .1 );
-//        mu0.setEntry( 1, .1 );
-//        mu0.setEntry( 2,  1 );
-        
+        int nu0 = 1 ;
+        Matrix mu0 = new Matrix( dimensionality );       
         Matrix psi0 = Matrix.eye( dimensionality ) ;
-//        psi0.setRow(0, new double[] {   1,  .5,    .2   , 0  } ) ;
-//        psi0.setRow(1, new double[] {  .5,   1,   -.75  , .5  } ) ;
-//        psi0.setRow(2, new double[] {  .2,  -.75,   1   , 0  } ) ;
-//        psi0.setRow(3, new double[] {   0,  .5,     0   , 1  } ) ;
-        
-        //dpmm = new MultinomialDPMM(dimensionality, alpha, alphaWords );
+
         dpmm = new GaussianDPMM(dimensionality, alpha, kappa0, nu0, mu0, psi0);
         
-        int maxIterations = 100;
+        int maxIterations = 30 ;
 		int performedIterations = dpmm.cluster(pointList, maxIterations);
         log.info( "Created {} clusters in {} iterations", dpmm.getClusterList().size(), performedIterations ) ;
         Matrix Y = YR ;
 	 
-		
 		return score(YR, Y, inverseFeatureKeys ) ;
 	}
 	
