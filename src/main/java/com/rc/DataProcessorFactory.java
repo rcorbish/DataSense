@@ -29,6 +29,9 @@ public class DataProcessorFactory {
 		if( "correlation".equals( method ) ) {
 			return new CorrelationDataProcessor() ;
 		}
+		if( "dpmmc".equals( method ) ) {
+			return new DpmmcDataProcessor() ;
+		}
 		throw new UnsupportedOperationException( method + " is not a supported processor type." ) ;
 	}
 }

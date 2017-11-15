@@ -11,7 +11,7 @@ public class StatisticsDataProcessor extends DataProcessor {
 		StatisticsResults X = new StatisticsResults() ; 
 		X.minimum = dataset.train.min() ;
 		X.maximum = dataset.train.max() ;
-		X.countDistinct = dataset.train.countBuckets( 1e-4 ) ;
+		X.countDistinct = dataset.train.countBuckets( 0.5 ) ;
 		X.median = dataset.train.median() ;
 		X.mean = dataset.train.mean() ;
 		X.stddev = dataset.train.stddev( X.mean ) ;

@@ -394,6 +394,10 @@ public class Cuda extends Compute {
 		return null ;
 	}
 
+	public Matrix lud( Matrix A, int ipiv[] ) {
+		return null ;
+	}	
+
 	protected void printMatrix( int M, int N, Pointer A ) {
 		double a[] = new double[M*N] ;
 		int rc = CuBlas.INSTANCE.cublasGetMatrix( M, N, DoubleSize, A, M, a, M ) ;

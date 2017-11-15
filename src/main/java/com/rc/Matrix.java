@@ -92,6 +92,17 @@ public class Matrix {
 		this( rows, columns, new double[ rows * columns ] ) ;
 	}
 
+
+	/**
+	 * Create an empty column vector with the given size
+	 * Matrices are stored column order ( fortran order )
+	 * 
+	 * @param rows number of ritems
+	 */
+	public Matrix( int rows ) {
+		this( rows, 1 ) ;
+	}
+
 	/**
 	 * Create a copy of the matrix
 	 * 
@@ -414,6 +425,26 @@ public class Matrix {
 		return x * x ;
 	}
 
+
+
+	/**
+	 * Find the kroenecker product of a matrix with another
+	 * @return a new matrix
+	 */
+	public Matrix outer( Matrix O ) {
+		Matrix rc = null ;
+		if( O.isVector && isVector ) {
+			rc = new Matrix( length(), O.length() ) ;
+			for( int i=0 ; i<length() ; i++ ) {
+				for( int j=0 ; j<O.length() ; j++ ) {
+					rc.put( i, j, get(i) * O.get(j) ) ;
+				}
+			}
+		}
+		return rc ;
+	}
+
+	
 	/**
 	 * Return the length of a vector
 	 * @return the Euclidean norm
@@ -443,6 +474,27 @@ public class Matrix {
 		return Engine.solve2(this, B ) ;
 	}
 
+	/**
+	 * Find the determinant of a matrix. This uses
+	 * LU decomp to find a triangular factor from which
+	 * we can use the trace to get the determinant value
+	 */
+	public double det() {
+		if( M != N ) {
+			throw new IllegalArgumentException( "Determinant of non-square matrix requested" ) ;
+		}
+		int ipiv[] = new int[ Math.min( M, N ) ] ;
+		Matrix lu = Engine.lud( dup(), ipiv ) ;
+		double rc = 1 ;
+		for( int i=0 ; i<Math.min(M,N) ; i++ ) {
+			rc *= lu.get(i,i) ;
+		}
+		for( int i=0 ; i<ipiv.length ; i++ ) {
+			rc *= ipiv[i] == i ? 1 : -1 ;
+		}
+		return rc ;
+	}
+	
 /**
  * Transpose a matrix
  * 
@@ -951,6 +1003,28 @@ public class Matrix {
 
 		return rc ;
 	}
+
+
+	/**
+	 * Copy rows from the receiver. The rows are copied to a new Matrix. The
+	 * original matrix is unchanged.
+	 * 
+	 * @param rows which rows to copied
+	 * @return a new Matrix containing the copied rows
+	 */
+	public Matrix copyRows( int ... rows ) {
+
+		Matrix rc = new Matrix( rows.length, N, labels ) ;
+
+		for( int i=0 ; i<rows.length ; i++ ) {
+			for( int j=0 ; j<N ; j++ ) {
+				rc.put( i,j, get( rows[i], j ) ) ;
+			}
+		}
+
+		return rc ;
+	}
+		
 
 	/**
 	 * Add a Matrix to the 'bottom' of the receiver. The number of

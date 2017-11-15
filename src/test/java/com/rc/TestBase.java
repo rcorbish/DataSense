@@ -159,6 +159,44 @@ public class TestBase {
 	}
 
 
+	@Test
+	public void testOuter() {
+		Matrix A = new Matrix( 4, 1,    1, 2, 3, 4  ) ; 
+		Matrix B = new Matrix( 4, 1,    -1, 2, -3, 4  ) ; 
+
+		Matrix kp = A.outer( B ) ;
+
+		double real[] = new double[] {
+			-1 ,  -2 ,  -3,   -4,
+			2  ,  4  ,  6 ,   8,
+		   -3  , -6  , -9 , -12,
+			4  ,  8 ,  12 ,  16
+		} ;
+		assertArrayEquals( "Incorrect outer result", real, kp.data, 1e-6 ) ;
+	}
+
+
+	@Test
+	public void testDetSquare() {
+		Matrix A = new Matrix( 3, 3,    1, 2, 3,   -7, 9,-2,   8,0,4  ) ; 
+		double d = A.det() ;
+		assertEquals( "Incorrect determinant", -156, d, 1e-6 ) ;
+	}
+
+
+	@Test
+	public void testDetNonSquare() { 
+		try {
+			Matrix A = new Matrix( 4, 3,    1, 2, 3,0.3,   -7, 9,-2,-4,   8,0,4,0  ) ; 
+			double d = A.det() ;
+			fail( "Non-square determinant is not alloweed" ) ;
+		} catch( IllegalArgumentException ok ) {
+			// expect an error
+		}
+	}
+
+
+
 
 	@Test
 	public void testDot() {
@@ -239,8 +277,8 @@ public class TestBase {
 		assertArrayEquals("Incorrect maximum", new double[] { 0,0,0,0 }, ct1.data, 1e-6 ) ;
 
 
-		Matrix ct2 = A.reduce( (a,b) -> (a + ( b>20 ? 1 : 0)), 0 ) ; 
-		assertArrayEquals("Incorrect maximum", new double[] { 0,1,1,1 }, ct2.data, 1e-6 ) ;
+		Matrix ct2 = A.reduce( (a,b) -> (a + ( b>20 ? 1 : 0)), 2 ) ; 
+		assertArrayEquals("Incorrect maximum", new double[] { 2,3,3,3 }, ct2.data, 1e-6 ) ;
 	}
 
 

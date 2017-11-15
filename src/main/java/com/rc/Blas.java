@@ -60,7 +60,12 @@ public class Blas extends Compute {
 				double c[], int ldc ,
 				double work[], int lwork
 				) ;
-
+		int LAPACKE_dgetrf( 
+				int matrix_layout, 
+				int m, int n,
+				double a[], int lda, 
+				int ipiv[]
+				) ;
 	}
 
 	public final static int LAPACK_ROW_MAJOR 	= 101 ;
@@ -146,6 +151,18 @@ public class Blas extends Compute {
 		checkrc( rc ) ;
 		return C ;
 	}
+
+
+	public Matrix lud( Matrix A, int ipiv[] ) {
+		Lapacke.INSTANCE.LAPACKE_dgetrf(
+			CblasColMajor, 
+			A.M, A.N, 
+			A.data, A.M, 
+			ipiv
+			) ;
+		return A ;
+	}	
+
 
 
 	//

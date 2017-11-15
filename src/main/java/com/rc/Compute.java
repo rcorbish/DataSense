@@ -13,6 +13,7 @@ public abstract class Compute implements AutoCloseable {
 	public abstract Matrix mmul( Matrix A, Matrix B ) ;
 	public abstract Matrix solve( Matrix A, Matrix B ) ;
 	public abstract Matrix solve2( Matrix A, Matrix B ) ;
+	public abstract Matrix lud( Matrix A, int ipiv[] ) ;
 	public abstract String getVersion() ;
 	
 	private static Class<? extends Compute> CLASS = null ;
