@@ -455,9 +455,10 @@ public class Cuda extends Compute {
 			rc = CuBlas.INSTANCE.cublasGetMatrix(X.M, X.N, DoubleSize, gpuA, A.M, X.data, X.M ) ;			
 			checkrc( rc ) ;
 		} finally {		
-			CuBlas.INSTANCE.cublasFree( gpuA ) ;
-			CuBlas.INSTANCE.cublasFree( gpuW ) ;
 			CuBlas.INSTANCE.cublasFree( gpuD ) ;
+			CuBlas.INSTANCE.cublasFree( gpuA ) ;
+			CuBlas.INSTANCE.cublasFree( gpuI ) ;
+			CuBlas.INSTANCE.cublasFree( gpuW ) ;
 		}
 		log.debug( "Factored LU = {}", X ) ;
 		return X ;
