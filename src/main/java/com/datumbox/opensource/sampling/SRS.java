@@ -46,7 +46,7 @@ public class SRS {
         //random number lies.
         for(int i=0;i<probabilityTable.length;++i) {
             probabilitySumSelector+=probabilityTable[i];
-            if(randomNumber<=probabilitySumSelector) {
+            if(randomNumber<probabilitySumSelector) {
                 sampledId=i;
                 break;
             }

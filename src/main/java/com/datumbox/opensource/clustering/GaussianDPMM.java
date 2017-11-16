@@ -3,7 +3,6 @@ package com.datumbox.opensource.clustering;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.datumbox.opensource.dataobjects.Point;
 import com.rc.Matrix;
 
 public class GaussianDPMM extends DPMM {

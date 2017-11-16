@@ -240,6 +240,100 @@ public class TestBase {
 	}
 
 	@Test
+	public void testAddiVV() {
+		Matrix A = new Matrix( 1, 4, 1,2,3,4 ) ;
+		Matrix B = new Matrix( 4, 1, .1, .2, .3, .4 ) ;
+
+		A.addi( B ) ;
+		double expected[] = new double[] { 1.1, 2.2, 3.3, 4.4 } ;
+		assertArrayEquals( "Incorrect addi (vector/vector) result", expected, A.data, 1e-6 ) ;
+	}
+
+
+	@Test
+	public void testAddiVM() {
+		Matrix A = new Matrix( 2, 4, 1,5, 2,6, 3,7, 4,8 ) ;
+		Matrix B = new Matrix( 1, 4, .1, .2, .3, .4 ) ;
+
+		A.addi( B ) ;
+		double expected[] = new double[] { 1.1, 5.1, 2.2, 6.2, 3.3, 7.3, 4.4, 8.4 } ;
+		assertArrayEquals( "Incorrect addi (Matrix/row vector) result", expected, A.data, 1e-6 ) ;
+	}
+
+	@Test
+	public void testAddiVM2() {
+		Matrix A = new Matrix( 2, 4, 1,5, 2,6, 3,7, 4,8 ) ;
+		Matrix B = new Matrix( 2, 1, .1, .2 ) ;
+
+		A.addi( B ) ;
+		double expected[] = new double[] { 1.1, 5.2, 2.1, 6.2, 3.1, 7.2, 4.1, 8.2 } ;
+		assertArrayEquals( "Incorrect addi (Matrix/col Vector) result", expected, A.data, 1e-6 ) ;
+	}
+
+	@Test
+	public void testAddiMM() {
+		Matrix A = Matrix.rand( 6,6 ) ;
+		Matrix B = Matrix.rand( 6,6 ) ;
+
+		double expected[] = new double[A.M * A.N];
+		for( int i=0 ; i<expected.length ; i++ ) {
+			expected[i] = A.get(i) + B.get(i) ;
+		}
+
+		A.addi( B ) ;
+		assertArrayEquals( "Incorrect addi (Matrix/Matrix) result", expected, A.data, 1e-6 ) ;
+	}
+
+
+
+	@Test
+	public void testSubiVV() {
+		Matrix A = new Matrix( 1, 4, 1,2,3,4 ) ;
+		Matrix B = new Matrix( 4, 1, .1, .2, .3, .4 ) ;
+
+		A.subi( B ) ;
+		double expected[] = new double[] { 0.9, 1.8, 2.7, 3.6 } ;
+		assertArrayEquals( "Incorrect subi (vector/vector) result", expected, A.data, 1e-6 ) ;
+	}
+
+
+	@Test
+	public void testSubiVM() {
+		Matrix A = new Matrix( 2, 4, 1,5, 2,6, 3,7, 4,8 ) ;
+		Matrix B = new Matrix( 1, 4, .1, .2, .3, .4 ) ;
+
+		A.subi( B ) ;
+		double expected[] = new double[] { 0.9, 4.9, 1.8, 5.8, 2.7, 6.7, 3.6, 7.6 } ;
+		assertArrayEquals( "Incorrect subi (Matrix/row vector) result", expected, A.data, 1e-6 ) ;
+	}
+
+	@Test
+	public void testSubiVM2() {
+		Matrix A = new Matrix( 2, 4, 1,5, 2,6, 3,7, 4,8 ) ;
+		Matrix B = new Matrix( 2, 1, .1, .2 ) ;
+
+		A.subi( B ) ;
+		double expected[] = new double[] { 0.9, 4.8, 1.9, 5.8, 2.9, 6.8, 3.9, 7.8 } ;
+		assertArrayEquals( "Incorrect subi (Matrix/col Vector) result", expected, A.data, 1e-6 ) ;
+	}
+
+	@Test
+	public void testSubiMM() {
+		Matrix A = Matrix.rand( 6,6 ) ;
+		Matrix B = Matrix.rand( 6,6 ) ;
+
+		double expected[] = new double[A.M * A.N];
+		for( int i=0 ; i<expected.length ; i++ ) {
+			expected[i] = A.get(i) - B.get(i) ;
+		}
+
+		A.subi( B ) ;
+		assertArrayEquals( "Incorrect subi (Matrix/Matrix) result", expected, A.data, 1e-6 ) ;
+	}
+
+
+
+	@Test
 	public void testMatrixError() {
 		try {
 			Matrix A = new Matrix( 3, 3,    1.0, 2.0,-2,     3.0, -3.0, -1.0,    0.5, 3, 8, -0.3 ) ; 

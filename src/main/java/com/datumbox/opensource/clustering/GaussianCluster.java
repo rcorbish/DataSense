@@ -52,9 +52,6 @@ public class GaussianCluster extends Cluster {
 	public GaussianCluster(int dimensionality, int kappa0, int nu0, Matrix mu0, Matrix psi0) {
 		super(dimensionality);
 
-		if( nu0<dimensionality ) {
-			nu0 = dimensionality;
-		}
 		if(mu0==null) {
 			mu0 = new Matrix(dimensionality) ; //0 vector
 		}
@@ -64,7 +61,7 @@ public class GaussianCluster extends Cluster {
 		}
 
 		this.kappa0 = kappa0;
-		this.nu0 = nu0;
+		this.nu0 = nu0 < dimensionality ? dimensionality : nu0 ;
 		this.mu0 = mu0;
 		this.psi0 = psi0;
 
@@ -101,8 +98,8 @@ public class GaussianCluster extends Cluster {
 			xi_square_sum=xi.data.outer(xi.data);
 		}
 		else {
-			xi_sum=xi_sum.add(xi.data);
-			xi_square_sum=xi_square_sum.add(xi.data.outer(xi.data));
+			xi_sum.addi(xi.data);
+			xi_square_sum.addi(xi.data.outer(xi.data));
 		}
 
 		pointList.add(xi);
@@ -121,7 +118,7 @@ public class GaussianCluster extends Cluster {
 		}
 
 		//update cluster clusterParameters
-		xi_sum=xi_sum.sub(xi.data);
+		xi_sum.subi(xi.data);
 		xi_square_sum=xi_square_sum.sub(xi.data.outer(xi.data));
 
 		pointList.remove(index);

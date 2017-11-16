@@ -1,19 +1,3 @@
-/* 
- * Copyright (C) 2014 Vasilis Vryniotis <bbriniotis at datumbox.com>
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
 
 package com.datumbox.opensource.clustering;
 
@@ -167,14 +151,12 @@ public abstract class DPMM  {
                 Point xi = pointList.get(i);
                 Cluster ci = pointId2Cluster.get(xi.id);
                 
-                boolean wasInClusterOfOne = false ;
                 //remove the point from the cluster
                 ci.removePoint(xi);
                 //if empty cluster remove it
                 if( ci.size()==0 ) {
                     clusterList.remove(ci);
                     pointId2Cluster.remove(xi.id);
-                    wasInClusterOfOne = true ;
                 }
                 
                 int totalClusters = clusterList.size();
@@ -186,9 +168,7 @@ public abstract class DPMM  {
                 
                 //Calculate the probabilities of assigning the point to a new cluster
                 Cluster cNew = generateCluster();
-                
                 double priorLogPredictive = cNew.posteriorLogPdf(xi);
-                cNew=null;
                 
                 double probNewCluster = alpha/(alpha+n-1);
                 condProbCiGivenXiAndOtherCi[totalClusters]=priorLogPredictive+Math.log(probNewCluster);
@@ -208,7 +188,7 @@ public abstract class DPMM  {
                 }
                 
                 int sampledClusterId;
-                if(sum!=0.0) {
+                if(sum>1e-5) {
                     for(int k=0;k<totalClusters+1;++k) {
                         condProbCiGivenXiAndOtherCi[k]/=sum; 
                     }
@@ -216,8 +196,8 @@ public abstract class DPMM  {
                     //sample a cluster according to the probability
                     sampledClusterId=SRS.weightedProbabilitySampling(condProbCiGivenXiAndOtherCi);
                     condProbCiGivenXiAndOtherCi=null;
-                }
-                else {
+                    
+                } else {
                     //if all probabilities are 0 then assign it to a new cluster
                     sampledClusterId=totalClusters;
                 }
@@ -227,9 +207,6 @@ public abstract class DPMM  {
                 if(sampledClusterId==totalClusters) { //if new cluster
                     int newClusterId=createNewCluster();
                     clusterList.get(newClusterId).addPoint(xi);
-                    if( wasInClusterOfOne ) {
-                        noChangeMade=false ;
-                    }
                 }
                 else {
                     clusterList.get(sampledClusterId).addPoint(xi);

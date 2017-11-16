@@ -141,22 +141,31 @@ public class Matrix {
 	 * @return this
 	 */
 	public Matrix subi( Matrix O ) {
-		if( O.M == 1 && M>1 ) { // row vector vs matrix
-			if( O.N != N ) {
-				throw new RuntimeException( "Invalid subtraction of row vector" ) ;
+		if( O.isVector && isVector ) { // vector add
+			if( O.length() != length() ) {
+				throw new RuntimeException( "Invalid addition of vectors" ) ;
 			}
-			for( int i=0 ; i<M ; i++ ) {
-				for( int j=0 ; j<N ; j++ ) {
-					data[ i + j*M  ] -= O.data[j] ;
-				}
+			for( int i=0 ; i<length() ; i++ ) {
+				data[i] -= O.data[i] ;
 			}
-		} else if( O.N == 1 && N>1 ) { // col vector  vs matrix
+		} else if( isVector && O.M>1 ) { // can't add a matrix to a vector
+			throw new RuntimeException( "Can't add a matrix to a vector" ) ;
+		} else if( O.N==1 ) { // col vector vs matrix 
 			if( O.M != M ) {
-				throw new RuntimeException( "Invalid subtraction of columns vector" ) ;
+				throw new RuntimeException( "Invalid addition of column vector" ) ;
 			}
 			for( int i=0 ; i<M ; i++ ) {
 				for( int j=0 ; j<N ; j++ ) {
 					data[ i + j*M  ] -= O.data[i] ;
+				}
+			}
+		} else if( O.M==1 ) { // col vector vs matrix 
+			if( O.N != N ) {
+				throw new RuntimeException( "Invalid addition of row vector" ) ;
+			}
+			for( int i=0 ; i<M ; i++ ) {
+				for( int j=0 ; j<N ; j++ ) {
+					data[ i + j*M  ] -= O.data[j] ;
 				}
 			}
 		} else { // compatible matrix
@@ -186,22 +195,31 @@ public class Matrix {
 	 * @return this
 	 */
 	public Matrix addi( Matrix O ) {
-		if( O.M == 1 && M>1 ) { // row vector vs matrix
-			if( O.N != N ) {
-				throw new RuntimeException( "Invalid addition of columns vector" ) ;
+		if( O.isVector && isVector ) { // vector add
+			if( O.length() != length() ) {
+				throw new RuntimeException( "Invalid addition of vectors" ) ;
 			}
-			for( int i=0 ; i<M ; i++ ) {
-				for( int j=0 ; j<N ; j++ ) {
-					data[ i + j*M  ] += O.data[j] ;
-				}
+			for( int i=0 ; i<length() ; i++ ) {
+				data[i] += O.data[i] ;
 			}
-		} else if( O.N==1 && N>1 ) { // col vector  vs matrix 
+		} else if( isVector && O.M>1 ) { // can't add a matrix to a vector
+			throw new RuntimeException( "Can't add a matrix to a vector" ) ;
+		} else if( O.N==1 ) { // col vector vs matrix 
 			if( O.M != M ) {
-				throw new RuntimeException( "Invalid addition of columns vector" ) ;
+				throw new RuntimeException( "Invalid addition of column vector" ) ;
 			}
 			for( int i=0 ; i<M ; i++ ) {
 				for( int j=0 ; j<N ; j++ ) {
 					data[ i + j*M  ] += O.data[i] ;
+				}
+			}
+		} else if( O.M==1 ) { // col vector vs matrix 
+			if( O.N != N ) {
+				throw new RuntimeException( "Invalid addition of row vector" ) ;
+			}
+			for( int i=0 ; i<M ; i++ ) {
+				for( int j=0 ; j<N ; j++ ) {
+					data[ i + j*M  ] += O.data[j] ;
 				}
 			}
 		} else { // compatible matrix
