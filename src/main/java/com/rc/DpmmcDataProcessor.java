@@ -69,11 +69,11 @@ public class DpmmcDataProcessor extends DataProcessor {
 
 		log.info( "Processing {} data items", pointList.size() ) ;
 		
-        double alpha = 10 ;
+        double alpha = 0 ;
         //Hyper parameters of Base Function
         
         int kappa0 = 0 ;
-        int nu0 = 1 ;
+        int nu0 = 0 ;
         Matrix mu0 = new Matrix( dimensionality );       
         Matrix psi0 = Matrix.eye( dimensionality ) ;
 
@@ -82,9 +82,30 @@ public class DpmmcDataProcessor extends DataProcessor {
         int maxIterations = 30 ;
 		int performedIterations = dpmm.cluster(pointList, maxIterations);
         log.info( "Created {} clusters in {} iterations", dpmm.getClusterList().size(), performedIterations ) ;
-        Matrix Y = YR ;
-	 
-		return score(YR, Y, inverseFeatureKeys ) ;
+
+		int n=dpmm.getClusterList().size() ;
+
+		Map<Integer, Integer> zi = dpmm.getPointAssignments();
+		log.debug( "Points: {}", zi ) ;
+
+		Matrix YH = new Matrix( YR.length() ) ;
+		for( int i=0 ; i<T.M ; i++ ) {
+			com.datumbox.opensource.dataobjects.Point xi = 
+				new com.datumbox.opensource.dataobjects.Point( i, T.copyRows(i).transpose() ) ;
+				double p[] = dpmm.clusterProbabilities(xi, n) ;
+				log.debug( "Cum probs: {}", p ) ;
+				double mx = p[0] ;
+				int mxi = 0 ;
+				for( int j=1 ; j<p.length ; j++ ) {
+					if( p[j]>mx ) {
+						p[j] = mx ;
+						mxi = j ;
+					}
+				}
+				YH.put(i, mxi ) ;
+			}
+
+		return score(YR, YH, inverseFeatureKeys ) ;
 	}
 	
 	protected int[] getClusters() {

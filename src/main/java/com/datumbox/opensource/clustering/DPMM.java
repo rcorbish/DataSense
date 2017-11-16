@@ -329,7 +329,7 @@ public abstract class DPMM  {
      * @param n     The number of activated Clusters
      * @return      Array with the probabilities
      */
-    private double[] clusterProbabilities(Point xi, int n) {
+    public double[] clusterProbabilities(Point xi, int n) {
         int totalClusters = clusterList.size();
         double[] condProbCiGivenXiAndOtherCi = new double[totalClusters];
 
