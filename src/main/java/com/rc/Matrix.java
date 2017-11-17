@@ -1325,6 +1325,19 @@ public class Matrix {
 		Arrays.fill( rc.data, v);
 		return rc ;
 	}
+	
+	/**
+	 * Create a new Vector filled with a single value
+	 * @param m rows
+	 * @param v value to fill the matrix
+	 * @return a new Matrix
+	 */
+	static public Matrix fill( int m, double v ) {
+		Matrix rc = new Matrix( m ) ;
+		Arrays.fill( rc.data, v);
+		return rc ;
+	}
+
 
 	/**
 	 * Nice means to print a matrix. We only print some of the data

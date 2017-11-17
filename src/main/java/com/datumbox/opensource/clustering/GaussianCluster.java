@@ -94,7 +94,7 @@ public class GaussianCluster extends Cluster {
 
 		//update cluster clusterParameters
 		if(nk==0) {
-			xi_sum=xi.data;
+			xi_sum=xi.data.dup() ;
 			xi_square_sum=xi.data.outer(xi.data);
 		}
 		else {
@@ -117,9 +117,8 @@ public class GaussianCluster extends Cluster {
 			return;
 		}
 
-		//update cluster clusterParameters
 		xi_sum.subi(xi.data);
-		xi_square_sum=xi_square_sum.sub(xi.data.outer(xi.data));
+		xi_square_sum.subi(xi.data.outer(xi.data));
 
 		pointList.remove(index);
 
@@ -147,15 +146,14 @@ public class GaussianCluster extends Cluster {
 		Matrix mu = xi_sum.div(n);
 		Matrix mu_mu_0 = mu.sub(mu0);
 
-		Matrix C = xi_square_sum.sub( ( mu.outer(mu) ).mul(n) );
+		Matrix C = xi_square_sum.sub( mu.outer(mu).muli(n) );
 
-		Matrix psi = psi0.add( C.add( ( mu_mu_0.outer(mu_mu_0) ).mul(kappa0*n/(double)kappa_n) ));
+		Matrix psi = psi0.add( C.add( mu_mu_0.outer(mu_mu_0).muli(kappa0*n/(double)kappa_n) ));
 
-		mean = ( mu0.mul(kappa0) ).add( mu.mul(n) ).div(kappa_n);
+		mean = mu0.mul(kappa0).addi( mu.mul(n) ).divi(kappa_n);
 		covariance = psi.mul( (kappa_n+1.0)/(kappa_n*(nu - dimensionality + 1.0)) );
 		cache_covariance_determinant=covariance.det() ;
 
-		log.debug( "Covariance {}", covariance ) ;
 		meanError = calculateMeanError(psi, kappa_n, nu);
 		meanDf = Math.max(0, nu-dimensionality+1);
 	}
@@ -173,7 +171,7 @@ public class GaussianCluster extends Cluster {
 
 		double x_muInvSx_muT = covariance.divLeft( x_mu ).dot( x_mu ) ;
 
-		double normConst = 1.0/( Math.pow(2*Math.PI, dimensionality/2.0) * Math.pow(cache_covariance_determinant, 0.5) );
+		double normConst = 1.0/( Math.pow(2*Math.PI, dimensionality/2.0) * Math.sqrt(cache_covariance_determinant) );
 
 		double logPdf = -0.5 * x_muInvSx_muT + Math.log(normConst);
 		return logPdf;

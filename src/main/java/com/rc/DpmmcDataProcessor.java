@@ -11,8 +11,10 @@ import java.util.Map.Entry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.datumbox.opensource.clustering.Cluster;
 import com.datumbox.opensource.clustering.DPMM;
 import com.datumbox.opensource.clustering.GaussianDPMM;
+import com.datumbox.opensource.dataobjects.Point;
 
 
 public class DpmmcDataProcessor extends DataProcessor {
@@ -69,7 +71,7 @@ public class DpmmcDataProcessor extends DataProcessor {
 
 		log.info( "Processing {} data items", pointList.size() ) ;
 		
-        double alpha = 1 ;
+        double alpha = 3 ;
         //Hyper parameters of Base Function
         
         int kappa0 = 0 ;
@@ -86,23 +88,29 @@ public class DpmmcDataProcessor extends DataProcessor {
 		int n=dpmm.getClusterList().size() ;
 
 		Map<Integer, Integer> zi = dpmm.getPointAssignments();
-		log.debug( "Points: {}", zi ) ;
+		log.info( "Points: {}", zi ) ;
 
 		Matrix YH = new Matrix( YR.length() ) ;
 		for( int i=0 ; i<T.M ; i++ ) {
 			com.datumbox.opensource.dataobjects.Point xi = 
 				new com.datumbox.opensource.dataobjects.Point( i, T.copyRows(i).transpose() ) ;
-				double p[] = dpmm.clusterProbabilities(xi, n) ;
-				log.debug( "Cum probs: {}", p ) ;
-				double mx = p[0] ;
+				double prob[] = dpmm.clusterProbabilities(xi, n) ;
+				double mx = prob[0] ;
 				int mxi = 0 ;
-				for( int j=1 ; j<p.length ; j++ ) {
-					if( p[j]>mx ) {
-						p[j] = mx ;
+				for( int j=1 ; j<prob.length ; j++ ) {
+					if( prob[j]>mx ) {
+						prob[j] = mx ;
 						mxi = j ;
 					}
 				}
-				YH.put(i, mxi ) ;
+				Cluster c = dpmm.getClusterList().get( mxi ) ;
+				List<Point> pl = c.getPointList() ;
+				double f = 0 ;
+				for( Point p : pl ) {
+					f += F.get( p.id ) ; 
+				}
+				f /= pl.size() ;
+				YH.put(i, f ) ;
 			}
 
 		return score(YR, YH, inverseFeatureKeys ) ;
