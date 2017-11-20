@@ -14,18 +14,33 @@ import org.slf4j.LoggerFactory;
 import com.datumbox.opensource.clustering.Cluster;
 import com.datumbox.opensource.clustering.DPMM;
 import com.datumbox.opensource.clustering.GaussianDPMM;
-import com.datumbox.opensource.clustering.MultinominalDPMM;
 import com.datumbox.opensource.dataobjects.Point;
 
 
-public class DpmmcDataProcessor extends DataProcessor {
-	final static Logger log = LoggerFactory.getLogger( DpmmcDataProcessor.class ) ;
+public class DpmmgDataProcessor extends DataProcessor {
+	final static Logger log = LoggerFactory.getLogger( DpmmgDataProcessor.class ) ;
 
     private DPMM dpmm ;
     
 	public Dataset load( InputStream data, ProcessorOptions options ) throws IOException {
-		options.discrete = true ;
 		Dataset dataset = Loader.load( DataProcessor.ROWS_TO_KEEP, data, options ) ;
+
+		if( options.square ) {
+			dataset.square( options.keepOriginal ); 
+		}		
+		
+		if( options.log ) {
+			dataset.log( options.keepOriginal );
+		}
+		
+		if( options.reciprocal ) {
+			dataset.reciprocal( options.keepOriginal );
+		}
+		
+		if( options.normalize ) {
+			dataset.normalize();
+		}
+
 		return dataset ;
 	}
 
@@ -57,9 +72,14 @@ public class DpmmcDataProcessor extends DataProcessor {
 		log.info( "Processing {} data items", pointList.size() ) ;
 		
         double alpha = 3 ;
-        double words = 100 ;
+        //Hyper parameters of Base Function
+        
+        int kappa0 = 0 ;
+        int nu0 = 0 ;
+        Matrix mu0 = new Matrix( dimensionality );       
+        Matrix psi0 = Matrix.eye( dimensionality ) ;
 
-        dpmm = new MultinominalDPMM(dimensionality, alpha, words);
+        dpmm = new GaussianDPMM(dimensionality, alpha, kappa0, nu0, mu0, psi0);
         
         int maxIterations = 30 ;
 		int performedIterations = dpmm.cluster(pointList, maxIterations);

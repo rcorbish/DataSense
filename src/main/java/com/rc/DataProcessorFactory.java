@@ -29,6 +29,9 @@ public class DataProcessorFactory {
 		if( "correlation".equals( method ) ) {
 			return new CorrelationDataProcessor() ;
 		}
+		if( "dpmmg".equals( method ) ) {
+			return new DpmmgDataProcessor() ;
+		}
 		if( "dpmmc".equals( method ) ) {
 			return new DpmmcDataProcessor() ;
 		}

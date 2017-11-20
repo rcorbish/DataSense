@@ -5,7 +5,7 @@ function drawCorrelations( ctx, R, w, h ) {
 	var dy = h / R.length
 
 	for( var i=0 ; i<R.length ; i++ ) {
-		for( var j=0 ; j<R.length ; j++ ) {
+		for( var j=i+1 ; j<R.length ; j++ ) {
 			if( i==j ) continue ;
 			ctx.beginPath()
 			const r = Math.round( Math.abs(R[i][j]) * 0xf).toString(16) 
@@ -14,7 +14,7 @@ function drawCorrelations( ctx, R, w, h ) {
 			} else {
 				ctx.fillStyle = "#0" + r + "0" 
 			}  
-			ctx.fillRect( i*dx, j*dy, dx, dy ) 
+			ctx.fillRect( j*dx, i*dy, dx, dy ) 
 			ctx.fill()
 		} 
 	} 

@@ -14,7 +14,7 @@ public class MultinomialCluster extends Cluster {
 	/**
 	 * Cached value of WordCountsPlusAlpha used only for speed optimization
 	 */
-	private double cache_wordcounts_plusalpha;
+	private Double cache_wordcounts_plusalpha;
 	private Matrix wordCountsPlusAlpha ;
 	
 	//Alpha parameter of Dirichlet for the words
@@ -83,7 +83,7 @@ public class MultinomialCluster extends Cluster {
 		}
 
 		//update cluster clusterParameters
-		Ni_sum=Ni_sum.sub(xi.data);
+		Ni_sum.subi(xi.data);
 
 		pointList.remove(index);
 
@@ -96,10 +96,8 @@ public class MultinomialCluster extends Cluster {
 	 */
 	@Override
 	protected void updateClusterParameters() {
-		Matrix aVector = Matrix.fill(dimensionality, alphaWords);
-		wordCountsPlusAlpha = wordCounts.add(aVector);
 
-		cache_wordcounts_plusalpha=C(wordCountsPlusAlpha);
+		cache_wordcounts_plusalpha=null;
 
 		wordCounts = Ni_sum;
 	}
@@ -113,6 +111,13 @@ public class MultinomialCluster extends Cluster {
 	 */
 	@Override
 	public double posteriorLogPdf(Point xi) {
+		Matrix aVector = Matrix.fill(dimensionality, alphaWords);
+		wordCountsPlusAlpha = wordCounts.add(aVector);
+		
+		if( cache_wordcounts_plusalpha == null ) {
+			cache_wordcounts_plusalpha=C(wordCountsPlusAlpha);
+		}
+
 		double cOfWordCountsPlusAlpha=cache_wordcounts_plusalpha;
 
 		double logPdf= C(wordCountsPlusAlpha.add(xi.data))-cOfWordCountsPlusAlpha;
@@ -150,7 +155,8 @@ public class MultinomialCluster extends Cluster {
 	 */
 	private double logGamma(double x) {
 		double tmp = (x - 0.5) * Math.log(x + 4.5) - (x + 4.5);
-		double ser = 1.0 + 76.18009173    / (x + 0)   - 86.50532033    / (x + 1)
+		double ser = 1.0 
+				+ 76.18009173    / (x + 0)   - 86.50532033    / (x + 1)
 				+ 24.01409822    / (x + 2)   -  1.231739516   / (x + 3)
 				+  0.00120858003 / (x + 4)   -  0.00000536382 / (x + 5);
 		return tmp + Math.log(ser * Math.sqrt(2 * Math.PI));

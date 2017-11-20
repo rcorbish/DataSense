@@ -5,7 +5,7 @@ package com.datumbox.opensource.clustering;
  *
  * @author Vasilis Vryniotis <bbriniotis at datumbox.com>
  */
-public class MultinomialDPMM extends DPMM {
+public class MultinominalDPMM extends DPMM {
     
     private final double alphaWords;
     
@@ -16,7 +16,7 @@ public class MultinomialDPMM extends DPMM {
      * @param alpha             The alpha of the Dirichlet Process
      * @param alphaWords        The second alpha of the Dirichlet Process for Words
      */
-    public MultinomialDPMM(int dimensionality, double alpha, double alphaWords) {
+    public MultinominalDPMM(int dimensionality, double alpha, double alphaWords) {
         super(dimensionality, alpha);            
         this.alphaWords = alphaWords;
     }
