@@ -50,10 +50,9 @@ public class MultinomialCluster extends Cluster {
 
 		//update cluster clusterParameters
 		if(nk==0) {
-			Ni_sum=xi.data;
-		}
-		else {
-			Ni_sum=Ni_sum.add(xi.data);
+			Ni_sum=xi.data.dup() ;
+		} else {
+			Ni_sum.addi(xi.data);
 		}
 
 		pointList.add(xi);

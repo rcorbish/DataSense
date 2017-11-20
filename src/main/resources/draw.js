@@ -98,8 +98,8 @@ function drawLogistic( ctx, yHist, yhHist, w, h ) {
 	var range = ( h - 50 ) / max  
 	
 	ctx.beginPath()
-	ctx.strokeStyle = "#fff"
-	ctx.fillStyle = "#fff"
+	ctx.strokeStyle = "#999"
+	ctx.fillStyle = "#999"
 			
 	var x = 25
 	var y = yHist[0]

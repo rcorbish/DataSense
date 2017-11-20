@@ -119,20 +119,22 @@ public class Loader {
 			
 			String cols[] = reader.readNext() ;
 			while( cols != null ) {
-				double row[] = parse( cols, maps ) ;
-				if( m==M ) { log.info( "Switching to reservoir mode. Keeping {} samples", M ) ; }
-				if( m<M ) {
-					for( int c=0 ; c<N ; c++ ) {
-						reservoir[m + c*M] = row[c] ;
+				if( cols.length > 1 ) {
+					double row[] = parse( cols, maps ) ;
+					if( m==M ) { log.info( "Switching to reservoir mode. Keeping {} samples", M ) ; }
+					if( m<M ) {
+						for( int c=0 ; c<N ; c++ ) {
+							reservoir[m + c*M] = row[c] ;
+						}
+					} else {
+						int r = rng.nextInt(M) ;
+						for( int c=0 ; c<N ; c++ ) {
+							reservoir[r + c*M] = row[c] ;
+						}
 					}
-				} else {
-					int r = rng.nextInt(M) ;
-					for( int c=0 ; c<N ; c++ ) {
-						reservoir[r + c*M] = row[c] ;
-					}
+					m++ ;
 				}
 				cols = reader.readNext() ;
-				m++ ;
 			}
 			log.info( "Parsed {} lines", m ) ;
 			Matrix all = new Matrix( M, N, reservoir ) ;

@@ -327,7 +327,7 @@ public class Matrix {
 	public Matrix hmuli( Matrix O ) {
 		if( O.M == 1 && M>1 ) { // row vector vs matrix
 			if( O.N != N ) {
-				throw new RuntimeException( "Invalid addition of columns vector" ) ;
+				throw new RuntimeException( "Invalid mpy of columns vector" ) ;
 			}
 			for( int i=0 ; i<M ; i++ ) {
 				for( int j=0 ; j<N ; j++ ) {
@@ -336,7 +336,7 @@ public class Matrix {
 			}
 		} else if( O.N==1 && N>1 ) { // col vector  vs matrix 
 			if( O.M != M ) {
-				throw new RuntimeException( "Invalid addition of columns vector" ) ;
+				throw new RuntimeException( "Invalid m pyof columns vector" ) ;
 			}
 			for( int i=0 ; i<M ; i++ ) {
 				for( int j=0 ; j<N ; j++ ) {
@@ -376,7 +376,7 @@ public class Matrix {
 	public Matrix hdivi( Matrix O ) {
 		if( O.M == 1  ) { // row vector vs matrix
 			if( O.N != N && M>1 ) {
-				throw new RuntimeException( "Invalid addition of columns vector" ) ;
+				throw new RuntimeException( "Invalid div of columns vector" ) ;
 			}
 			for( int i=0 ; i<M ; i++ ) {
 				for( int j=0 ; j<N ; j++ ) {
@@ -385,7 +385,7 @@ public class Matrix {
 			}
 		} else if( O.N==1 && N>1 ) { // col vector  vs matrix 
 			if( O.M != M ) {
-				throw new RuntimeException( "Invalid addition of columns vector" ) ;
+				throw new RuntimeException( "Invalid div of columns vector" ) ;
 			}
 			for( int i=0 ; i<M ; i++ ) {
 				for( int j=0 ; j<N ; j++ ) {
@@ -970,6 +970,32 @@ public class Matrix {
 
 		return rc ;
 	}
+
+
+	/**
+	 * Swap two columns in a matrix
+	 * The original Matrix is hanged by this operation
+	 * 
+	 * @param col1 swap this (0 based) column ...
+	 * @param col2 ... with this (0 based) column
+	 * @return the changed matrix
+	 */
+	public Matrix swapColumns( int col1, int col2 ) {
+		if( col1 != col2 ) {
+			double tmp[] = new double[M] ;
+			System.arraycopy( data, M*col1, tmp, 0, M ) ;
+			System.arraycopy( data, M*col2, data, M*col1, M ) ;
+			System.arraycopy( tmp, 0, data, M*col2, M )  ;
+			
+			if( labels != null ) {
+				String tmp2 = labels[col1] ;
+				labels[col1] = labels[col2] ;
+				labels[col2] = tmp2 ;
+			}
+		}
+		return this ;
+	}
+
 
 	/**
 	 * Add new columns to the'rhs' of the matrix.  The original matrix is unchanged.

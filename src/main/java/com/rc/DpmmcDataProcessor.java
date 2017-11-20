@@ -56,7 +56,7 @@ public class DpmmcDataProcessor extends DataProcessor {
 
 		log.info( "Processing {} data items", pointList.size() ) ;
 		
-        double alpha = 3 ;
+        double alpha = 1 ;
         double words = 100 ;
 
         dpmm = new MultinominalDPMM(dimensionality, alpha, words);

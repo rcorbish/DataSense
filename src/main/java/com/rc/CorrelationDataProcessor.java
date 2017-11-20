@@ -29,6 +29,9 @@ public class CorrelationDataProcessor extends DataProcessor {
 
 	public Object process( Dataset dataset ) {
 		
+		int feature = dataset.getFeatureColumnIndex() ;
+		dataset.train.swapColumns(0, feature ) ;
+		
 		Matrix A = dataset.train.zeroMeanColumns() ;
 		Matrix CO = A.transpose().mmul( A ) ;			
 		CO.labels = dataset.train.labels ;
