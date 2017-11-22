@@ -71,7 +71,7 @@ public class DpmmgDataProcessor extends DataProcessor {
 
 		log.info( "Processing {} data items", pointList.size() ) ;
 		
-        double alpha = 3 ;
+        double alpha = 1 ;
         //Hyper parameters of Base Function
         
         int kappa0 = 0 ;
