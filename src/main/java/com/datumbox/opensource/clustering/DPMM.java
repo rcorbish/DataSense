@@ -102,16 +102,16 @@ public abstract class DPMM  {
      * 
      * @return  The id of the new cluster.
      */
-    private int createNewCluster() {
+    private Cluster createNewCluster() {
         int clusterId=clusterList.size(); //the ids start enumerating from 0
         
         //create new cluster
         Cluster c = generateCluster();
         
         //add the new cluster in our list
-        clusterList.add(clusterId, c);
+        clusterList.add(c);
         
-        return clusterId;
+        return c;
     }
     
     /**
@@ -130,14 +130,12 @@ public abstract class DPMM  {
             }
         }
         
-        Map<Integer, Cluster> pointId2Cluster = new HashMap<>(); //pointId=>cluster
         
-
         //Initialize clusters, create a cluster for every xi
         for(Point xi : pointList) {
-            int clusterId=createNewCluster();
-            clusterList.get(clusterId).addPoint(xi);
-            pointId2Cluster.put(xi.id, clusterList.get(clusterId));
+            Cluster cluster = createNewCluster() ; 
+            cluster.addPoint(xi);
+            xi.cluster = cluster ;
         }
         
         boolean noChangeMade=false;
@@ -149,14 +147,14 @@ public abstract class DPMM  {
             noChangeMade=true;
             for(int i=0;i<actualPointNumber;++i) {
                 Point xi = pointList.get(i);
-                Cluster ci = pointId2Cluster.get(xi.id);
+                Cluster ci = xi.cluster ;
                 
                 //remove the point from the cluster
                 ci.removePoint(xi);
+                xi.cluster = null ;
                 //if empty cluster remove it
                 if( ci.size()==0 ) {
                     clusterList.remove(ci);
-                    pointId2Cluster.remove(xi.id);
                 }
                 
                 int totalClusters = clusterList.size();
@@ -187,36 +185,27 @@ public abstract class DPMM  {
                     sum += condProbCiGivenXiAndOtherCi[k];
                 }
                 
-                int sampledClusterId;
+                Cluster sampledCluster;
                 if(sum>1e-5) {
                     for(int k=0;k<totalClusters+1;++k) {
                         condProbCiGivenXiAndOtherCi[k]/=sum; 
                     }
                     
                     //sample a cluster according to the probability
-                    sampledClusterId=SRS.weightedProbabilitySampling(condProbCiGivenXiAndOtherCi);
-                    condProbCiGivenXiAndOtherCi=null;
+                    int ix =SRS.weightedProbabilitySampling(condProbCiGivenXiAndOtherCi);
+                    sampledCluster = clusterList.get( ix ) ;
                     
                 } else {
                     //if all probabilities are 0 then assign it to a new cluster
-                    sampledClusterId=totalClusters;
+                    sampledCluster = createNewCluster() ;
                 }
                 
-                
-                //Add Xi back to the sampled Cluster
-                if(sampledClusterId==totalClusters) { //if new cluster
-                    int newClusterId=createNewCluster();
-                    clusterList.get(newClusterId).addPoint(xi);
+                sampledCluster.addPoint(xi);
+                xi.cluster = sampledCluster ;
+                if( ci!= sampledCluster ) {
+                    noChangeMade=false;
                 }
-                else {
-                    clusterList.get(sampledClusterId).addPoint(xi);
-                    if(noChangeMade && ci!=clusterList.get(sampledClusterId)) {
-                        noChangeMade=false;
-                    }
-                }
-                pointId2Cluster.put(xi.id,clusterList.get(sampledClusterId));
             }
-            
             ++iteration;
         }
         

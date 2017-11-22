@@ -17,6 +17,7 @@
 
 package com.datumbox.opensource.dataobjects;
 
+import com.datumbox.opensource.clustering.Cluster;
 import com.rc.Matrix;
 
 /**
@@ -29,6 +30,8 @@ public class Point {
      * The id variable is used to identify the xi record.
      */
     public int id;
+
+    public Cluster cluster ;
     
     /**
      * The data variable is a RealVector which stores the information of xi record.

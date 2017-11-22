@@ -64,20 +64,48 @@
 		window.addEventListener("load", function(e) {
 			initUploadDivs()
 			
-			const menuSection = document.getElementById( "menu-section" ) ;
-			const menuHamburger = menuSection.querySelector( ".hamburger" ) ;
+			const menuSection = document.getElementById( "menu-section" ) 
+			const menuHamburger = menuSection.querySelector( ".hamburger" ) 
 
-			menuHamburger.addEventListener( "click", function(e) {
-				toggleMenuCollapse() 
-			}) ;
+			menuSection.addEventListener( "click", nothing ) 
+			menuHamburger.addEventListener( "click", expandMenu ) 
+			document.body.addEventListener( "click", collapseMenu ) 
 		});
 
-		function toggleMenuCollapse() {
-			const menuSection = document.getElementById( "menu-section" ) ;
-			const collapsibles = menuSection.querySelectorAll( ".collapsible" ) ;
-			for( var i=0 ; i<collapsibles.length ; i++ ) {
-				collapsibles[i].classList.toggle("expanded");
+		function nothing(e) {
+			e.stopPropagation()
+			return false 
+		}
+
+		function collapseMenu(e) {
+			if( e ) {
+				e.stopPropagation()
+				e.preventDefault()
 			}
+			const menuSection = document.getElementById( "menu-section" ) ;
+			const menuHamburger = menuSection.querySelector( ".hamburger" ) ;
+			const collapsibles = menuSection.querySelectorAll( ".collapsible.expanded" ) ;
+			for( var i=0 ; i<collapsibles.length ; i++ ) {
+				collapsibles[i].classList.remove("expanded");
+			}
+			menuHamburger.removeEventListener( "click", collapseMenu ) 
+			menuHamburger.addEventListener( "click", expandMenu ) 
+			document.body.removeEventListener( "click", collapseMenu ) 
+			return true 
+		}
+		function expandMenu(e) {
+			e.stopPropagation()
+			e.preventDefault()
+			const menuSection = document.getElementById( "menu-section" ) 
+			const menuHamburger = menuSection.querySelector( ".hamburger" ) 
+			const collapsibles = menuSection.querySelectorAll( ".collapsible" ) 
+			for( var i=0 ; i<collapsibles.length ; i++ ) {
+				collapsibles[i].classList.add("expanded")
+			}
+			menuHamburger.removeEventListener( "click", expandMenu ) 
+			menuHamburger.addEventListener( "click", collapseMenu ) 
+			document.body.addEventListener( "click", collapseMenu )
+			return true 
 		}
 		
 		function initUploadDivs() {
@@ -86,19 +114,25 @@
 			for (var i = 0; i < divs.length; i++) {
 				div = divs[i];
 				div.addEventListener( "dragover", function(e) {
-					e.preventDefault();
-					e.dataTransfer.dropEffect = 'copy';
-					e.target.classList.add( "dropok" ) ;
+					if( e.target.classList ) {
+						e.preventDefault();
+						e.dataTransfer.dropEffect = 'copy';
+						e.target.classList.add( "dropok" ) ;
+					}
 					return false;
 				});
 				div.addEventListener( "dragend", function(e) {
-					e.preventDefault();
-					e.target.classList.remove( "dropok" ) ;
+					if( e.target.classList ) {
+						e.preventDefault();
+						e.target.classList.remove( "dropok" ) ;
+					}
 					return false;
 				});
 				div.addEventListener( "dragleave", function(e) {
-					e.preventDefault();
-					e.target.classList.remove( "dropok" ) ;
+					if( e.target.classList ) {
+						e.preventDefault();
+						e.target.classList.remove( "dropok" ) ;
+					}
 					return false;
 				});
 				div.addEventListener( "drop", function(e) {
@@ -134,7 +168,7 @@
 				div.classList.remove( "active" )
 				document.getElementById("results").innerHTML = "<pre>"
 						+ e.target.responseText + "</pre>"
-				toggleMenuCollapse()
+				collapseMenu()
 				const o = JSON.parse( e.target.responseText ) 
 				draw( form.method.value, o )  
 			} ;
