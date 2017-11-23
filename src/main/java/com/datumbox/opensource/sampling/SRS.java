@@ -17,33 +17,27 @@
 
 package com.datumbox.opensource.sampling;
 
+import java.util.Random;
+
 /**
  * Simple Random Sampling class.
  * 
- * @author Vasilis Vryniotis <bbriniotis at datumbox.com>
  */
 public class SRS {
     
+    static Random rng = new Random() ;
     /**
      * Samples an observation based on a probability Table.
      * 
      * @param probabilityTable  The probability table
-     * @return  The id that was selected based on sampling
+     * @return  The index that was selected based on sampling
      */
     public static int weightedProbabilitySampling(double[] probabilityTable) {
         int sampledId=0;
-        double randomNumber = Math.random();
+        double randomNumber = rng.nextDouble() ;
         
-        //This value is used to determine the outcome of the random assignment.
-        //This is the analogous of having a line of length 1, separate the line
-        //sublines of length equal to their probability, selecting a random
-        //number which is the position on this line and then start summing up
-        //the positions until you hit the point where subline where the random
-        //number lies.
         double probabilitySumSelector = 0.0;
         
-        //loop through all the table and find their weight then see if the
-        //random number lies.
         for(int i=0;i<probabilityTable.length;++i) {
             probabilitySumSelector+=probabilityTable[i];
             if(randomNumber<probabilitySumSelector) {
@@ -51,7 +45,6 @@ public class SRS {
                 break;
             }
         }
-        
         return sampledId;
     }
 }

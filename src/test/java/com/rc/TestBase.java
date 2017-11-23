@@ -27,80 +27,6 @@ public class TestBase {
 		test.close(); 
 	}
 
-	@Test
-	public void testData() {
-		Matrix A = new Matrix( 5, 5 ) ;
-		for( int i=0 ; i<A.length() ; i++ ) {
-			A.data[i] = i ;
-		}
-
-		int ix = 0 ;
-		for( int j=0 ; j<A.N ; j++ ) {
-			for( int i=0 ; i<A.M ; i++ ) {
-				assertEquals( "Unexpected value in A", ix, A.get(i, j), 1e-6) ;
-				ix++ ;
-			}
-		}
-	}
-
-	@Test
-	public void testPutcol() {
-		Matrix A = Matrix.eye(4) ;
-		for( int i=0 ; i<A.N ; i++ ) {
-			A.putColumn(i, new double[] { i,i,i,i } ) ;
-		}
-
-		for( int j=0 ; j<A.N ; j++ ) {
-			for( int i=0 ; i<A.M ; i++ ) {
-				assertEquals( "Unexpected value in A", j, A.get(i, j), 1e-6) ;
-			}
-		}
-	}
-
-	@Test
-	public void testGetcol() {
-		Matrix A = Matrix.eye(4) ;
-
-		for( int j=0 ; j<A.N ; j++ ) {
-			Matrix C = A.extractColumns( 0 ) ;
-			assertEquals( "Unexpected # rows in extract", A.M, C.M ) ;
-
-			for( int i=0 ; i<C.M ; i++ ) {
-				assertEquals( "Unexpected value in A", i==j?1:0, C.get(i, 0), 1e-6) ;
-			}
-		}
-	}
-
-
-
-	@Test
-	public void testGetrow1() {
-		Matrix A = Matrix.eye(4) ;
-
-		for( int j=0 ; j<4 ; j++ ) {
-			Matrix R = A.extractRows( 0 ) ;
-			assertEquals( "Unexpected # cols in extract", A.N, R.N ) ;
-			for( int i=0 ; i<R.N ; i++ ) {
-				assertEquals( "Unexpected value in extract", i==j?1:0, R.get(0,i), 1e-6) ;
-			}
-		}
-	}
-
-	@Test
-	public void testGetrow2() {
-		Matrix A = Matrix.rand(5,3) ;
-
-		Matrix R = A.dup().extractRows( 1,2 ) ;
-		assertEquals( "Unexpected # cols in extract", A.N, R.N ) ;
-		assertEquals( "Unexpected # rows in extract", 2, R.M ) ;
-
-		for( int i=0 ; i<R.M ; i++ ) {
-			for( int j=0 ; j<R.N ; j++ ) {
-				assertEquals( "Unexpected value in extract", A.get( i+1,  j), R.get(i,j), 1e-6) ;
-			}
-		}
-	}
-
 
 	@Test
 	public void testAdd1() {
@@ -146,18 +72,6 @@ public class TestBase {
 
 
 
-	@Test
-	public void testMap() {
-		Matrix A = Matrix.rand(4,4) ;
-		A.map( (v,m,r,c) -> r+10*c ) ;
-
-		for( int j=0 ; j<A.N ; j++ ) {
-			for( int i=0 ; i<A.M ; i++ ) {
-				assertEquals( "Unexpected value in A", i+10*j, A.get(i, j), 1e-6) ;
-			}
-		}
-	}
-
 
 	@Test
 	public void testOuter() {
@@ -182,6 +96,20 @@ public class TestBase {
 		double d = A.det() ;
 		assertEquals( "Incorrect determinant", -156, d, 1e-6 ) ;
 	}
+
+
+
+	@Test
+	public void testDetTriangle() {
+		Matrix A = new Matrix( 3, 3,    1, 0, 0,   -7, 9,0,   8,0,4  ) ; 
+		double d = A.det() ;
+		assertEquals( "Incorrect determinant", 36, d, 1e-6 ) ;
+
+		A.isTriangular = true ;
+		double d2 = A.det() ;
+		assertEquals( "Incorrect determinant (fast)", d, d2, 1e-6 ) ;
+	}
+
 
 
 	@Test
@@ -344,54 +272,6 @@ public class TestBase {
 		} catch( RuntimeException expected ) {
 
 		}
-	}
-
-	@Test
-	public void testReduce() {
-		Matrix A = Matrix.fill( 4, 4, 17 ) ;
-		A.put( 0, 0, 20 ) ;
-		A.put( 0, 1, 21 ) ;
-		A.put( 0, 2, 22 ) ;
-		A.put( 0, 3, 23 ) ;
-
-		Matrix mx = A.reduce( (a,b) -> Math.max(a,b) ) ; 
-		assertArrayEquals("Incorrect maximum", new double[] { 20, 21, 22, 23 }, mx.data, 1e-6 ) ;
-	}
-
-
-	@Test
-	public void testReduceStart() {
-		Matrix A = Matrix.rand( 4, 4 ) ;
-		A.put( 0, 0, 20 ) ;
-		A.put( 0, 1, 21 ) ;
-		A.put( 0, 2, 22 ) ;
-		A.put( 0, 3, 23 ) ;
-
-		Matrix ct1 = A.reduce( (a,b) -> (a + ( b>170 ? 1 : 0)), 0 ) ; 
-		assertArrayEquals("Incorrect maximum", new double[] { 0,0,0,0 }, ct1.data, 1e-6 ) ;
-
-
-		Matrix ct2 = A.reduce( (a,b) -> (a + ( b>20 ? 1 : 0)), 2 ) ; 
-		assertArrayEquals("Incorrect maximum", new double[] { 2,3,3,3 }, ct2.data, 1e-6 ) ;
-	}
-
-
-	@Test
-	public void testIdentity() {
-		Matrix A = Matrix.eye( 4 ) ;
-		assertEquals( "Unexpected M size in identity", 4, A.M ) ;
-		assertEquals( "Unexpected M size in identity", 4, A.N ) ;
-
-		double t = 0 ;
-		for( int i=0 ; i<A.length() ; i++ ) {
-			t += A.data[i] ;
-		} 
-
-		assertEquals( "Unexpected values in identity matrix", 4, t, 1e-10 ) ;
-
-		for( int i=0 ; i<A.M ; i++ ) {
-			assertEquals( "Unexpected value in identity matrix on diagonal " + i, 1.0, A.get(i, i), 1e-10 ) ;
-		} 
 	}
 
 

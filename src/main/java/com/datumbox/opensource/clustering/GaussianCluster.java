@@ -168,12 +168,15 @@ public class GaussianCluster extends Cluster {
 	@Override
 	public double posteriorLogPdf(Point xi) {
 		Matrix x_mu = xi.data.sub(mean);
-
-		double x_muInvSx_muT = covariance.divLeft( x_mu ).dot( x_mu ) ;
-
 		double normConst = 1.0/( Math.pow(2*Math.PI, dimensionality/2.0) * Math.sqrt(cache_covariance_determinant) );
-
-		double logPdf = -0.5 * x_muInvSx_muT + Math.log(normConst);
+		
+		double logPdf ;
+		if( size() == 0 ) {
+			logPdf = -0.5 * x_mu.dot() + Math.log(normConst);
+		} else {
+			double x_muInvSx_muT = covariance.divLeft( x_mu ).dot( x_mu ) ;
+			logPdf = -0.5 * x_muInvSx_muT + Math.log(normConst) ;
+		}
 		return logPdf;
 	}
 

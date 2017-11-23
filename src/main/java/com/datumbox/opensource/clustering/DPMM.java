@@ -4,8 +4,8 @@ package com.datumbox.opensource.clustering;
 import com.datumbox.opensource.dataobjects.Point;
 import com.datumbox.opensource.sampling.SRS;
 
-import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -42,7 +42,7 @@ public abstract class DPMM  {
 	public DPMM(int dimensionality, double alpha) {
 		this.dimensionality = dimensionality;
 		this.alpha = alpha;
-		clusterList = new ArrayList<>();
+		clusterList = new LinkedList<>();
 	}
 
 	/**

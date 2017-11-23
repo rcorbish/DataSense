@@ -9,6 +9,8 @@ import java.util.Set;
 import java.util.function.DoubleBinaryOperator;
 import java.util.function.DoubleUnaryOperator;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -17,6 +19,8 @@ import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
 
 public class Matrix {
+	final static Logger log = LoggerFactory.getLogger( Matrix.class ) ;
+	
 	/**
 	 * Number of rows (e.g. observations in a dataset )
 	 */
@@ -49,6 +53,12 @@ public class Matrix {
 	 * Is the Matrix a vector? (rows or columns = 1 ? )
 	 */
 	public boolean isVector ;
+
+	/**
+	 * Is the Matrix a triangular matrix?
+	 */
+	public boolean isTriangular ;
+	
 
 	/**
 	 * Create an matrix with the given size and column labels
@@ -118,6 +128,24 @@ public class Matrix {
 		if( labels != null ) {
 			rc.labels = labels.clone() ;
 		}
+		return rc ; 
+	}
+
+
+	/**
+	 * Copy the upper triangular matrix from the receiver to a new 
+	 * Matrix. The original is unchanged.
+	 * 
+	 * @return A new upper triangular matrix
+	 */
+	public Matrix upperTriangle() {
+		Matrix rc = dup() ;
+		for( int i=0 ; i<N ; i++ ) {
+			int ix = M*i + i + 1 ;
+			Arrays.fill( rc.data, ix, ix+M-i-1, 0 ) ;
+		}
+		log.info( "RC = {}", rc.data ) ;
+		rc.isTriangular = true ;
 		return rc ;
 	}
 
@@ -501,14 +529,20 @@ public class Matrix {
 		if( M != N ) {
 			throw new IllegalArgumentException( "Determinant of non-square matrix requested" ) ;
 		}
-		int ipiv[] = new int[ Math.min( M, N ) ] ;
-		Matrix lu = Engine.lud( dup(), ipiv ) ;
 		double rc = 1 ;
-		for( int i=0 ; i<Math.min(M,N) ; i++ ) {
-			rc *= lu.get(i,i) ;
-		}
-		for( int i=0 ; i<ipiv.length ; i++ ) {
-			rc *= ipiv[i] == (i+1) ? 1 : -1 ;
+		if( isTriangular ) {
+			for( int i=0 ; i<Math.min(M,N) ; i++ ) {
+				rc *= get(i,i) ;
+			}
+		} else {
+			int ipiv[] = new int[ Math.min( M, N ) ] ;
+			Matrix lu = Engine.lud( dup(), ipiv ) ;
+			for( int i=0 ; i<Math.min(M,N) ; i++ ) {
+				rc *= lu.get(i,i) ;
+			}
+			for( int i=0 ; i<ipiv.length ; i++ ) {
+				rc *= ipiv[i] == (i+1) ? 1 : -1 ;
+			}
 		}
 		return rc ;
 	}
@@ -961,11 +995,13 @@ public class Matrix {
 	public Matrix copyColumns( int ... cols ) {
 
 		Matrix rc = new Matrix( M, cols.length, new String[cols.length] ) ;
-		rc.labels = new String[ cols.length ] ;
+		rc.labels = labels==null ? null : new String[ cols.length ] ;
 
 		for( int i=0 ; i<cols.length ; ++i ) {
 			System.arraycopy( data, M*cols[i], rc.data, M*i, M ) ;
-			rc.labels[i] = labels[cols[i]] ;
+			if( labels != null ) {
+				rc.labels[i] = labels[cols[i]] ;
+			}
 		}
 
 		return rc ;
@@ -1283,6 +1319,18 @@ public class Matrix {
 		System.arraycopy(v, 0, data, c*M, M ) ;  ;
 	}
 
+	/**
+	 * Is the matrix triangular?
+	 */
+	public void isTriangular() {
+		isTriangular = true ;
+		for( int i=1 ; i<M ; i++ ) {
+			for( int j=i-1 ; j>0 ; --j ) {
+				isTriangular &= get(i,j) == 0 ;
+				if( !isTriangular ) return ;
+			}
+		}
+	}
 	/**
 	 * Total available size of the data
 	 * Note - this may be larger than M*N (if we created a special matrix to hold more than rows x columns)
