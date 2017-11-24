@@ -1,11 +1,8 @@
 package com.rc;
 
 import java.nio.charset.Charset;
-import java.text.DateFormat;
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.Calendar;
-import java.util.Date;
 import java.util.Map;
 
 public class ProcessorOptions {
@@ -67,7 +64,7 @@ public class ProcessorOptions {
 				+ today.get( Calendar.MONTH) * 100 
 				+ today.get( Calendar.DAY_OF_MONTH ) ;}
 		}
-		String dateText = get( params, "date-baseline" ) ;
+		//String dateText = get( params, "date-baseline" ) ;
 	}
 
 	public static int toYears( String years ) {

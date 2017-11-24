@@ -58,8 +58,8 @@ public class SvmrDataProcessor extends DataProcessor implements svm_print_interf
 		Matrix F = A.extractColumns( feature ) ;
 		Matrix YR = T.extractColumns( feature ) ; 
 
-		double mean = F.mean().get(0) ;
-		double std = F.stddev(F.mean()).get(0) ;
+//		double mean = F.mean().get(0) ;
+//		double std = F.stddev(F.mean()).get(0) ;
 		
 //		F.map( v -> (v-mean / std) ) ;
 		//YR.map( v -> (v-mean / std) ) ;

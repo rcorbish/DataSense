@@ -15,9 +15,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.datumbox.opensource.dataobjects;
+package com.rc.clustering;
 
-import com.datumbox.opensource.clustering.Cluster;
 import com.rc.Matrix;
 
 /**

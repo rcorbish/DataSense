@@ -3,7 +3,6 @@ package com.rc;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.rc.Blas.OpenBlas;
 import com.sun.jna.Library;
 import com.sun.jna.Native;
 import com.sun.jna.Platform;

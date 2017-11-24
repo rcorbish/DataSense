@@ -11,10 +11,10 @@ import java.util.Map.Entry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.datumbox.opensource.clustering.Cluster;
-import com.datumbox.opensource.clustering.DPMM;
-import com.datumbox.opensource.clustering.GaussianDPMM;
-import com.datumbox.opensource.dataobjects.Point;
+import com.rc.clustering.Cluster;
+import com.rc.clustering.DPMM;
+import com.rc.clustering.GaussianDPMM;
+import com.rc.clustering.Point;
 
 
 public class DpmmgDataProcessor extends DataProcessor {
@@ -61,12 +61,12 @@ public class DpmmgDataProcessor extends DataProcessor {
 		Matrix F = A.extractColumns( feature ) ;
 		Matrix YR = T.extractColumns( feature ) ; 
 
-		List<com.datumbox.opensource.dataobjects.Point> pointList = new ArrayList<>();
+		List<com.rc.clustering.Point> pointList = new ArrayList<>();
 		//add records in pointList
 
         int dimensionality = A.N ;
 		for( int i=0 ; i<A.M ; i++ ) {
-			pointList.add( new com.datumbox.opensource.dataobjects.Point( i, A.copyRows(i).transpose() ) ) ;
+			pointList.add( new com.rc.clustering.Point( i, A.copyRows(i).transpose() ) ) ;
 		}
 
 		log.info( "Processing {} data items", pointList.size() ) ;
@@ -92,8 +92,8 @@ public class DpmmgDataProcessor extends DataProcessor {
 
 		Matrix YH = new Matrix( YR.length() ) ;
 		for( int i=0 ; i<T.M ; i++ ) {
-			com.datumbox.opensource.dataobjects.Point xi = 
-				new com.datumbox.opensource.dataobjects.Point( i, T.copyRows(i).transpose() ) ;
+			com.rc.clustering.Point xi = 
+				new com.rc.clustering.Point( i, T.copyRows(i).transpose() ) ;
 				double prob[] = dpmm.clusterProbabilities(xi, n) ;
 				double mx = prob[0] ;
 				int mxi = 0 ;

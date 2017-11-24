@@ -1,7 +1,6 @@
 
-package com.datumbox.opensource.clustering;
+package com.rc.clustering;
 
-import com.datumbox.opensource.dataobjects.Point;
 import com.rc.Matrix;
 
 

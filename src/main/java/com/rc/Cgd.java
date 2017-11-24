@@ -209,7 +209,7 @@ public class Cgd {
 	}
 	
 	public double checkGrad( CostFunction cost, GradientsFunction gradients ) {
-		boolean rc = true ;
+
 		Matrix X = Matrix.rand(1, 10) ;
 		Matrix y = Matrix.rand(1, 1 ) ;
 		Matrix theta = Matrix.rand(10, 1) ;

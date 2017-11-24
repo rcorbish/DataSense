@@ -15,7 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.datumbox.opensource.sampling;
+package com.rc.clustering;
 
 /**
  * Simple Random Sampling class.

@@ -188,7 +188,7 @@ public class TestBase {
 	public void testDetNonSquare() { 
 		try {
 			Matrix A = new Matrix( 4, 3,    1, 2, 3,0.3,   -7, 9,-2,-4,   8,0,4,0  ) ; 
-			double d = A.det() ;
+			A.det() ;
 			fail( "Non-square determinant is not alloweed" ) ;
 		} catch( IllegalArgumentException ok ) {
 			// expect an error

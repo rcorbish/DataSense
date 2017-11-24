@@ -1,5 +1,5 @@
 
-package com.datumbox.opensource.clustering;
+package com.rc.clustering;
 
 /**
  *

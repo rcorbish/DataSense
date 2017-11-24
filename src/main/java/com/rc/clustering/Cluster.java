@@ -1,9 +1,7 @@
-package com.datumbox.opensource.clustering;
+package com.rc.clustering;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import com.datumbox.opensource.dataobjects.Point;
 
 public abstract class Cluster {
         /**

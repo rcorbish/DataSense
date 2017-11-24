@@ -1,12 +1,12 @@
-package com.datumbox.opensource.clustering;
+package com.rc.clustering;
 
 import org.slf4j.LoggerFactory;
 
-import com.datumbox.opensource.dataobjects.Point;
 import com.rc.Matrix;
 
 public class GaussianCluster extends Cluster {
 
+	@SuppressWarnings("unused")
 	private static org.slf4j.Logger log = LoggerFactory.getLogger(GaussianCluster.class);
 
 	//hyper parameters

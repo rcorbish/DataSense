@@ -1,8 +1,5 @@
 
-package com.datumbox.opensource.clustering;
-
-import com.datumbox.opensource.dataobjects.Point;
-import com.datumbox.opensource.sampling.SRS;
+package com.rc.clustering;
 
 import java.util.ArrayList;
 import java.util.HashMap;
