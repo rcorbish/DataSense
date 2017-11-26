@@ -35,6 +35,9 @@ public class DataProcessorFactory {
 		if( "dpmmc".equals( method ) ) {
 			return new DpmmcDataProcessor() ;
 		}
+		if( "mlp".equals( method ) ) {
+			return new MlpDataProcessor() ;
+		}
 		throw new UnsupportedOperationException( method + " is not a supported processor type." ) ;
 	}
 }

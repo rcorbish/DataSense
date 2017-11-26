@@ -2,6 +2,7 @@ package com.rc;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import org.junit.After;
 import org.junit.Before;
@@ -17,6 +18,8 @@ public class TestBase2 {
 	public void tearDown() throws Exception {
 	}
 
+
+	
 	@Test
 	public void testData() {
 		Matrix A = new Matrix( 5, 5 ) ;
@@ -143,6 +146,64 @@ public class TestBase2 {
 		Matrix B = A.upperTriangle() ;
 		assertArrayEquals("Upper triangle failed on identity", A.data, B.data, 1e-6 );
 	}
+
+	@Test
+	public void testTriangularSquare2() {
+		Matrix A = new Matrix( 5, 5 ) ;
+		for( int i=0 ; i<A.length() ; i++ ) {
+			A.data[i] = i ;
+		}
+		Matrix U = A.upperTriangle() ;
+		assertTrue( "Matrix U is not triangular", U.isTriangular );
+		
+		for( int i=0 ; i<A.M ; i++ ) {
+			for( int j=0 ; j<A.N ; j++ ) {
+				if( i>j ) A.put( i, j, 0 ) ;
+			}
+		}
+		assertTrue( "Matrix A is not triangular", U.isTriangular() );
+		assertArrayEquals( "Matrix data does not match", U.data, A.data, 1e-4 ) ;
+	}
+
+	
+
+	@Test
+	public void testTriangularTall2() {
+		Matrix A = new Matrix( 10, 5 ) ;
+		for( int i=0 ; i<A.length() ; i++ ) {
+			A.data[i] = i ;
+		}
+		Matrix U = A.upperTriangle() ;
+		assertTrue( "Matrix U is not triangular", U.isTriangular );
+		
+		for( int i=0 ; i<A.M ; i++ ) {
+			for( int j=0 ; j<A.N ; j++ ) {
+				if( i>j ) A.put( i, j, 0 ) ;
+			}
+		}
+		assertTrue( "Matrix A is not triangular", A.isTriangular() );
+		assertArrayEquals( "Matrix data does not match", U.data, A.data, 1e-4 ) ;
+	}
+
+
+	@Test
+	public void testTriangularWide2() {
+		Matrix A = new Matrix( 5, 15 ) ;
+		for( int i=0 ; i<A.length() ; i++ ) {
+			A.data[i] = i ;
+		}
+		Matrix U = A.upperTriangle() ;
+		assertTrue( "Matrix U is not triangular", U.isTriangular );
+		
+		for( int i=0 ; i<A.M ; i++ ) {
+			for( int j=0 ; j<A.N ; j++ ) {
+				if( i>j ) A.put( i, j, 0 ) ;
+			}
+		}
+		assertTrue( "Matrix A is not triangular", A.isTriangular() );
+		assertArrayEquals( "Matrix data does not match", U.data, A.data, 1e-4 ) ;
+	}
+
 
 
 	@Test

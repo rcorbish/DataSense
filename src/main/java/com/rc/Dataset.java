@@ -72,8 +72,8 @@ public class Dataset {
 		
 		train.subi(M).hdivi(S) ;
 		test.subi(M).hdivi(S) ;
-		train.prefixLabels( "nrm " ) ;
-		test.prefixLabels( "nrm " ) ;
+//		train.prefixLabels( "nrm " ) ;
+//		test.prefixLabels( "nrm " ) ;
 	}		
 
 	public void square( boolean keepOriginals ) {

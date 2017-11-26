@@ -102,6 +102,7 @@ public class TestBase {
 	@Test
 	public void testDetTriangle() {
 		Matrix A = new Matrix( 3, 3,    1, 0, 0,   -7, 9,0,   8,0,4  ) ; 
+		A.isTriangular = false ;
 		double d = A.det() ;
 		assertEquals( "Incorrect determinant", 36, d, 1e-6 ) ;
 
