@@ -67,7 +67,7 @@ public class MlpDataProcessor extends DataProcessor {
 		for( int i=0 ; i<A.M ; i++ ) {
 			double outputs[] = new double[numOutputs] ;
 			int f = (int)Math.floor( F.get(i)+0.5 ) ;
-			outputs[ inverseFeatureKeys.getOrDefault(f, 0) ] = 1 ;
+			outputs[ featureKeys.getOrDefault(f, 0) ] = 1 ;
 			trainingSet.addRow(new DataSetRow(A.copyRows(i).data, outputs ) );
 		}
 		BackPropagation lr = new MomentumBackpropagation() {
