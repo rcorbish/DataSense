@@ -14,6 +14,8 @@ public class Dataset {
 	
 	Matrix train ;
 	Matrix test ;
+	Matrix mean  ;
+	Matrix stddev  ;
 
 	public Dataset( Matrix A, Matrix B ) {
 		train = A ;
@@ -64,16 +66,15 @@ public class Dataset {
 
 	public void normalize() {
 		int feature = getFeatureColumnIndex() ;
-		Matrix M = train.mean() ;
-		// log.info( "Mean : {}", M ) ;
-		Matrix S = train.stddev(M) ;
-		M.put( feature, 0 ) ;
-		S.put( feature, 1.0 ) ;
+		log.info( "Normalizing inputs - excl. feature in col {}", feature ) ;
+		mean = train.mean() ;
+
+		stddev = train.stddev(mean) ;
+		mean.put( feature, 0 ) ;
+		stddev.put( feature, 1.0 ) ;
 		
-		train.subi(M).hdivi(S) ;
-		test.subi(M).hdivi(S) ;
-//		train.prefixLabels( "nrm " ) ;
-//		test.prefixLabels( "nrm " ) ;
+		train.subi(mean).hdivi(stddev) ;
+		test.subi(mean).hdivi(stddev) ;
 	}		
 
 	public void square( boolean keepOriginals ) {

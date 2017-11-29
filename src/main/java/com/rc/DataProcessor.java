@@ -50,6 +50,7 @@ abstract public class DataProcessor {
 		if( inverseFeatureKeys != null ) {
 			rc.yhHistogram = histogram(YH, inverseFeatureKeys) ;
 			rc.yHistogram = histogram(Y, inverseFeatureKeys) ;
+			rc.ymHistogram = new int[ rc.yhHistogram.length ] ;
 
 			int numBuckets = inverseFeatureKeys.size() ;
 			Matrix precision = new Matrix( numBuckets, 1 ) ;
@@ -66,6 +67,7 @@ abstract public class DataProcessor {
 					int yrn = (int)Math.round( Y.get(i) ) ;
 					if( yrn == f && yn == f ) {	// true positives
 						ntp++ ;
+						rc.ymHistogram[n]++ ;
 					} else if( yrn != f && yn == f ) {	// false positives
 						nfp++ ;
 					} else if( yrn == f && yn != f ) {	// false negatives
@@ -150,6 +152,7 @@ class ProcessScores {
 	
 	int yHistogram[] ;
 	int yhHistogram[] ;
+	int ymHistogram[] ;
 }
 
 

@@ -36,7 +36,6 @@ function drawStatistics( ctx, obj, w, h ) {
 		for( var i=0 ; i<stats.length ; i++ ) {
 			var data = stats[i].data
 			for( var j=0 ; j<N ; j++ ) {
-				if( i==j ) continue ;
 				ctx.beginPath()
 				const r = Math.round( Math.abs(data[j]) * 0xf).toString(16) 
 				if( data[j]<0 ) {
@@ -89,17 +88,17 @@ function drawLinear( ctx, Y, YH, w, h ) {
 }
 
 
-function drawLogistic( ctx, yHist, yhHist, w, h ) {
+function drawLogistic( ctx, yHist, yhHist, ymHist, w, h ) {
 
-	var dx = (w-50) / yHist.length
-
+	const dx = (w-50) / yHist.length
+	const barWidth = dx / 2 - 5
 	var max = Math.max.apply( null, yHist ) 
 	max = Math.max.apply( max, yhHist ) 
-	var range = ( h - 50 ) / max  
+	const range = ( h - 50 ) / max  
 	
 	ctx.beginPath()
-	ctx.strokeStyle = "#999"
-	ctx.fillStyle = "#999"
+	ctx.strokeStyle = "#666"
+	ctx.fillStyle = "#666"
 			
 	var x = 25
 	var y = yHist[0]
@@ -107,7 +106,37 @@ function drawLogistic( ctx, yHist, yhHist, w, h ) {
 		//ctx.moveTo( x, h ) 
 		y = h - yHist[i] * range    
 		//ctx.lineTo( x, y )
-		ctx.fillRect( x, y-25, 25, h-y )
+		ctx.fillRect( x, y-25, barWidth, h-y )
+		x += dx
+	}
+	ctx.stroke()
+
+	ctx.beginPath()
+	ctx.strokeStyle = "#999"
+	ctx.fillStyle = "#999"
+			
+	var x = 25
+	var y = ymHist[0]
+	for( var i=0 ; i<ymHist.length ; i++ ) {
+		//ctx.moveTo( x, h ) 
+		y = h - ymHist[i] * range    
+		//ctx.lineTo( x, y )
+		ctx.fillRect( x, y-25, barWidth, h-y )
+		x += dx
+	}
+	ctx.stroke()
+
+	ctx.beginPath()
+	ctx.strokeStyle = "#060"
+	ctx.fillStyle = "#060"
+			
+	var x = 25+barWidth
+	var y = yhHist[0]
+	for( var i=0 ; i<yhHist.length ; i++ ) {
+//		ctx.moveTo( x, h ) 
+		y = h - yhHist[i] * range 
+//		ctx.lineTo( x, y )
+		ctx.fillRect( x, y-25, barWidth, h-y )
 		x += dx
 	}
 	ctx.stroke()
@@ -116,13 +145,13 @@ function drawLogistic( ctx, yHist, yhHist, w, h ) {
 	ctx.strokeStyle = "#090"
 	ctx.fillStyle = "#090"
 			
-	var x = 50
-	var y = yhHist[0]
-	for( var i=0 ; i<yhHist.length ; i++ ) {
+	var x = 25+barWidth
+	var y = ymHist[0]
+	for( var i=0 ; i<ymHist.length ; i++ ) {
 //		ctx.moveTo( x, h ) 
-		y = h - yhHist[i] * range 
+		y = h - ymHist[i] * range 
 //		ctx.lineTo( x, y )
-		ctx.fillRect( x, y-25, 25, h-y )
+		ctx.fillRect( x, y-25, barWidth, h-y )
 		x += dx
 	}
 	ctx.stroke()

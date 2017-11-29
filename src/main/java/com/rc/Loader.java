@@ -9,9 +9,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Random;
 import java.util.StringJoiner;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -102,7 +105,7 @@ public class Loader {
 	public static Dataset load( int dataM, InputStream is, ProcessorOptions options ) throws IOException {
 
 		Dataset rc = null ;
-
+		
 		try( Reader rdr = new InputStreamReader(is, options.cs ) ;
 				CSVReader reader = new CSVReader(rdr) ; ) {
 			
@@ -212,11 +215,16 @@ public class Loader {
 				try {
 					rc[i] = Double.parseDouble( cols[i] ) ;
 				} catch ( Throwable t ) {
-					// we just found a non-numeric, start mapping... 
-					List<String> map = new ArrayList<>() ;
-					maps[i] = map ;
-					// and get an ordinal
-					rc[i] = mapToDouble(cols[i], map ) ;
+					Date d = DateColumnProcessor.parse(cols[i]) ;
+					if( d != null ) {
+						rc[i] = d.getTime()/1000 ;
+					} else {
+						// we just found a non-numeric, start mapping... 
+						List<String> map = new ArrayList<>() ;
+						maps[i] = map ;
+						// and get an ordinal
+						rc[i] = mapToDouble(cols[i], map ) ;
+					}
 				}
 			}
 		}

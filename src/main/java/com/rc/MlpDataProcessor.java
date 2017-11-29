@@ -16,13 +16,6 @@ import org.neuroph.util.TransferFunctionType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import libsvm.svm;
-import libsvm.svm_model;
-import libsvm.svm_node;
-import libsvm.svm_parameter;
-import libsvm.svm_print_interface;
-import libsvm.svm_problem;
-
 public class MlpDataProcessor extends DataProcessor {
 	final static Logger log = LoggerFactory.getLogger( MlpDataProcessor.class ) ;
 
@@ -73,7 +66,8 @@ public class MlpDataProcessor extends DataProcessor {
 		DataSet trainingSet = new DataSet(numInputs, numOutputs);
 		for( int i=0 ; i<A.M ; i++ ) {
 			double outputs[] = new double[numOutputs] ;
-			outputs[ (int)Math.floor( F.get(i)+0.5 ) ] = 1 ;
+			int f = (int)Math.floor( F.get(i)+0.5 ) ;
+			outputs[ inverseFeatureKeys.getOrDefault(f, 0) ] = 1 ;
 			trainingSet.addRow(new DataSetRow(A.copyRows(i).data, outputs ) );
 		}
 		BackPropagation lr = new MomentumBackpropagation() {
@@ -84,13 +78,20 @@ public class MlpDataProcessor extends DataProcessor {
 				if( epoch > 300 ) {
 					setMaxError( 1000 ) ;
 				} else {
-					setMaxError( 0.001 ) ;
+					setMaxError( 0.0003 ) ;
 				}
 				super.beforeEpoch() ;
 				setMinErrorChange( 0.001 ) ;
-				setMaxIterations( 300 ) ;
 				setMinErrorChangeIterationsLimit( 3 ) ;
-				setLearningRate( 0.03 ) ;
+				setMaxIterations( 300 ) ;
+				if( epoch > 200 ) {
+					setLearningRate( 0.01 ) ;
+				} else if( epoch > 100 ) {
+					setLearningRate( 0.02 ) ;
+				} else  {
+					setLearningRate( 0.03 ) ;
+				}
+			
 				if( !Double.isFinite( previousEpochError ) ) {
 					previousEpochError = 0 ; 
 				}
@@ -115,13 +116,7 @@ public class MlpDataProcessor extends DataProcessor {
 			Y.put( i, f ) ;
 		}
 		return score(YR, Y, inverseFeatureKeys ) ;
-	}
-	
-	public void print(String s)	{
-		if( s.length() > 1 ) {
-			log.info( s.trim() ) ;
-		}
-	};
+	}	
 }
 
 
