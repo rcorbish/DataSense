@@ -29,7 +29,9 @@ public class Cgd {
 		this.progress = progress ;
 	}
 	
-	public Matrix solve( CostFunction cost, GradientsFunction gradients, 
+	public Matrix solve( 
+			CostFunction cost, 
+			GradientsFunction gradients, 
 			Matrix Xin, Matrix yin,
 			double lambda, int maxIters ) {
 

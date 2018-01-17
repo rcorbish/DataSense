@@ -38,6 +38,9 @@ public class DataProcessorFactory {
 		if( "mlp".equals( method ) ) {
 			return new MlpDataProcessor() ;
 		}
+		if( "kohonen".equals( method ) ) {
+			return new KohonenDataProcessor() ;
+		}
 		throw new UnsupportedOperationException( method + " is not a supported processor type." ) ;
 	}
 }

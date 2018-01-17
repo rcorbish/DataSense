@@ -172,16 +172,16 @@ public class Matrix {
 	public Matrix subi( Matrix O ) {
 		if( O.isVector && isVector ) { // vector add
 			if( O.length() != length() ) {
-				throw new RuntimeException( "Invalid addition of vectors" ) ;
+				throw new RuntimeException( "Invalid subtraction of vectors: [" + O.length() + "] - [" + length() + "]") ;
 			}
 			for( int i=0 ; i<length() ; i++ ) {
 				data[i] -= O.data[i] ;
 			}
 		} else if( isVector && O.M>1 ) { // can't add a matrix to a vector
-			throw new RuntimeException( "Can't add a matrix to a vector" ) ;
+			throw new RuntimeException( "Can't subtract a matrix from a vector" ) ;
 		} else if( O.N==1 ) { // col vector vs matrix 
 			if( O.M != M ) {
-				throw new RuntimeException( "Invalid addition of column vector" ) ;
+				throw new RuntimeException( "Invalid subtraction of column vector" ) ;
 			}
 			for( int i=0 ; i<M ; i++ ) {
 				for( int j=0 ; j<N ; j++ ) {
@@ -1416,6 +1416,26 @@ public class Matrix {
 		return rc ;
 	}
 
+	/**
+	 * Create a new Vector shuffled integer values of 0..N
+	 * @param m rows
+	 * @return a new Matrix
+	 */
+	static public Matrix shuffle( int m ) {
+		Matrix rc = new Matrix( m ) ;
+		int d[] = new int[m] ;
+		for( int i=0 ; i<m ; i++ ) {
+			d[i] = i ;
+		}
+		Random rng = new Random() ;
+		
+		for( int i=0 ; i<m ; i++ ) {
+			int n = rng.nextInt( m - i ) ;
+			rc.data[i] = d[n] ;
+			d[n] = d[m-i-1] ;
+		}
+		return rc ;
+	}
 
 	/**
 	 * Nice means to print a matrix. We only print some of the data

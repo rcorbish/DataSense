@@ -58,7 +58,7 @@ public class SvmcDataProcessor extends DataProcessor implements svm_print_interf
 		Matrix F = A.extractColumns( feature ) ;
 //		F.map( v -> featureKeys.get((int)v) ) ;
 		Matrix YR = T.extractColumns( feature ) ; 
-		
+		/*
 		Matrix means = A.mean() ;
 		Matrix stddev = A.stddev(means) ;
 		
@@ -72,7 +72,7 @@ public class SvmcDataProcessor extends DataProcessor implements svm_print_interf
 				T.put( i, j, ( T.get( i, j ) - means.get(j) ) / stddev.get(j) ) ; 
 			}			
 		}
-		
+		*/
 		svm_node data[][] = new svm_node[A.M][] ;
 		for( int i=0 ; i<A.M ; i++ ) {
 			data[i] = new svm_node[A.N] ;
@@ -95,7 +95,7 @@ public class SvmcDataProcessor extends DataProcessor implements svm_print_interf
 		parameter.gamma = 0.0003 ;	// exp( -gamma * (u-v)^2 )
 		parameter.coef0 = 0 ; 	// sigmoid / poly only
 		parameter.cache_size = 500 ;	// MB
-		parameter.C = 300 ; // normal C parameter in svm
+		parameter.C = 100 ; // normal C parameter in svm
 		parameter.eps = 0.0001 ; // error to stop
 		parameter.nr_weight = 0 ; // all weights equal
 		parameter.weight_label = null ; // all weights equal

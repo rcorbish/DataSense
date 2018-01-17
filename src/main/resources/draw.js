@@ -33,8 +33,9 @@ function drawStatistics( ctx, obj, w, h ) {
 		var dx = w / N
 		var dy = h / stats.length
 	
+
 		for( var i=0 ; i<stats.length ; i++ ) {
-			var data = stats[i].data
+			var data = normalize( stats[i].data )
 			for( var j=0 ; j<N ; j++ ) {
 				ctx.beginPath()
 				const r = Math.round( Math.abs(data[j]) * 0xf).toString(16) 
@@ -49,6 +50,14 @@ function drawStatistics( ctx, obj, w, h ) {
 		} 
 	}
 	
+function normalize( data ) {
+	var min = Math.min.apply( null, data ) 
+	var max = Math.max.apply( null, data ) 
+
+	rc = data.map(d => ( 2 * (d - min) / (max-min) - 1.0 ) ) 
+
+	return rc ;
+}
 
 function drawLinear( ctx, Y, YH, w, h ) {
 
@@ -59,12 +68,14 @@ function drawLinear( ctx, Y, YH, w, h ) {
 	var max = Math.max.apply( null, Y.data ) 
 	var range = ( h - 50 ) / ( max - min ) 
 	
+
 	ctx.beginPath()
 	ctx.strokeStyle = "#fff"
-			
+
 	var x = 0 
-	var y = Y.data[0]
+	var y = h - ( Y.data[0] - min ) * range - 25
 	ctx.moveTo( x, y ) 
+
 	for( var i=1 ; i<Y.M ; i++ ) {
 		x += dx
 		y = h - ( Y.data[i] - min ) * range - 25   
@@ -76,7 +87,7 @@ function drawLinear( ctx, Y, YH, w, h ) {
 	ctx.strokeStyle = "#0f0"
 			
 	x = 0 
-	y = YH.data[0]
+	y = h - ( YH.data[0] - min ) * range - 25
 	ctx.moveTo( x, y ) 
 	for( var i=1 ; i<YH.M ; i++ ) {
 		x += dx
@@ -84,7 +95,6 @@ function drawLinear( ctx, Y, YH, w, h ) {
 		ctx.lineTo( x, y )
 	}
 	ctx.stroke()
-
 }
 
 
@@ -101,7 +111,7 @@ function drawLogistic( ctx, yHist, yhHist, ymHist, w, h ) {
 	ctx.fillStyle = "#666"
 			
 	var x = 25
-	var y = yHist[0]
+	var y 
 	for( var i=0 ; i<yHist.length ; i++ ) {
 		//ctx.moveTo( x, h ) 
 		y = h - yHist[i] * range    
@@ -115,8 +125,7 @@ function drawLogistic( ctx, yHist, yhHist, ymHist, w, h ) {
 	ctx.strokeStyle = "#999"
 	ctx.fillStyle = "#999"
 			
-	var x = 25
-	var y = ymHist[0]
+	x = 25
 	for( var i=0 ; i<ymHist.length ; i++ ) {
 		//ctx.moveTo( x, h ) 
 		y = h - ymHist[i] * range    
@@ -130,8 +139,7 @@ function drawLogistic( ctx, yHist, yhHist, ymHist, w, h ) {
 	ctx.strokeStyle = "#060"
 	ctx.fillStyle = "#060"
 			
-	var x = 25+barWidth
-	var y = yhHist[0]
+	x = 25+barWidth
 	for( var i=0 ; i<yhHist.length ; i++ ) {
 //		ctx.moveTo( x, h ) 
 		y = h - yhHist[i] * range 
@@ -145,8 +153,7 @@ function drawLogistic( ctx, yHist, yhHist, ymHist, w, h ) {
 	ctx.strokeStyle = "#090"
 	ctx.fillStyle = "#090"
 			
-	var x = 25+barWidth
-	var y = ymHist[0]
+	x = 25+barWidth
 	for( var i=0 ; i<ymHist.length ; i++ ) {
 //		ctx.moveTo( x, h ) 
 		y = h - ymHist[i] * range 
@@ -155,5 +162,4 @@ function drawLogistic( ctx, yHist, yhHist, ymHist, w, h ) {
 		x += dx
 	}
 	ctx.stroke()
-
 }

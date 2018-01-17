@@ -61,7 +61,7 @@ public class MlpDataProcessor extends DataProcessor {
 		int numInputs = A.N ;
 		int numOutputs = featureKeys.size() ;
 		
-		MultiLayerPerceptron nn = new MultiLayerPerceptron(TransferFunctionType.TANH, numInputs, numInputs, numInputs, numOutputs );
+		MultiLayerPerceptron nn = new MultiLayerPerceptron(TransferFunctionType.RAMP, numInputs, numInputs, numInputs, numOutputs );
 		// learn the training set
 		DataSet trainingSet = new DataSet(numInputs, numOutputs);
 		for( int i=0 ; i<A.M ; i++ ) {
@@ -70,7 +70,10 @@ public class MlpDataProcessor extends DataProcessor {
 			outputs[ featureKeys.getOrDefault(f, 0) ] = 1 ;
 			trainingSet.addRow(new DataSetRow(A.copyRows(i).data, outputs ) );
 		}
+		
 		BackPropagation lr = new MomentumBackpropagation() {
+			final static long serialVersionUID = 1L ;
+
 			int epoch = 0 ;
 			@Override
 			protected void beforeEpoch() {

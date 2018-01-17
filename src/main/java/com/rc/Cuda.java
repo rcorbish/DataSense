@@ -288,7 +288,7 @@ public class Cuda extends Compute {
 	// 	B is B.M x B.N
 	//
 	// OUT
-	// 	Q is A.M x A.M    	( square )
+	// 	Q is A.M x A.M    	( square & orthogonal )
 	// 	R is A.M x A.N		( same as A )
 	//  Q'B' is A.M x B.N	 
 	//  X is A.N x B.N		
