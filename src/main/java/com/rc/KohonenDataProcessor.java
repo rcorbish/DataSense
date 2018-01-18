@@ -12,7 +12,6 @@ import org.slf4j.LoggerFactory;
 public class KohonenDataProcessor extends DataProcessor {
 	final static Logger log = LoggerFactory.getLogger( KohonenDataProcessor.class ) ;
 
-	final int TARGET_SPACE_SIZE = 5 ;
 
 	public Dataset load( InputStream data, ProcessorOptions options ) throws IOException {
 		Dataset dataset = Loader.load( DataProcessor.ROWS_TO_KEEP, data, options ) ;
@@ -48,6 +47,7 @@ public class KohonenDataProcessor extends DataProcessor {
 		Matrix YR = T.extractColumns( feature ) ; 
 
 		int numInputs = A.N  ;
+		final int TARGET_SPACE_SIZE = 10 ;
 
 		Matrix targetSpace[] = new Matrix[ TARGET_SPACE_SIZE * TARGET_SPACE_SIZE ] ;
 		for( int i=0 ; i<targetSpace.length ; i++ ) {
@@ -55,10 +55,13 @@ public class KohonenDataProcessor extends DataProcessor {
 		}
 
 		double learningRate = 0.5 ;
-		final int ITERATIONS = 20 ;
-		final double LEARN_RATE_DECAY = learningRate / ITERATIONS ;
+		final int ITERATIONS = 100 ;
 
-		for( int iteration=0 ; iteration<ITERATIONS ; iteration++, learningRate-=LEARN_RATE_DECAY ) {
+		double MAP_RADIUS = TARGET_SPACE_SIZE / 2.0 ;
+		double RADIUS_LAMBDA = ITERATIONS / Math.log( MAP_RADIUS ) ;
+		
+		for( int iteration=0 ; iteration<ITERATIONS ; iteration++ ) {
+						
 			Matrix shuffle = Matrix.shuffle( A.M ) ;
 			for( int m=0 ; m<A.M ; m++ ) {
 				int ix = (int)shuffle.get(m) ;
@@ -78,19 +81,24 @@ public class KohonenDataProcessor extends DataProcessor {
 				// Matrix closest = targetSpace[ closestIndex ] ;
 				int x0 = closestIndex % TARGET_SPACE_SIZE ;
 				int y0 = closestIndex / TARGET_SPACE_SIZE ;
-				
+				double radius = MAP_RADIUS * Math.exp( -iteration/RADIUS_LAMBDA ) ;
+	
 				for( int i=0 ; i<targetSpace.length ; i++ ) {
 	
 					// calc distance between closest & each vector in the target
 					int x1 = i % TARGET_SPACE_SIZE ;
 					int y1 = i / TARGET_SPACE_SIZE ;
 					double proximity = Math.sqrt( (x0-x1)*(x0-x1) + (y0-y1)*(y0-y1) ) ;
-					double rate = learningRate / (1.0 + proximity ) ;
-					Matrix delta = observation.sub( targetSpace[i] ).mul( rate ) ;
-					log.debug( "Moving\n{} by\n{} due to\n{}",targetSpace[i], delta, observation ) ;
-					targetSpace[i].addi( delta ) ;
+					if( proximity <= radius ) {
+						double theta = Math.exp( -(proximity*proximity) / ( 2 * radius ) ) ;
+						double rate = learningRate * theta ;
+						Matrix delta = observation.sub( targetSpace[i] ).mul( rate ) ;
+//						log.debug( "Moving\n{} by\n{} due to\n{}",targetSpace[i], delta, observation ) ;
+						targetSpace[i].addi( delta ) ;
+					}
 				}
 			}
+			log.info( "Iteration {} complete", iteration ) ;
 		}
 
 		// value in dataset -> zero based index
@@ -109,7 +117,14 @@ public class KohonenDataProcessor extends DataProcessor {
 			}
 			featureKeys.put( closestIndex, (int)F.get(m) ) ;
 		}
+		
+		Map<Integer,Integer> inverseFeatureKeys = new HashMap<>() ;
+		for( Entry<Integer, Integer> e :featureKeys.entrySet() ) {
+			inverseFeatureKeys.put( e.getValue(), e.getKey() ) ;
+		}
+		
 		log.info( "Feature keys in target: {}", featureKeys ) ;
+		log.info( "Inverse feature keys in target: {}", inverseFeatureKeys ) ;
 		
 		Matrix Y = new Matrix( YR.M )  ;
 		for( int m=0 ; m<T.M ; m++ ) {
@@ -123,7 +138,8 @@ public class KohonenDataProcessor extends DataProcessor {
 					closestDistance = distance ;
 				}
 			}
-			log.info( "finding ideal index for {}", closestIndex ) ;
+			
+			log.debug( "finding ideal index for {}", closestIndex ) ;
 			Matrix best = targetSpace[closestIndex] ;
 			double bestDistance = targetSpace.length * targetSpace.length ;
 			int bestIndex = -1 ;
@@ -134,14 +150,11 @@ public class KohonenDataProcessor extends DataProcessor {
 					bestDistance = distance ;
 				}
 			}
-			log.info( "Using {} as best", bestIndex ) ;
-			Y.put( m, bestIndex ) ; // featureKeys.get(bestIndex) ) ;
+			log.debug( "Using {} as best", bestIndex ) ;
+			Y.put( m, featureKeys.get(bestIndex) ) ;
 		}
 
-		Map<Integer,Integer> inverseFeatureKeys = new HashMap<>() ;
-		for( Entry<Integer, Integer> e :featureKeys.entrySet() ) {
-			inverseFeatureKeys.put( e.getValue(), e.getKey() ) ;
-		}
+
 		return score( YR, Y, inverseFeatureKeys )  ;
 	}
 }
