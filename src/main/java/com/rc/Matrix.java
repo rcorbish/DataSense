@@ -1456,11 +1456,17 @@ public class Matrix {
 			}
 			rc.append( '\n' ); 
 		}
-		for( int i=0 ; i<Math.min( MAX_PRINT, M) ; i++ ) {
-			for( int j=0 ; j<Math.min( MAX_PRINT, N) ; j++ ) {
-				rc.append( String.format( "%10.4f", get(i,j) ) );
+		if( isVector ) {
+			for( int i=0 ; i<Math.min( MAX_PRINT, length() ) ; i++ ) {
+				rc.append( String.format( "%10.4f", get(i) ) );
+			}			
+		} else {
+			for( int i=0 ; i<Math.min( MAX_PRINT, M) ; i++ ) {
+				for( int j=0 ; j<Math.min( MAX_PRINT, N) ; j++ ) {
+					rc.append( String.format( "%10.4f", get(i,j) ) );
+				}
+				rc.append( '\n' ); 
 			}
-			rc.append( '\n' ); 
 		}
 		rc.deleteCharAt( rc.length()-1 ) ;
 		return rc.toString() ;

@@ -12,7 +12,7 @@ import org.slf4j.LoggerFactory;
 public class KohonenDataProcessor extends DataProcessor {
 	final static Logger log = LoggerFactory.getLogger( KohonenDataProcessor.class ) ;
 
-	final int TARGET_SPACE_SIZE = 20 ;
+	final int TARGET_SPACE_SIZE = 5 ;
 
 	public Dataset load( InputStream data, ProcessorOptions options ) throws IOException {
 		Dataset dataset = Loader.load( DataProcessor.ROWS_TO_KEEP, data, options ) ;
@@ -54,8 +54,11 @@ public class KohonenDataProcessor extends DataProcessor {
 			targetSpace[i] = Matrix.rand( numInputs, 1 ) ;
 		}
 
-		double learningRate = 0.1 ;
-		for( int iteration=0 ; iteration<100 ; iteration++ ) {
+		double learningRate = 0.5 ;
+		final int ITERATIONS = 20 ;
+		final double LEARN_RATE_DECAY = learningRate / ITERATIONS ;
+
+		for( int iteration=0 ; iteration<ITERATIONS ; iteration++, learningRate-=LEARN_RATE_DECAY ) {
 			Matrix shuffle = Matrix.shuffle( A.M ) ;
 			for( int m=0 ; m<A.M ; m++ ) {
 				int ix = (int)shuffle.get(m) ;
@@ -82,8 +85,10 @@ public class KohonenDataProcessor extends DataProcessor {
 					int x1 = i % TARGET_SPACE_SIZE ;
 					int y1 = i / TARGET_SPACE_SIZE ;
 					double proximity = Math.sqrt( (x0-x1)*(x0-x1) + (y0-y1)*(y0-y1) ) ;
-					double rate = learningRate / (1.0 + proximity + iteration ) ;
-					targetSpace[i].addi( observation.sub( targetSpace[i] ).mul( rate ) ) ;
+					double rate = learningRate / (1.0 + proximity ) ;
+					Matrix delta = observation.sub( targetSpace[i] ).mul( rate ) ;
+					log.debug( "Moving\n{} by\n{} due to\n{}",targetSpace[i], delta, observation ) ;
+					targetSpace[i].addi( delta ) ;
 				}
 			}
 		}
@@ -118,8 +123,21 @@ public class KohonenDataProcessor extends DataProcessor {
 					closestDistance = distance ;
 				}
 			}
-			Y.put( m, closestIndex ) ;
+			log.info( "finding ideal index for {}", closestIndex ) ;
+			Matrix best = targetSpace[closestIndex] ;
+			double bestDistance = targetSpace.length * targetSpace.length ;
+			int bestIndex = -1 ;
+			for( int key : featureKeys.keySet() ) {
+				double distance = best.sub( targetSpace[key] ).norm() ;
+				if( distance < bestDistance ) {
+					bestIndex = key ;
+					bestDistance = distance ;
+				}
+			}
+			log.info( "Using {} as best", bestIndex ) ;
+			Y.put( m, bestIndex ) ; // featureKeys.get(bestIndex) ) ;
 		}
+
 		Map<Integer,Integer> inverseFeatureKeys = new HashMap<>() ;
 		for( Entry<Integer, Integer> e :featureKeys.entrySet() ) {
 			inverseFeatureKeys.put( e.getValue(), e.getKey() ) ;
