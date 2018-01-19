@@ -5,6 +5,7 @@ import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.function.Function;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,34 +55,28 @@ public class KohonenDataProcessor extends DataProcessor {
 			targetSpace[i] = Matrix.rand( numInputs, 1 ) ;
 		}
 
-		double learningRate = 0.5 ;
+		double learningRate = 1.0 ;
 		final int ITERATIONS = 100 ;
 
 		double MAP_RADIUS = TARGET_SPACE_SIZE / 2.0 ;
 		double RADIUS_LAMBDA = ITERATIONS / Math.log( MAP_RADIUS ) ;
 		
 		for( int iteration=0 ; iteration<ITERATIONS ; iteration++ ) {
-						
+			double radius = MAP_RADIUS * Math.exp( -iteration/RADIUS_LAMBDA ) ;
+			log.info( "Iteration {} - radius = {}", iteration, radius ) ;
+					
 			Matrix shuffle = Matrix.shuffle( A.M ) ;
 			for( int m=0 ; m<A.M ; m++ ) {
 				int ix = (int)shuffle.get(m) ;
 				Matrix observation = A.copyRows(ix) ;
-				double closestDistance = observation.sub( targetSpace[0] ).norm() ;
-				int closestIndex = 0 ;
-				for( int i=1 ; i<targetSpace.length ; i++ ) {
-					double distance = observation.sub( targetSpace[i] ).norm() ;
-					if( distance < closestDistance ) {
-						closestIndex = i ;
-						closestDistance = distance ;
-					}
-				}
+
+				int closestIndex = findClosestIndex(observation, targetSpace ) ;
 			
 			// Now move all vectors towards the answer
 			// depending on how near they are to the 'closest'
 				// Matrix closest = targetSpace[ closestIndex ] ;
 				int x0 = closestIndex % TARGET_SPACE_SIZE ;
 				int y0 = closestIndex / TARGET_SPACE_SIZE ;
-				double radius = MAP_RADIUS * Math.exp( -iteration/RADIUS_LAMBDA ) ;
 	
 				for( int i=0 ; i<targetSpace.length ; i++ ) {
 	
@@ -98,64 +93,62 @@ public class KohonenDataProcessor extends DataProcessor {
 					}
 				}
 			}
-			log.info( "Iteration {} complete", iteration ) ;
+			log.debug( "Iteration {} complete", iteration ) ;
 		}
-
+		log.info( "Iterations complete" ) ;
+		
 		// value in dataset -> zero based index
 		Map<Integer,Integer> featureKeys = new HashMap<>() ;
 
 		for( int m=0 ; m<A.M ; m++ ) {
 			Matrix observation = A.copyRows(m) ;
-			double closestDistance = observation.sub( targetSpace[0] ).norm() ;
-			int closestIndex = 0 ;
-			for( int i=1 ; i<targetSpace.length ; i++ ) {
-				double distance = observation.sub( targetSpace[i] ).norm() ;
-				if( distance < closestDistance ) {
-					closestIndex = i ;
-					closestDistance = distance ;
-				}
-			}
+			int closestIndex = findClosestIndex(observation, targetSpace ) ;
 			featureKeys.put( closestIndex, (int)F.get(m) ) ;
+			log.info( "{} :  {} -> {}", m, F.get(m), targetSpace[closestIndex] ) ;
 		}
 		
-		Map<Integer,Integer> inverseFeatureKeys = new HashMap<>() ;
-		for( Entry<Integer, Integer> e :featureKeys.entrySet() ) {
-			inverseFeatureKeys.put( e.getValue(), e.getKey() ) ;
-		}
 		
 		log.info( "Feature keys in target: {}", featureKeys ) ;
-		log.info( "Inverse feature keys in target: {}", inverseFeatureKeys ) ;
 		
+		Matrix idealTargets[] = new Matrix[ featureKeys.size() ] ;
+		int idealTargetIndices[] = new int[idealTargets.length] ;
+		int ix = 0 ;
+		for( int fk :featureKeys.keySet() ) {
+			idealTargets[ix] = targetSpace[ fk ] ;
+			idealTargetIndices[ix] = fk ;
+			ix++ ;
+		}
+
 		Matrix Y = new Matrix( YR.M )  ;
 		for( int m=0 ; m<T.M ; m++ ) {
 			Matrix observation = A.copyRows(m) ;
-			double closestDistance = observation.sub( targetSpace[0] ).norm() ;
-			int closestIndex = 0 ;
-			for( int i=1 ; i<targetSpace.length ; i++ ) {
-				double distance = observation.sub( targetSpace[i] ).norm() ;
-				if( distance < closestDistance ) {
-					closestIndex = i ;
-					closestDistance = distance ;
-				}
-			}
-			
-			log.debug( "finding ideal index for {}", closestIndex ) ;
-			Matrix best = targetSpace[closestIndex] ;
-			double bestDistance = targetSpace.length * targetSpace.length ;
-			int bestIndex = -1 ;
-			for( int key : featureKeys.keySet() ) {
-				double distance = best.sub( targetSpace[key] ).norm() ;
-				if( distance < bestDistance ) {
-					bestIndex = key ;
-					bestDistance = distance ;
-				}
-			}
-			log.debug( "Using {} as best", bestIndex ) ;
-			Y.put( m, featureKeys.get(bestIndex) ) ;
+			int closestIndex = findClosestIndex( observation, idealTargets ) ;
+			log.info( "Mapping {} using {}", closestIndex, featureKeys ) ;
+			Y.put( m, idealTargetIndices[closestIndex] ) ;
 		}
 
+		Map<Integer,Integer> inverseFeatureKeys = new HashMap<>() ;
+		
+		for( int i=0 ; i<idealTargetIndices.length ; i++ ) {
+			inverseFeatureKeys.put( i, idealTargetIndices[i] ) ;
+		}
 
 		return score( YR, Y, inverseFeatureKeys )  ;
 	}
+
+
+	protected int findClosestIndex( Matrix v, Matrix w[] ) {
+		double closestDistance = v.sub( w[0] ).norm() ;
+		int closestIndex = 0 ;
+		for( int i=1 ; i<w.length ; i++ ) {
+			double distance = v.sub( w[i] ).norm() ;
+			if( distance < closestDistance ) {
+				closestIndex = i ;
+				closestDistance = distance ;
+			}
+		}
+		return closestIndex ;
+	}
+
 }
 
