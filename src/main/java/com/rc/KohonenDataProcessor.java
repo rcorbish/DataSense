@@ -4,8 +4,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Map.Entry;
-import java.util.function.Function;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,8 +46,11 @@ public class KohonenDataProcessor extends DataProcessor {
 		Matrix YR = T.extractColumns( feature ) ; 
 
 		int numInputs = A.N  ;
-		final int TARGET_SPACE_SIZE = 10 ;
+		int numFeatures = F.countBuckets( 0.5 ).length() ;
 
+		final int TARGET_SPACE_SIZE = (int)Math.ceil( Math.sqrt( numFeatures * 1.25 ) ) ;
+		log.info( "Using {} x {} feature space", TARGET_SPACE_SIZE, TARGET_SPACE_SIZE ) ;
+		
 		Matrix targetSpace[] = new Matrix[ TARGET_SPACE_SIZE * TARGET_SPACE_SIZE ] ;
 		for( int i=0 ; i<targetSpace.length ; i++ ) {
 			targetSpace[i] = Matrix.rand( numInputs, 1 ) ;
@@ -58,12 +59,12 @@ public class KohonenDataProcessor extends DataProcessor {
 		double learningRate = 1.0 ;
 		final int ITERATIONS = 100 ;
 
-		double MAP_RADIUS = TARGET_SPACE_SIZE / 2.0 ;
+		double MAP_RADIUS = TARGET_SPACE_SIZE / 1.25 ;
 		double RADIUS_LAMBDA = ITERATIONS / Math.log( MAP_RADIUS ) ;
 		
 		for( int iteration=0 ; iteration<ITERATIONS ; iteration++ ) {
 			double radius = MAP_RADIUS * Math.exp( -iteration/RADIUS_LAMBDA ) ;
-			log.info( "Iteration {} - radius = {}", iteration, radius ) ;
+			log.debug( "Iteration {} - radius = {}", iteration, radius ) ;
 					
 			Matrix shuffle = Matrix.shuffle( A.M ) ;
 			for( int m=0 ; m<A.M ; m++ ) {
@@ -123,7 +124,7 @@ public class KohonenDataProcessor extends DataProcessor {
 		for( int m=0 ; m<T.M ; m++ ) {
 			Matrix observation = A.copyRows(m) ;
 			int closestIndex = findClosestIndex( observation, idealTargets ) ;
-			log.info( "Mapping {} using {}", closestIndex, featureKeys ) ;
+			log.debug( "Mapping {} using {}", closestIndex, featureKeys ) ;
 			Y.put( m, idealTargetIndices[closestIndex] ) ;
 		}
 
