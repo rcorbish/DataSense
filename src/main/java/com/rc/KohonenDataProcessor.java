@@ -45,10 +45,13 @@ public class KohonenDataProcessor extends DataProcessor {
 		Matrix F = A.extractColumns( feature ) ;
 		Matrix YR = T.extractColumns( feature ) ; 
 
+		Matrix uniqueValues = F.getUniqueValues( 0.1 ) ;
+		F.map( e -> uniqueValues.indexOf(e, 0.1) ) ;
+		
 		int numInputs = A.N  ;
-		int numFeatures = F.countBuckets( 0.5 ).length() ;
+		int numFeatures = uniqueValues.length() ;
 
-		final int TARGET_SPACE_SIZE = (int)Math.ceil( Math.sqrt( numFeatures * 1.25 ) ) ;
+		final int TARGET_SPACE_SIZE = (int)Math.ceil( Math.sqrt( numFeatures * 2 ) ) ;
 		log.info( "Using {} x {} feature space", TARGET_SPACE_SIZE, TARGET_SPACE_SIZE ) ;
 		
 		Matrix targetSpace[] = new Matrix[ TARGET_SPACE_SIZE * TARGET_SPACE_SIZE ] ;
@@ -108,32 +111,18 @@ public class KohonenDataProcessor extends DataProcessor {
 			log.info( "{} :  {} -> {}", m, F.get(m), targetSpace[closestIndex] ) ;
 		}
 		
-		
 		log.info( "Feature keys in target: {}", featureKeys ) ;
-		
-		Matrix idealTargets[] = new Matrix[ featureKeys.size() ] ;
-		int idealTargetIndices[] = new int[idealTargets.length] ;
-		int ix = 0 ;
-		for( int fk :featureKeys.keySet() ) {
-			idealTargets[ix] = targetSpace[ fk ] ;
-			idealTargetIndices[ix] = fk ;
-			ix++ ;
-		}
 
-		Matrix Y = new Matrix( YR.M )  ;
+		Matrix Y = new Matrix( YR.M ) ;
 		for( int m=0 ; m<T.M ; m++ ) {
-			Matrix observation = A.copyRows(m) ;
-			int closestIndex = findClosestIndex( observation, idealTargets ) ;
+			Matrix observation = T.copyRows(m) ;
+			int closestIndex = findClosestIndex( observation, targetSpace ) ;
 			log.debug( "Mapping {} using {}", closestIndex, featureKeys ) ;
-			Y.put( m, idealTargetIndices[closestIndex] ) ;
+			Y.put( m, closestIndex ) ;
 		}
 
 		Map<Integer,Integer> inverseFeatureKeys = new HashMap<>() ;
 		
-		for( int i=0 ; i<idealTargetIndices.length ; i++ ) {
-			inverseFeatureKeys.put( i, idealTargetIndices[i] ) ;
-		}
-
 		return score( YR, Y, inverseFeatureKeys )  ;
 	}
 

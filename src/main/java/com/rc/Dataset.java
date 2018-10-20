@@ -8,7 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class Dataset {
-	public final static String FEATURE_LABELS[] = { "Score", "Feature", "Result", "Close" } ;
+	public final static String FEATURE_LABELS[] = { "Score", "Feature", "Result", "Close", "Label" } ;
 	public final static String BIAS = "Bias" ;
 	final static Logger log = LoggerFactory.getLogger( Dataset.class ) ;
 	

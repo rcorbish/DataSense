@@ -6,6 +6,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Random;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.function.DoubleBinaryOperator;
 import java.util.function.DoubleUnaryOperator;
 
@@ -573,24 +574,25 @@ public class Matrix {
 		return rc ;
 	}
 
+	
 	/**
 	 * Return a Matrix of the count of distinct values in each column. 
 	 * A value is considered distinct to the precision given.
 	 * This probably only has real meaning for integers (e.g mapped columns)
 	 * 
 	 * @param precision how to determine whether a value is similar to another value 
-	 * @return a vector of each column's minimum
+	 * @return a vector of each column's unique values
 	 */
 	public Matrix countBuckets( double precision ) {
 		Matrix rc = new Matrix( 1, N ) ;
 
-		Set<String> buckets = new HashSet<>() ;
+		Set<Integer> buckets = new HashSet<>() ;
 
 		int ix = 0 ;
 		for( int i=0 ; i<N ; i++ ) {
 			buckets.clear() ;
 			for( int j=0 ; j<M ; j++ ) {
-				buckets.add( String.valueOf( (int)( data[ix] / precision ) ) ) ;
+				buckets.add( (int)( data[ix] / precision ) ) ;
 				ix++ ;
 			}
 			rc.data[i] = buckets.size() ;
@@ -598,6 +600,52 @@ public class Matrix {
 		return rc ;
 	}
 
+	
+	
+	/**
+	 * Return a Matrix of the distinct values in the whole matrix 
+	 * A value is considered distinct to the precision given.
+	 * 
+	 * @param precision how to determine whether a value is similar to another value 
+	 * @return a vector of a column's unique values
+	 */
+	public Matrix getUniqueValues( double precision ) {
+
+		Set<Double> buckets = new TreeSet<>() ;
+
+		for( int j=0 ; j<length() ; j++ ) {
+			buckets.add( get(j) / precision )  ;
+		}		
+		
+		Matrix rc = new Matrix( 1, buckets.size() ) ;
+		int ix = 0 ;
+		for( double d : buckets ) {
+			rc.data[ix++] = d * precision ;
+		}	
+		return rc ;
+	}
+
+
+	/**
+	 * Return the first index of the value given.  
+	 * A value is considered distinct to the precision given.
+	 * 
+	 * @param precision how to determine whether a value is similar to another value 
+	 * @return index of the first matching value (-1 if not found)
+	 */
+	public int indexOf( double value, double precision ) {
+		int rc = -1 ;
+
+		for( int i=0 ; i<length() ; i++ ) {
+			if( Math.abs( data[i] - value ) <= precision ) {
+				rc = i ;
+				break ;
+			}
+		}		
+		return rc ;
+	}
+	
+	
 	/**
 	 * Return a Matrix of the mean value in each column
 	 * 
